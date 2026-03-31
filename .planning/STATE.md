@@ -4,20 +4,20 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 01
 current_plan: 3
-status: executing
-last_updated: "2026-03-31T07:20:59.653Z"
+status: verifying
+last_updated: "2026-03-31T08:04:15.566Z"
 progress:
   total_phases: 6
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
-  percent: 67
+  completed_plans: 3
+  percent: 100
 ---
 
 # State: ViolenceCC
 
 **Last updated:** 2026-03-31
-**Session:** Phase 01 Plan 02 complete — three conda environments created, XD-Violence extracted, feature junction created
+**Session:** Phase 01 Plan 03 complete — CTR-GCN weights downloaded, smoke test passing, requirements frozen. Phase 01 COMPLETE.
 
 ---
 
@@ -32,21 +32,21 @@ progress:
 
 ## Current Position
 
-Phase: 01 (environment) — EXECUTING
-Plan: 3 of 3
+Phase: 01 (environment) — COMPLETE
+Plan: 3 of 3 (all plans complete)
 **Current phase:** 01
 **Current plan:** 3
-**Status:** Executing Phase 01
+**Status:** Phase 01 complete — all 3 plans executed, ready for Phase 02
 
 **Progress:**
 
 ```
-Phase 1 [███████░░░] 67%  Environment & Project Foundation
-Phase 2 [          ] 0%   Feature Extraction Pipeline
-Phase 3 [          ] 0%   Model Architecture & Training Infrastructure
-Phase 4 [          ] 0%   Baseline Evaluation & Main Results
-Phase 5 [          ] 0%   TTA Infrastructure & Corruption Experiments
-Phase 6 [          ] 0%   Analysis & Visualization
+Phase 1 [██████████] 100%  Environment & Project Foundation — COMPLETE
+Phase 2 [          ] 0%    Feature Extraction Pipeline
+Phase 3 [          ] 0%    Model Architecture & Training Infrastructure
+Phase 4 [          ] 0%    Baseline Evaluation & Main Results
+Phase 5 [          ] 0%    TTA Infrastructure & Corruption Experiments
+Phase 6 [          ] 0%    Analysis & Visualization
 ```
 
 ---
@@ -65,6 +65,7 @@ No experiments run yet. Targets from PRD v2.3:
 |------|----------|-------|-------|
 | Phase 01-environment P01 | 8min | 2 tasks | 18 files |
 | Phase 01-environment P02 | 78 | 2 tasks | 10 files |
+| Phase 01-environment P03 | 35min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -87,6 +88,10 @@ No experiments run yet. Targets from PRD v2.3:
 | mmpose/PYSKL installed with --no-deps | chumpy build failure on modern pip; PYSKL doesn't need SMPL mesh estimation |
 | XD-Violence test videos at test/videos/ subfolder | Source zip had top-level videos/ folder; Phase 2 scripts must use this path |
 | 4 CRC-corrupt files in 1005-2004.zip | Pre-existing source zip corruption; <0.1% training data loss, acceptable |
+| CTRGCN.forward() expects (N,M,T,V,C); NTU120 checkpoint requires M=2 | data_bn has 102=2*17*3 channels; pool backbone over M/T/V to get (N,256) |
+| PYSKL checkpoints are plain OrderedDicts (no state_dict wrapper) | Load directly with strict=False; not wrapped like mmcv checkpoints |
+| numpy must be <2 in vcc-ctrgcn | mmcv-full 1.7.0 compiled against NumPy 1.x C API; 2.x breaks binary interface |
+| fvcore must be installed in vcc-ctrgcn | PYSKL smp.py imports fvcore; missing from original install |
 
 ### Critical Pitfalls to Watch
 
@@ -104,8 +109,8 @@ No experiments run yet. Targets from PRD v2.3:
 ### Todos
 
 - [x] Verify XD-Violence zip access and extraction feasibility before Phase 2 planning — DONE: 3954 training videos extracted flat to E:\XD_Violence\train\ (Plan 02)
+- [x] Confirm CTR-GCN weights (j/b/jm/bm) are available for download from PYSKL repo — DONE: all 4 files downloaded ~6.1MB each (Plan 03)
 - [ ] Scan UCF-Crime and XD-Violence FPS distribution in Phase 2 Week 1 to size snippet window computation
-- [ ] Confirm CTR-GCN weights (j/b/jm/bm) are available for download from PYSKL repo before Phase 1 execution
 
 ### Blockers
 
@@ -115,9 +120,7 @@ None currently.
 
 ## Session Continuity
 
-**To resume:** Read this file and ROADMAP.md. Current phase is Phase 1, plan 3 of 3. Plans 01 (directory scaffold) and 02 (conda envs + dataset extraction) are complete. Plan 03 (CTR-GCN weights download and smoke test) remains.
-
-**Plan 02 checkpoint:** Task 3 is a human-verify checkpoint. User must verify all three environments and dataset extraction before Plan 03 proceeds.
+**To resume:** Read this file and ROADMAP.md. Phase 01 is COMPLETE. All 3 plans executed: scaffold (P01), conda envs + datasets (P02), CTR-GCN weights + smoke test (P03). Next: Phase 02 Feature Extraction Pipeline.
 
 **Files of record:**
 

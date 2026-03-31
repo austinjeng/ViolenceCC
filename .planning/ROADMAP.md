@@ -10,7 +10,7 @@
 
 ## Phases
 
-- [ ] **Phase 1: Environment & Project Foundation** - Three conda envs operational, CTR-GCN weights verified, directory scaffold in place
+- [x] **Phase 1: Environment & Project Foundation** - Three conda envs operational, CTR-GCN weights verified, directory scaffold in place (completed 2026-03-31)
 - [ ] **Phase 2: Feature Extraction Pipeline** - Skeleton and CLIP features fully extracted, aligned, and cached for both datasets
 - [ ] **Phase 3: Model Architecture & Training Infrastructure** - All model variants built, training loop operational, reproducibility hardened
 - [ ] **Phase 4: Baseline Evaluation & Main Results** - RTFM gate passed, all fusion models evaluated on UCF-Crime and XD-Violence, ablation table complete
@@ -29,11 +29,11 @@
   1. All three environments (`vcc-skeleton`, `vcc-ctrgcn`, `vcc-main`) activate without error and pass a smoke-test import of their primary packages (rtmlib, PYSKL, open-clip-torch)
   2. A test forward pass through CTR-GCN with a synthetically constructed COCO-17 input (17 joints x 3 channels x 64 frames x 2 persons) produces a 256-d output tensor with no NaN/Inf values, confirming PreNormalize2D is applied and coordinates are in [-1, 1]
   3. The project directory tree (`configs/`, `data/`, `src/`, `scripts/`, `results/`, `notebooks/`) exists and is committed to the repo
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 Plans:
 - [x] 01-01-PLAN.md — Project directory scaffold, .gitignore, requirements files, and SETUP.md
 - [x] 01-02-PLAN.md — Three conda environments, XD-Violence/I3D dataset extraction, feature directory junction
-- [ ] 01-03-PLAN.md — CTR-GCN weight download and forward pass smoke test
+- [x] 01-03-PLAN.md — CTR-GCN weight download and forward pass smoke test
 
 ### Phase 2: Feature Extraction Pipeline
 **Goal**: Valid, temporally aligned skeleton and CLIP feature caches exist for every video in both UCF-Crime and XD-Violence, verified by the alignment script
@@ -97,7 +97,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Environment & Project Foundation | 2/3 | In Progress|  |
+| 1. Environment & Project Foundation | 3/3 | Complete   | 2026-03-31 |
 | 2. Feature Extraction Pipeline | 0/? | Not started | - |
 | 3. Model Architecture & Training Infrastructure | 0/? | Not started | - |
 | 4. Baseline Evaluation & Main Results | 0/? | Not started | - |
