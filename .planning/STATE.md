@@ -3,21 +3,21 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 current_phase: 01
-current_plan: 2
+current_plan: 3
 status: executing
-last_updated: "2026-03-31T05:57:48.486Z"
+last_updated: "2026-03-31T07:20:59.653Z"
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
-  percent: 33
+  completed_plans: 2
+  percent: 67
 ---
 
 # State: ViolenceCC
 
 **Last updated:** 2026-03-31
-**Session:** Phase 01 Plan 01 complete — project scaffold and environment docs created
+**Session:** Phase 01 Plan 02 complete — three conda environments created, XD-Violence extracted, feature junction created
 
 ---
 
@@ -33,15 +33,15 @@ progress:
 ## Current Position
 
 Phase: 01 (environment) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 **Current phase:** 01
-**Current plan:** 2
+**Current plan:** 3
 **Status:** Executing Phase 01
 
 **Progress:**
 
 ```
-Phase 1 [███░░░░░░░] 33%  Environment & Project Foundation
+Phase 1 [███████░░░] 67%  Environment & Project Foundation
 Phase 2 [          ] 0%   Feature Extraction Pipeline
 Phase 3 [          ] 0%   Model Architecture & Training Infrastructure
 Phase 4 [          ] 0%   Baseline Evaluation & Main Results
@@ -64,6 +64,7 @@ No experiments run yet. Targets from PRD v2.3:
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
 | Phase 01-environment P01 | 8min | 2 tasks | 18 files |
+| Phase 01-environment P02 | 78 | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -82,6 +83,10 @@ No experiments run yet. Targets from PRD v2.3:
 | English codebase | Standard for ML research repos |
 | results/.gitkeep not committed | .gitignore excludes results/ by design (D-07); directory created locally as needed |
 | requirements files are reference documents | conda and --index-url packages documented as comments; not pip install -r targets |
+| PyTorch 1.12.1 conda wheel fails on Windows | WinError 182 (DLL ordinal conflict); must use pip +cu113 wheel in vcc-ctrgcn |
+| mmpose/PYSKL installed with --no-deps | chumpy build failure on modern pip; PYSKL doesn't need SMPL mesh estimation |
+| XD-Violence test videos at test/videos/ subfolder | Source zip had top-level videos/ folder; Phase 2 scripts must use this path |
+| 4 CRC-corrupt files in 1005-2004.zip | Pre-existing source zip corruption; <0.1% training data loss, acceptable |
 
 ### Critical Pitfalls to Watch
 
@@ -98,7 +103,7 @@ No experiments run yet. Targets from PRD v2.3:
 
 ### Todos
 
-- [ ] Verify XD-Violence zip access and extraction feasibility before Phase 2 planning (zip files 1-1004.zip through 3320-3954.zip on E:\)
+- [x] Verify XD-Violence zip access and extraction feasibility before Phase 2 planning — DONE: 3954 training videos extracted flat to E:\XD_Violence\train\ (Plan 02)
 - [ ] Scan UCF-Crime and XD-Violence FPS distribution in Phase 2 Week 1 to size snippet window computation
 - [ ] Confirm CTR-GCN weights (j/b/jm/bm) are available for download from PYSKL repo before Phase 1 execution
 
@@ -110,7 +115,9 @@ None currently.
 
 ## Session Continuity
 
-**To resume:** Read this file and ROADMAP.md. Current phase is Phase 1, plan 2 of 3. Plan 01 (directory scaffold) is complete. Plans 02-03 (environment verification, CTR-GCN smoke test) remain.
+**To resume:** Read this file and ROADMAP.md. Current phase is Phase 1, plan 3 of 3. Plans 01 (directory scaffold) and 02 (conda envs + dataset extraction) are complete. Plan 03 (CTR-GCN weights download and smoke test) remains.
+
+**Plan 02 checkpoint:** Task 3 is a human-verify checkpoint. User must verify all three environments and dataset extraction before Plan 03 proceeds.
 
 **Files of record:**
 
