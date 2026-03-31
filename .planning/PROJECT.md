@@ -12,15 +12,13 @@ A working dual-modal (Skeleton + CLIP) fusion pipeline that produces reproducibl
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] Environment setup: conda env with PyTorch, rtmlib, PYSKL, OpenCLIP, SAR dependencies — Validated in Phase 1: Environment & Project Foundation
+- [x] CTR-GCN frozen feature extractor using NTU120 HRNet 2D pretrained weights (COCO-17) — Forward pass verified in Phase 1 (ENV-02: 256-d output, no NaN/Inf)
 
 ### Active
-
-- [ ] Environment setup: conda env with PyTorch, rtmlib, PYSKL, OpenCLIP, SAR dependencies
 - [ ] Data pipeline: skeleton extraction (RTMPose COCO-17) for UCF-Crime and XD-Violence
 - [ ] Data pipeline: CLIP ViT-B/16 feature extraction at 1 FPS with mean+max pooling
 - [ ] Data pipeline: unified snippet-level feature caching (time-aligned skeleton + CLIP)
-- [ ] CTR-GCN frozen feature extractor using NTU120 HRNet 2D pretrained weights (COCO-17)
 - [ ] Baseline reproduction: RTFM on UCF-Crime with I3D features (target: ±1% of 84.30 AUC)
 - [ ] Single-modal baselines: Skeleton-Only MIL head, CLIP-Only MIL head
 - [ ] Late Fusion baseline (score-level weighted average)
@@ -109,4 +107,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-31 after initialization*
+*Last updated: 2026-03-31 after Phase 1 completion*
