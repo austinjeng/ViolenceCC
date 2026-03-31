@@ -11,7 +11,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [ ] **ENV-01**: Three conda environments created and verified — `vcc-skeleton` (rtmlib 0.0.15 + onnxruntime-gpu), `vcc-ctrgcn` (PyTorch 1.12.1 + PYSKL + mmcv-full 1.7.0), `vcc-main` (PyTorch 2.6.0 + open-clip-torch 3.3.0)
 - [ ] **ENV-02**: CTR-GCN NTU120 HRNet 2D pretrained weights (j/b/jm/bm) downloaded and forward pass verified with COCO-17 input (17 joints x 3 channels x 64 frames x 2 persons -> 256-d output)
-- [ ] **ENV-03**: Project directory structure established following research-recommended layout (configs/, data/, src/, scripts/, results/, notebooks/)
+- [x] **ENV-03**: Project directory structure established following research-recommended layout (configs/, data/, src/, scripts/, results/, notebooks/)
 
 ### Data Pipeline
 
@@ -112,7 +112,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | ENV-01 | Phase 1 | Pending |
 | ENV-02 | Phase 1 | Pending |
-| ENV-03 | Phase 1 | Pending |
+| ENV-03 | Phase 1 | Complete |
 | DATA-01 | Phase 2 | Pending |
 | DATA-02 | Phase 2 | Pending |
 | DATA-03 | Phase 2 | Pending |

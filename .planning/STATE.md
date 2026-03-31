@@ -1,7 +1,23 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+current_phase: 01
+current_plan: 2
+status: executing
+last_updated: "2026-03-31T05:57:48.486Z"
+progress:
+  total_phases: 6
+  completed_phases: 0
+  total_plans: 3
+  completed_plans: 1
+  percent: 33
+---
+
 # State: ViolenceCC
 
 **Last updated:** 2026-03-31
-**Session:** Initialization — roadmap created
+**Session:** Phase 01 Plan 01 complete — project scaffold and environment docs created
 
 ---
 
@@ -16,13 +32,16 @@
 
 ## Current Position
 
-**Current phase:** Phase 1 — Environment & Project Foundation
-**Current plan:** None (not yet started)
-**Status:** Not started
+Phase: 01 (environment) — EXECUTING
+Plan: 2 of 3
+**Current phase:** 01
+**Current plan:** 2
+**Status:** Executing Phase 01
 
 **Progress:**
+
 ```
-Phase 1 [          ] 0%   Environment & Project Foundation
+Phase 1 [███░░░░░░░] 33%  Environment & Project Foundation
 Phase 2 [          ] 0%   Feature Extraction Pipeline
 Phase 3 [          ] 0%   Model Architecture & Training Infrastructure
 Phase 4 [          ] 0%   Baseline Evaluation & Main Results
@@ -42,7 +61,9 @@ No experiments run yet. Targets from PRD v2.3:
 | XD-Violence frame-level AP | 80% | 82-85% |
 | RTFM reproduction AUC | 84.30% ± 1% | — (gate, not target) |
 
----
+| Plan | Duration | Tasks | Files |
+|------|----------|-------|-------|
+| Phase 01-environment P01 | 8min | 2 tasks | 18 files |
 
 ## Accumulated Context
 
@@ -59,6 +80,8 @@ No experiments run yet. Targets from PRD v2.3:
 | LN-only TTA (not BN) | Fusion head uses LayerNorm; the BN→LN transfer is itself a research contribution |
 | Single train.py with YAML config | Avoids VadCLIP's per-dataset duplication anti-pattern |
 | English codebase | Standard for ML research repos |
+| results/.gitkeep not committed | .gitignore excludes results/ by design (D-07); directory created locally as needed |
+| requirements files are reference documents | conda and --index-url packages documented as comments; not pip install -r targets |
 
 ### Critical Pitfalls to Watch
 
@@ -87,9 +110,10 @@ None currently.
 
 ## Session Continuity
 
-**To resume:** Read this file and ROADMAP.md. Current phase is Phase 1. No plans have been created yet. Run `/gsd:plan-phase 1` to begin.
+**To resume:** Read this file and ROADMAP.md. Current phase is Phase 1, plan 2 of 3. Plan 01 (directory scaffold) is complete. Plans 02-03 (environment verification, CTR-GCN smoke test) remain.
 
 **Files of record:**
+
 - `.planning/PROJECT.md` — project definition and key decisions
 - `.planning/REQUIREMENTS.md` — 40 v1 requirements with traceability
 - `.planning/ROADMAP.md` — 6-phase roadmap with success criteria

@@ -29,9 +29,9 @@
   1. All three environments (`vcc-skeleton`, `vcc-ctrgcn`, `vcc-main`) activate without error and pass a smoke-test import of their primary packages (rtmlib, PYSKL, open-clip-torch)
   2. A test forward pass through CTR-GCN with a synthetically constructed COCO-17 input (17 joints x 3 channels x 64 frames x 2 persons) produces a 256-d output tensor with no NaN/Inf values, confirming PreNormalize2D is applied and coordinates are in [-1, 1]
   3. The project directory tree (`configs/`, `data/`, `src/`, `scripts/`, `results/`, `notebooks/`) exists and is committed to the repo
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 Plans:
-- [ ] 01-01-PLAN.md — Project directory scaffold, .gitignore, requirements files, and SETUP.md
+- [x] 01-01-PLAN.md — Project directory scaffold, .gitignore, requirements files, and SETUP.md
 - [ ] 01-02-PLAN.md — Three conda environments, XD-Violence/I3D dataset extraction, feature directory junction
 - [ ] 01-03-PLAN.md — CTR-GCN weight download and forward pass smoke test
 
@@ -97,7 +97,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Environment & Project Foundation | 0/3 | Planned | - |
+| 1. Environment & Project Foundation | 1/3 | In Progress|  |
 | 2. Feature Extraction Pipeline | 0/? | Not started | - |
 | 3. Model Architecture & Training Infrastructure | 0/? | Not started | - |
 | 4. Baseline Evaluation & Main Results | 0/? | Not started | - |
