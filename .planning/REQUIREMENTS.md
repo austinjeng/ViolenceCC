@@ -110,52 +110,52 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ENV-01 | — | Pending |
-| ENV-02 | — | Pending |
-| ENV-03 | — | Pending |
-| DATA-01 | — | Pending |
-| DATA-02 | — | Pending |
-| DATA-03 | — | Pending |
-| DATA-04 | — | Pending |
-| DATA-05 | — | Pending |
-| DATA-06 | — | Pending |
-| DATA-07 | — | Pending |
-| DATA-08 | — | Pending |
-| DATA-09 | — | Pending |
-| DATA-10 | — | Pending |
-| MOD-01 | — | Pending |
-| MOD-02 | — | Pending |
-| MOD-03 | — | Pending |
-| MOD-04 | — | Pending |
-| MOD-05 | — | Pending |
-| MOD-06 | — | Pending |
-| MOD-07 | — | Pending |
-| TRN-01 | — | Pending |
-| TRN-02 | — | Pending |
-| TRN-03 | — | Pending |
-| TRN-04 | — | Pending |
-| TRN-05 | — | Pending |
-| TRN-06 | — | Pending |
-| EVAL-01 | — | Pending |
-| EVAL-02 | — | Pending |
-| EVAL-03 | — | Pending |
-| EVAL-04 | — | Pending |
-| EVAL-05 | — | Pending |
-| TTA-01 | — | Pending |
-| TTA-02 | — | Pending |
-| TTA-03 | — | Pending |
-| TTA-04 | — | Pending |
-| TTA-05 | — | Pending |
-| TTA-06 | — | Pending |
-| TTA-07 | — | Pending |
-| VIS-01 | — | Pending |
-| VIS-02 | — | Pending |
+| ENV-01 | Phase 1 | Pending |
+| ENV-02 | Phase 1 | Pending |
+| ENV-03 | Phase 1 | Pending |
+| DATA-01 | Phase 2 | Pending |
+| DATA-02 | Phase 2 | Pending |
+| DATA-03 | Phase 2 | Pending |
+| DATA-04 | Phase 2 | Pending |
+| DATA-05 | Phase 2 | Pending |
+| DATA-06 | Phase 2 | Pending |
+| DATA-07 | Phase 2 | Pending |
+| DATA-08 | Phase 2 | Pending |
+| DATA-09 | Phase 2 | Pending |
+| DATA-10 | Phase 2 | Pending |
+| MOD-01 | Phase 3 | Pending |
+| MOD-02 | Phase 3 | Pending |
+| MOD-03 | Phase 3 | Pending |
+| MOD-04 | Phase 3 | Pending |
+| MOD-05 | Phase 3 | Pending |
+| MOD-06 | Phase 3 | Pending |
+| MOD-07 | Phase 3 | Pending |
+| TRN-01 | Phase 3 | Pending |
+| TRN-02 | Phase 3 | Pending |
+| TRN-03 | Phase 3 | Pending |
+| TRN-04 | Phase 3 | Pending |
+| TRN-05 | Phase 3 | Pending |
+| TRN-06 | Phase 3 | Pending |
+| EVAL-01 | Phase 4 | Pending |
+| EVAL-02 | Phase 4 | Pending |
+| EVAL-03 | Phase 4 | Pending |
+| EVAL-04 | Phase 4 | Pending |
+| EVAL-05 | Phase 4 | Pending |
+| TTA-01 | Phase 5 | Pending |
+| TTA-02 | Phase 5 | Pending |
+| TTA-03 | Phase 5 | Pending |
+| TTA-04 | Phase 5 | Pending |
+| TTA-05 | Phase 5 | Pending |
+| TTA-06 | Phase 5 | Pending |
+| TTA-07 | Phase 5 | Pending |
+| VIS-01 | Phase 6 | Pending |
+| VIS-02 | Phase 6 | Pending |
 
 **Coverage:**
 - v1 requirements: 40 total
-- Mapped to phases: 0
-- Unmapped: 40
+- Mapped to phases: 40
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-31*
-*Last updated: 2026-03-31 after initialization*
+*Last updated: 2026-03-31 after roadmap creation*
