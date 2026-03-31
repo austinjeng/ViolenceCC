@@ -1,9 +1,10 @@
 # vcc-skeleton environment
 # Python 3.11, no PyTorch required
 # Purpose: RTMPose skeleton extraction via ONNX Runtime
+# Frozen from pip freeze 2026-03-31
 rtmlib==0.0.15
-onnxruntime-gpu>=1.20.0
-opencv-python>=4.7.0
-opencv-contrib-python>=4.7.0
-numpy>=1.23.0
-tqdm>=4.65.0
+onnxruntime-gpu==1.24.4
+opencv-python==4.13.0.92
+opencv-contrib-python==4.13.0.92
+numpy==2.4.4
+tqdm==4.67.3
