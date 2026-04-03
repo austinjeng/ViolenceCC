@@ -15,10 +15,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Data Pipeline
 
-- [ ] **DATA-01**: Official split files committed to repo — UCF-Crime (Anomaly_Train.txt, Anomaly_Test.txt, Temporal_Anomaly_Annotation.txt), XD-Violence annotation file
-- [ ] **DATA-02**: Fixed 15% stratified validation split created from training set (seeded, stored as text file, maintains normal/abnormal ratio)
-- [ ] **DATA-03**: Skeleton extraction script using rtmlib RTMPose-m that outputs PYSKL-compatible pickle format (COCO-17, top-2 persons per frame, confidence scores)
-- [ ] **DATA-04**: Skeleton coordinate normalization verified — raw RTMPose pixel coords pass through PreNormalize2D before CTR-GCN forward pass
+- [x] **DATA-01**: Official split files committed to repo — UCF-Crime (Anomaly_Train.txt, Anomaly_Test.txt, Temporal_Anomaly_Annotation.txt), XD-Violence annotation file
+- [x] **DATA-02**: Fixed 15% stratified validation split created from training set (seeded, stored as text file, maintains normal/abnormal ratio)
+- [x] **DATA-03**: Skeleton extraction script using rtmlib RTMPose-m that outputs PYSKL-compatible pickle format (COCO-17, top-2 persons per frame, confidence scores)
+- [x] **DATA-04**: Skeleton coordinate normalization verified — raw RTMPose pixel coords pass through PreNormalize2D before CTR-GCN forward pass
 - [ ] **DATA-05**: CTR-GCN frozen feature extraction producing 256-d per snippet with 4-stream weighted concat (j:b:jm:bm = 1.0:1.0:0.5:0.5)
 - [ ] **DATA-06**: CLIP ViT-B/16 feature extraction at 1 FPS with mean+max pooling producing 1024-d per snippet (pre-projection; Phase 3 applies learned Linear(1024->512))
 - [ ] **DATA-07**: Feature cache stored as float32 .npy per video, indexed by video ID, for both modalities
@@ -113,10 +113,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ENV-01 | Phase 1 | Complete |
 | ENV-02 | Phase 1 | Complete |
 | ENV-03 | Phase 1 | Complete |
-| DATA-01 | Phase 2 | Pending |
-| DATA-02 | Phase 2 | Pending |
-| DATA-03 | Phase 2 | Pending |
-| DATA-04 | Phase 2 | Pending |
+| DATA-01 | Phase 2 | Complete |
+| DATA-02 | Phase 2 | Complete |
+| DATA-03 | Phase 2 | Complete |
+| DATA-04 | Phase 2 | Complete |
 | DATA-05 | Phase 2 | Pending |
 | DATA-06 | Phase 2 | Pending |
 | DATA-07 | Phase 2 | Pending |

@@ -45,9 +45,9 @@ Plans:
   3. CTR-GCN feature extraction produces `[N_snippets, 256]` float32 .npy files per video using 4-stream weighted concat (j:b:jm:bm = 1.0:1.0:0.5:0.5)
   4. CLIP extraction produces `[N_snippets, 1024]` float32 .npy files per video with mean+max pooling at 1 FPS (1024-d pre-projection; Phase 3 applies learned projection to 512-d)
   5. `verify_alignment.py` runs to completion with zero failures across all videos in both datasets (N_skel_snippets == N_clip_snippets for every video)
-**Plans:** 4 plans
+**Plans:** 1/4 plans executed
 Plans:
-- [ ] 02-01-PLAN.md — Data splits and skeleton extraction script
+- [x] 02-01-PLAN.md — Data splits and skeleton extraction script
 - [ ] 02-02-PLAN.md — CTR-GCN and CLIP feature extraction scripts
 - [ ] 02-03-PLAN.md — UCF-Crime full pipeline run and alignment verification
 - [ ] 02-04-PLAN.md — XD-Violence full pipeline run and Phase 2 completion
@@ -103,7 +103,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Environment & Project Foundation | 3/3 | Complete   | 2026-03-31 |
-| 2. Feature Extraction Pipeline | 0/4 | Planning complete | - |
+| 2. Feature Extraction Pipeline | 1/4 | In Progress|  |
 | 3. Model Architecture & Training Infrastructure | 0/? | Not started | - |
 | 4. Baseline Evaluation & Main Results | 0/? | Not started | - |
 | 5. TTA Infrastructure & Corruption Experiments | 0/? | Not started | - |

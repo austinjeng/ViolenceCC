@@ -2,21 +2,22 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 2
-current_plan: Not started
-status: planning
-last_updated: "2026-03-31T08:12:18.924Z"
+current_phase: 02
+current_plan: 2
+status: executing
+last_updated: "2026-04-03T21:07:44.061Z"
 progress:
   total_phases: 6
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
+  total_plans: 7
+  completed_plans: 4
+  percent: 57
 ---
 
 # State: ViolenceCC
 
-**Last updated:** 2026-03-31
-**Session:** Phase 01 Plan 03 complete — CTR-GCN weights downloaded, smoke test passing, requirements frozen. Phase 01 COMPLETE.
+**Last updated:** 2026-04-03
+**Session:** Phase 02 Plan 01 complete — dataset splits committed (UCF 1368/242/290, XD 3360/594/800), RTMPose skeleton extraction validated on 3 UCF-Crime videos. Next: Phase 02 Plan 02 (CLIP extraction).
 
 ---
 
@@ -31,21 +32,22 @@ progress:
 
 ## Current Position
 
-Phase: 01 (environment) — COMPLETE
-Plan: 3 of 3 (all plans complete)
-**Current phase:** 2
-**Current plan:** Not started
-**Status:** Ready to plan
+Phase: 02 (feature-extraction-pipeline) — EXECUTING
+Plan: 2 of 4
+**Current phase:** 02
+**Current plan:** 2
+**Status:** Executing Phase 02
 
 **Progress:**
 
-```
+[██████░░░░] 57%
 Phase 1 [██████████] 100%  Environment & Project Foundation — COMPLETE
-Phase 2 [          ] 0%    Feature Extraction Pipeline
+Phase 2 [██        ] 25%   Feature Extraction Pipeline (1/4 plans done)
 Phase 3 [          ] 0%    Model Architecture & Training Infrastructure
 Phase 4 [          ] 0%    Baseline Evaluation & Main Results
 Phase 5 [          ] 0%    TTA Infrastructure & Corruption Experiments
 Phase 6 [          ] 0%    Analysis & Visualization
+
 ```
 
 ---
@@ -65,6 +67,7 @@ No experiments run yet. Targets from PRD v2.3:
 | Phase 01-environment P01 | 8min | 2 tasks | 18 files |
 | Phase 01-environment P02 | 78 | 2 tasks | 10 files |
 | Phase 01-environment P03 | 35min | 2 tasks | 5 files |
+| Phase 02 P01 | 16 | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -86,6 +89,10 @@ No experiments run yet. Targets from PRD v2.3:
 | PyTorch 1.12.1 conda wheel fails on Windows | WinError 182 (DLL ordinal conflict); must use pip +cu113 wheel in vcc-ctrgcn |
 | mmpose/PYSKL installed with --no-deps | chumpy build failure on modern pip; PYSKL doesn't need SMPL mesh estimation |
 | XD-Violence test videos at test/videos/ subfolder | Source zip had top-level videos/ folder; Phase 2 scripts must use this path |
+| XD-Violence anomaly labels from filename suffix | _label_A=normal, B*/G*=anomalous; XD_violence_annotations.txt is frame-level temporal annotations, not a label list |
+| rtmlib Wholebody uses mode='balanced' (not pose name) | mode string drives ONNX model download; 'performance'/'balanced'/'lightweight' are valid modes |
+| UCF-Crime PNGs are 64x64 pixels | Pre-extracted at this resolution; img_shape=(64,64) in skeleton pickles is correct |
+| onnxruntime-gpu CUDA provider needs cuDNN 9.x on PATH | DLL missing error; CPU fallback works but ~10x slower; fix PATH before full extraction |
 | 4 CRC-corrupt files in 1005-2004.zip | Pre-existing source zip corruption; <0.1% training data loss, acceptable |
 | CTRGCN.forward() expects (N,M,T,V,C); NTU120 checkpoint requires M=2 | data_bn has 102=2*17*3 channels; pool backbone over M/T/V to get (N,256) |
 | PYSKL checkpoints are plain OrderedDicts (no state_dict wrapper) | Load directly with strict=False; not wrapped like mmcv checkpoints |
