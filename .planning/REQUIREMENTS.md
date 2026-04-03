@@ -20,7 +20,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **DATA-03**: Skeleton extraction script using rtmlib RTMPose-m that outputs PYSKL-compatible pickle format (COCO-17, top-2 persons per frame, confidence scores)
 - [ ] **DATA-04**: Skeleton coordinate normalization verified — raw RTMPose pixel coords pass through PreNormalize2D before CTR-GCN forward pass
 - [ ] **DATA-05**: CTR-GCN frozen feature extraction producing 256-d per snippet with 4-stream weighted concat (j:b:jm:bm = 1.0:1.0:0.5:0.5)
-- [ ] **DATA-06**: CLIP ViT-B/16 feature extraction at 1 FPS with mean+max pooling producing 512-d per snippet
+- [ ] **DATA-06**: CLIP ViT-B/16 feature extraction at 1 FPS with mean+max pooling producing 1024-d per snippet (pre-projection; Phase 3 applies learned Linear(1024->512))
 - [ ] **DATA-07**: Feature cache stored as float32 .npy per video, indexed by video ID, for both modalities
 - [ ] **DATA-08**: Temporal alignment verification script confirming N_skel_snippets == N_clip_snippets for every video across both datasets
 - [ ] **DATA-09**: UCF-Crime skeleton + CLIP features fully extracted and cached
@@ -158,4 +158,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-03-31*
-*Last updated: 2026-03-31 after roadmap creation*
+*Last updated: 2026-04-03 after Phase 2 plan revision (DATA-06 updated to 1024-d pre-projection)*
