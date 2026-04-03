@@ -42,6 +42,16 @@ import re
 import sys
 import warnings
 
+# ---------------------------------------------------------------------------
+# cuDNN PATH fix (ISSUE 2 from CLAUDE.md)
+# onnxruntime-gpu requires cudnn64_9.dll to be on PATH for CUDAExecutionProvider.
+# cuDNN 9.x for CUDA 12 installs into v9.8/bin/12.8/ on Windows, not v9.8/bin/.
+# Must be set BEFORE any import that triggers onnxruntime DLL loading.
+# ---------------------------------------------------------------------------
+_CUDNN_PATH = r"C:\Program Files\NVIDIA\CUDNN\v9.8\bin\12.8"
+if _CUDNN_PATH not in os.environ.get("PATH", ""):
+    os.environ["PATH"] = _CUDNN_PATH + ";" + os.environ.get("PATH", "")
+
 import cv2
 import numpy as np
 from tqdm import tqdm
