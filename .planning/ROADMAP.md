@@ -48,7 +48,7 @@ Plans:
 **Plans:** 1/4 plans executed
 Plans:
 - [x] 02-01-PLAN.md — Data splits and skeleton extraction script
-- [ ] 02-02-PLAN.md — CTR-GCN and CLIP feature extraction scripts
+- [x] 02-02-PLAN.md — CTR-GCN and CLIP feature extraction scripts
 - [ ] 02-03-PLAN.md — UCF-Crime full pipeline run and alignment verification
 - [ ] 02-04-PLAN.md — XD-Violence full pipeline run and Phase 2 completion
 

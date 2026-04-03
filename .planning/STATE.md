@@ -3,21 +3,21 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 current_phase: 02
-current_plan: 2
+current_plan: 3
 status: executing
-last_updated: "2026-04-03T21:07:44.061Z"
+last_updated: "2026-04-03T21:18:40Z"
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 7
-  completed_plans: 4
-  percent: 57
+  completed_plans: 5
+  percent: 71
 ---
 
 # State: ViolenceCC
 
 **Last updated:** 2026-04-03
-**Session:** Phase 02 Plan 01 complete — dataset splits committed (UCF 1368/242/290, XD 3360/594/800), RTMPose skeleton extraction validated on 3 UCF-Crime videos. Next: Phase 02 Plan 02 (CLIP extraction).
+**Session:** Phase 02 Plan 02 complete — CTR-GCN 4-stream extraction script and CLIP ViT-B/16 extraction script built and validated on 3 UCF-Crime videos each. Features: skeleton [N,256] and CLIP [N,1024] float32, aligned by shared boundary JSON. Next: Phase 02 Plan 03 (alignment verification).
 
 ---
 
@@ -33,16 +33,16 @@ progress:
 ## Current Position
 
 Phase: 02 (feature-extraction-pipeline) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 **Current phase:** 02
-**Current plan:** 2
+**Current plan:** 3
 **Status:** Executing Phase 02
 
 **Progress:**
 
-[██████░░░░] 57%
+[███████░░░] 71%
 Phase 1 [██████████] 100%  Environment & Project Foundation — COMPLETE
-Phase 2 [██        ] 25%   Feature Extraction Pipeline (1/4 plans done)
+Phase 2 [████      ] 50%   Feature Extraction Pipeline (2/4 plans done)
 Phase 3 [          ] 0%    Model Architecture & Training Infrastructure
 Phase 4 [          ] 0%    Baseline Evaluation & Main Results
 Phase 5 [          ] 0%    TTA Infrastructure & Corruption Experiments
@@ -68,6 +68,7 @@ No experiments run yet. Targets from PRD v2.3:
 | Phase 01-environment P02 | 78 | 2 tasks | 10 files |
 | Phase 01-environment P03 | 35min | 2 tasks | 5 files |
 | Phase 02 P01 | 16 | 2 tasks | 10 files |
+| Phase 02 P02 | 8min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -98,6 +99,9 @@ No experiments run yet. Targets from PRD v2.3:
 | PYSKL checkpoints are plain OrderedDicts (no state_dict wrapper) | Load directly with strict=False; not wrapped like mmcv checkpoints |
 | numpy must be <2 in vcc-ctrgcn | mmcv-full 1.7.0 compiled against NumPy 1.x C API; 2.x breaks binary interface |
 | fvcore must be installed in vcc-ctrgcn | PYSKL smp.py imports fvcore; missing from original install |
+| CLIP cache at 1024-d (not 512-d) | mean+max pooling is 1024-d; 512-d projection is learned in Phase 3 MIL head, not at extraction time |
+| cv2 not in vcc-main; use PIL for PNG loading | opencv-python is in vcc-skeleton only; PIL.Image.open().convert('RGB') is available and cleaner |
+| CTR-GCN forward uses model.backbone(x) not model(x) | model.forward() includes cls_head logits; backbone() gives 256-d features needed for feature extraction |
 
 ### Critical Pitfalls to Watch
 
@@ -126,7 +130,8 @@ None currently.
 
 ## Session Continuity
 
-**To resume:** Read this file and ROADMAP.md. Phase 01 is COMPLETE. All 3 plans executed: scaffold (P01), conda envs + datasets (P02), CTR-GCN weights + smoke test (P03). Next: Phase 02 Feature Extraction Pipeline.
+**Stopped at:** Completed 02-02-PLAN.md
+**To resume:** Read this file and ROADMAP.md. Phase 01 is COMPLETE. Phase 02 is in progress (2/4 plans done). Plans P01 (splits+skeleton) and P02 (CTR-GCN+CLIP extraction scripts) complete. Next: Phase 02 Plan 03 (alignment verification script).
 
 **Files of record:**
 
