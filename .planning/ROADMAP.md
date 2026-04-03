@@ -43,9 +43,14 @@ Plans:
   1. Official split files for UCF-Crime and XD-Violence are committed to `data/`; a seeded 15% stratified validation split file exists and can be reproduced byte-for-byte from the same seed
   2. Skeleton extraction produces PYSKL-compatible pickle output for a sample of UCF-Crime videos, with joint coordinates confirmed to be in [-1, 1] after PreNormalize2D (C1 resolved)
   3. CTR-GCN feature extraction produces `[N_snippets, 256]` float32 .npy files per video using 4-stream weighted concat (j:b:jm:bm = 1.0:1.0:0.5:0.5)
-  4. CLIP extraction produces `[N_snippets, 512]` float32 .npy files per video with mean+max pooling at 1 FPS
+  4. CLIP extraction produces `[N_snippets, 1024]` float32 .npy files per video with mean+max pooling at 1 FPS (1024-d pre-projection; Phase 3 applies learned projection to 512-d)
   5. `verify_alignment.py` runs to completion with zero failures across all videos in both datasets (N_skel_snippets == N_clip_snippets for every video)
-**Plans**: TBD
+**Plans:** 4 plans
+Plans:
+- [ ] 02-01-PLAN.md — Data splits and skeleton extraction script
+- [ ] 02-02-PLAN.md — CTR-GCN and CLIP feature extraction scripts
+- [ ] 02-03-PLAN.md — UCF-Crime full pipeline run and alignment verification
+- [ ] 02-04-PLAN.md — XD-Violence full pipeline run and Phase 2 completion
 
 ### Phase 3: Model Architecture & Training Infrastructure
 **Goal**: All model variants are implemented and a single configurable training loop can train any of them to convergence with full reproducibility
@@ -98,7 +103,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Environment & Project Foundation | 3/3 | Complete   | 2026-03-31 |
-| 2. Feature Extraction Pipeline | 0/? | Not started | - |
+| 2. Feature Extraction Pipeline | 0/4 | Planning complete | - |
 | 3. Model Architecture & Training Infrastructure | 0/? | Not started | - |
 | 4. Baseline Evaluation & Main Results | 0/? | Not started | - |
 | 5. TTA Infrastructure & Corruption Experiments | 0/? | Not started | - |
@@ -156,4 +161,4 @@ Plans:
 ---
 
 *Roadmap created: 2026-03-31*
-*Last updated: 2026-03-31 after Phase 1 planning*
+*Last updated: 2026-04-03 after Phase 2 planning*
