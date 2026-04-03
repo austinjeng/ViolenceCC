@@ -49,7 +49,7 @@ Plans:
 Plans:
 - [x] 02-01-PLAN.md — Data splits and skeleton extraction script
 - [x] 02-02-PLAN.md — CTR-GCN and CLIP feature extraction scripts
-- [ ] 02-03-PLAN.md — UCF-Crime full pipeline run and alignment verification
+- [x] 02-03-PLAN.md — UCF-Crime full pipeline run and alignment verification
 - [ ] 02-04-PLAN.md — XD-Violence full pipeline run and Phase 2 completion
 
 ### Phase 3: Model Architecture & Training Infrastructure

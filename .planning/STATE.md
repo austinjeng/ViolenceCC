@@ -5,13 +5,14 @@ milestone_name: milestone
 current_phase: 02
 current_plan: 3
 status: executing
-last_updated: "2026-04-03T21:18:40Z"
+stopped_at: Completed 02-03-PLAN.md (partial — skeleton extraction in progress)
+last_updated: "2026-04-03T21:47:08.275Z"
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 7
-  completed_plans: 5
-  percent: 71
+  completed_plans: 6
+  percent: 86
 ---
 
 # State: ViolenceCC
@@ -33,14 +34,14 @@ progress:
 ## Current Position
 
 Phase: 02 (feature-extraction-pipeline) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 **Current phase:** 02
 **Current plan:** 3
-**Status:** Executing Phase 02
+**Status:** Ready to execute
 
 **Progress:**
 
-[███████░░░] 71%
+[█████████░] 86%
 Phase 1 [██████████] 100%  Environment & Project Foundation — COMPLETE
 Phase 2 [████      ] 50%   Feature Extraction Pipeline (2/4 plans done)
 Phase 3 [          ] 0%    Model Architecture & Training Infrastructure
@@ -69,6 +70,7 @@ No experiments run yet. Targets from PRD v2.3:
 | Phase 01-environment P03 | 35min | 2 tasks | 5 files |
 | Phase 02 P01 | 16 | 2 tasks | 10 files |
 | Phase 02 P02 | 8min | 2 tasks | 2 files |
+| Phase 02 P03 | 23min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -94,6 +96,7 @@ No experiments run yet. Targets from PRD v2.3:
 | rtmlib Wholebody uses mode='balanced' (not pose name) | mode string drives ONNX model download; 'performance'/'balanced'/'lightweight' are valid modes |
 | UCF-Crime PNGs are 64x64 pixels | Pre-extracted at this resolution; img_shape=(64,64) in skeleton pickles is correct |
 | onnxruntime-gpu CUDA provider needs cuDNN 9.x on PATH | DLL missing error; CPU fallback works but ~10x slower; fix PATH before full extraction |
+| cuDNN 9.x CUDA 12 DLLs in v9.8/bin/12.8/ not v9.8/bin/ | Windows cuDNN 9 organizes DLLs by CUDA version in subdirs; PATH must include 12.8/ subdir for cudnn64_9.dll |
 | 4 CRC-corrupt files in 1005-2004.zip | Pre-existing source zip corruption; <0.1% training data loss, acceptable |
 | CTRGCN.forward() expects (N,M,T,V,C); NTU120 checkpoint requires M=2 | data_bn has 102=2*17*3 channels; pool backbone over M/T/V to get (N,256) |
 | PYSKL checkpoints are plain OrderedDicts (no state_dict wrapper) | Load directly with strict=False; not wrapped like mmcv checkpoints |
@@ -130,7 +133,7 @@ None currently.
 
 ## Session Continuity
 
-**Stopped at:** Completed 02-02-PLAN.md
+**Stopped at:** Completed 02-03-PLAN.md (partial — skeleton extraction in progress)
 **To resume:** Read this file and ROADMAP.md. Phase 01 is COMPLETE. Phase 02 is in progress (2/4 plans done). Plans P01 (splits+skeleton) and P02 (CTR-GCN+CLIP extraction scripts) complete. Next: Phase 02 Plan 03 (alignment verification script).
 
 **Files of record:**
