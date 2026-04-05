@@ -40,6 +40,10 @@ import re
 import sys
 from pathlib import Path
 
+# Force unbuffered output so tqdm/logging display in real-time under `conda run`
+sys.stdout.reconfigure(line_buffering=True)
+sys.stderr.reconfigure(line_buffering=True)
+
 import numpy as np
 import torch
 from PIL import Image

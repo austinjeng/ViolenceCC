@@ -42,6 +42,11 @@ import re
 import sys
 import warnings
 
+# Force unbuffered output so tqdm/logging display in real-time under `conda run`
+# Must reconfigure streams since PYTHONUNBUFFERED only works if set before interpreter starts
+sys.stdout.reconfigure(line_buffering=True)
+sys.stderr.reconfigure(line_buffering=True)
+
 # ---------------------------------------------------------------------------
 # cuDNN PATH fix (ISSUE 2 from CLAUDE.md)
 # onnxruntime-gpu requires cudnn64_9.dll to be on PATH for CUDAExecutionProvider.

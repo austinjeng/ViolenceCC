@@ -38,6 +38,10 @@ import pathlib
 import pickle
 import sys
 
+# Force unbuffered output so tqdm/logging display in real-time under `conda run`
+sys.stdout.reconfigure(line_buffering=True)
+sys.stderr.reconfigure(line_buffering=True)
+
 import numpy as np
 import torch
 from tqdm import tqdm
