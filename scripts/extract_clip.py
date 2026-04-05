@@ -350,7 +350,7 @@ def extract_video_clip_features(
 
     else:
         # XD-Violence: decode from mp4
-        if split in ("train",):
+        if split in ("train", "val"):
             video_path = XD_TRAIN_ROOT / f"{video_id}.mp4"
         else:
             video_path = XD_TEST_ROOT / f"{video_id}.mp4"

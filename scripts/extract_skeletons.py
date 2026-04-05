@@ -215,7 +215,7 @@ def load_xd_frames(video_id: str, split: str) -> tuple:
         frames:    list of np.ndarray (H, W, 3) in BGR
         img_shape: (H, W) tuple from the first frame
     """
-    if split in ("train",):
+    if split in ("train", "val"):
         video_path = XD_TRAIN_ROOT / f"{video_id}.mp4"
     else:
         video_path = XD_TEST_ROOT / f"{video_id}.mp4"
