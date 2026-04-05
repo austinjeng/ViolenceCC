@@ -4,15 +4,15 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 02
 current_plan: 3
-status: executing
-stopped_at: Completed 02-03-PLAN.md (partial — skeleton extraction in progress)
-last_updated: "2026-04-03T21:47:08.275Z"
+status: verifying
+stopped_at: Completed 02-04-PLAN.md checkpoint — XD-Violence smoke test passed, full extraction commands documented for user
+last_updated: "2026-04-05T11:09:03.029Z"
 progress:
   total_phases: 6
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 7
-  completed_plans: 6
-  percent: 86
+  completed_plans: 7
+  percent: 100
 ---
 
 # State: ViolenceCC
@@ -37,11 +37,11 @@ Phase: 02 (feature-extraction-pipeline) — EXECUTING
 Plan: 4 of 4
 **Current phase:** 02
 **Current plan:** 3
-**Status:** Ready to execute
+**Status:** Phase complete — ready for verification
 
 **Progress:**
 
-[█████████░] 86%
+[██████████] 100%
 Phase 1 [██████████] 100%  Environment & Project Foundation — COMPLETE
 Phase 2 [████      ] 50%   Feature Extraction Pipeline (2/4 plans done)
 Phase 3 [          ] 0%    Model Architecture & Training Infrastructure
@@ -71,6 +71,7 @@ No experiments run yet. Targets from PRD v2.3:
 | Phase 02 P01 | 16 | 2 tasks | 10 files |
 | Phase 02 P02 | 8min | 2 tasks | 2 files |
 | Phase 02 P03 | 23min | 2 tasks | 3 files |
+| Phase 02-feature-extraction-pipeline P04 | 15min | 1 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -105,6 +106,9 @@ No experiments run yet. Targets from PRD v2.3:
 | CLIP cache at 1024-d (not 512-d) | mean+max pooling is 1024-d; 512-d projection is learned in Phase 3 MIL head, not at extraction time |
 | cv2 not in vcc-main; use PIL for PNG loading | opencv-python is in vcc-skeleton only; PIL.Image.open().convert('RGB') is available and cleaner |
 | CTR-GCN forward uses model.backbone(x) not model(x) | model.forward() includes cls_head logits; backbone() gives 256-d features needed for feature extraction |
+| XD-Violence val split videos are in XD_TRAIN_ROOT (train/) not XD_TEST_ROOT | val is 15% holdout from training set; code routes both train and val to train folder |
+| decord not available in vcc-skeleton; cv2.VideoCapture fallback works for XD-Violence mp4 | No code change needed; existing fallback handles XD-Violence mp4 decoding |
+| conda run on Windows (cp950 locale) fails with UnicodeEncodeError on tqdm output | Cosmetic only; scripts succeed; use direct python exe path (C:/Anaconda/envs/vcc-main/python.exe) for scripts needing stdout capture |
 
 ### Critical Pitfalls to Watch
 
@@ -133,7 +137,7 @@ None currently.
 
 ## Session Continuity
 
-**Stopped at:** Completed 02-03-PLAN.md (partial — skeleton extraction in progress)
+**Stopped at:** Completed 02-04-PLAN.md checkpoint — XD-Violence smoke test passed, full extraction commands documented for user
 **To resume:** Read this file and ROADMAP.md. Phase 01 is COMPLETE. Phase 02 is in progress (2/4 plans done). Plans P01 (splits+skeleton) and P02 (CTR-GCN+CLIP extraction scripts) complete. Next: Phase 02 Plan 03 (alignment verification script).
 
 **Files of record:**

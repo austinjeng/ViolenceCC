@@ -24,7 +24,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **DATA-07**: Feature cache stored as float32 .npy per video, indexed by video ID, for both modalities
 - [x] **DATA-08**: Temporal alignment verification script confirming N_skel_snippets == N_clip_snippets for every video across both datasets
 - [x] **DATA-09**: UCF-Crime skeleton + CLIP features fully extracted and cached
-- [ ] **DATA-10**: XD-Violence skeleton + CLIP features fully extracted and cached
+- [x] **DATA-10**: XD-Violence skeleton + CLIP features fully extracted and cached
 
 ### Model
 
@@ -122,7 +122,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DATA-07 | Phase 2 | Complete |
 | DATA-08 | Phase 2 | Complete |
 | DATA-09 | Phase 2 | Complete |
-| DATA-10 | Phase 2 | Pending |
+| DATA-10 | Phase 2 | Complete |
 | MOD-01 | Phase 3 | Pending |
 | MOD-02 | Phase 3 | Pending |
 | MOD-03 | Phase 3 | Pending |

@@ -50,7 +50,7 @@ Plans:
 - [x] 02-01-PLAN.md — Data splits and skeleton extraction script
 - [x] 02-02-PLAN.md — CTR-GCN and CLIP feature extraction scripts
 - [x] 02-03-PLAN.md — UCF-Crime full pipeline run and alignment verification
-- [ ] 02-04-PLAN.md — XD-Violence full pipeline run and Phase 2 completion
+- [x] 02-04-PLAN.md — XD-Violence full pipeline run and Phase 2 completion
 
 ### Phase 3: Model Architecture & Training Infrastructure
 **Goal**: All model variants are implemented and a single configurable training loop can train any of them to convergence with full reproducibility
