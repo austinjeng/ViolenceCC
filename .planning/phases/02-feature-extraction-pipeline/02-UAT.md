@@ -1,14 +1,14 @@
 ---
-status: complete
+status: partial
 phase: 02-feature-extraction-pipeline
 source: 02-01-SUMMARY.md, 02-02-SUMMARY.md, 02-03-SUMMARY.md, 02-04-SUMMARY.md
 started: 2026-04-08T04:00:00Z
-updated: 2026-04-08T04:01:00Z
+updated: 2026-04-08T04:05:00Z
 ---
 
 ## Current Test
 
-[testing complete]
+[testing paused — 4 items outstanding (blocked on XD-Violence extraction)]
 
 ## Tests
 
@@ -36,7 +36,7 @@ note: 1728/1900 have features. 172 videos have <64 frames (max 63), producing 0 
 ### 6. UCF-Crime Alignment Verification
 expected: `python scripts/verify_alignment.py --dataset ucf --split all` exits 0, reporting all checked videos PASS (skeleton snippet count == CLIP snippet count == boundary snippet count for every video)
 result: pass
-note: 1728 PASS, 0 FAIL, 172 SKIP (sub-64-frame videos with no features). Exit code 1 due to "INCOMPLETE" status, but all extractable videos pass alignment. The verify script correctly flags missing files but doesn't distinguish "too short" from "not yet extracted". Phase 3 must handle 172 zero-snippet videos in the data loader.
+note: 1728 PASS, 0 FAIL, 172 SKIP (sub-64-frame videos with no features). All extractable videos pass alignment. Phase 3 must handle 172 zero-snippet videos in the data loader.
 
 ### 7. XD-Violence Smoke Test
 expected: At least 3 XD-Violence .npy files exist in E:/features/xd/skeleton/ and E:/features/xd/clip/ with correct shapes ([N,256] and [N,1024]) and alignment verified
@@ -46,15 +46,67 @@ result: pass
 expected: Re-running any extraction script on already-processed videos completes quickly, printing skip messages for each existing file (skip-if-exists pattern)
 result: pass
 
+### 9. XD-Violence Skeleton Extraction Complete
+expected: E:/skeletons/xd/ contains ~4754 .pkl files and E:/snippets/xd/ contains matching boundary JSONs for all XD-Violence videos (train+val+test)
+result: blocked
+blocked_by: prior-phase
+reason: "Only 939/4754 skeleton pickles extracted (20%). User must run full skeleton extraction (~10-15h)."
+
+### 10. XD-Violence Feature Extraction Complete
+expected: E:/features/xd/skeleton/ contains .npy files with shape [N,256] float32 and E:/features/xd/clip/ contains matching [N,1024] float32 for all extractable XD-Violence videos
+result: blocked
+blocked_by: prior-phase
+reason: "Only 3/4754 feature files exist (smoke test). Depends on test 9 completing first, then CTR-GCN (~1-2h) and CLIP (~3-6h) extraction."
+
+### 11. XD-Violence Alignment Verification
+expected: `python scripts/verify_alignment.py --dataset xd --split all` exits 0, reporting all checked videos PASS
+result: blocked
+blocked_by: prior-phase
+reason: "Depends on tests 9 and 10 completing."
+
+### 12. XD-Violence Sub-64-Frame Video Audit
+expected: Any XD-Violence videos with <64 frames are correctly skipped (same pattern as UCF-Crime's 172 zero-snippet videos), and the count is documented for Phase 3 data loader
+result: blocked
+blocked_by: prior-phase
+reason: "Depends on test 9 completing to identify which XD videos are sub-64-frame."
+
 ## Summary
 
-total: 8
+total: 12
 passed: 8
 issues: 0
 pending: 0
 skipped: 0
-blocked: 0
+blocked: 4
 
 ## Gaps
 
-[none — 172 "missing" UCF-Crime videos confirmed as <64 frames (0 snippets), not extraction failures. Phase 3 data loader must exclude or handle these.]
+[none so far — 8/8 testable items pass. 4 blocked tests await XD-Violence extraction completion.]
+
+## XD-Violence Extraction Commands (User Must Run)
+
+### Stage 1: Skeleton Extraction (~10-15h)
+```bash
+conda run -n vcc-skeleton python scripts/extract_skeletons.py --dataset xd --split train
+conda run -n vcc-skeleton python scripts/extract_skeletons.py --dataset xd --split val
+conda run -n vcc-skeleton python scripts/extract_skeletons.py --dataset xd --split test
+```
+
+### Stage 2: CTR-GCN Feature Extraction (~1-2h)
+```bash
+conda run -n vcc-ctrgcn python scripts/extract_ctrgcn.py --dataset xd --split train
+conda run -n vcc-ctrgcn python scripts/extract_ctrgcn.py --dataset xd --split val
+conda run -n vcc-ctrgcn python scripts/extract_ctrgcn.py --dataset xd --split test
+```
+
+### Stage 3: CLIP Feature Extraction (~3-6h)
+```bash
+conda run -n vcc-main python scripts/extract_clip.py --dataset xd --split train
+conda run -n vcc-main python scripts/extract_clip.py --dataset xd --split val
+conda run -n vcc-main python scripts/extract_clip.py --dataset xd --split test
+```
+
+### Stage 4: Verify
+```bash
+C:/Anaconda/envs/vcc-main/python.exe scripts/verify_alignment.py --dataset xd --split all
+```
