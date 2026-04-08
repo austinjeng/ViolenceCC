@@ -83,9 +83,48 @@ blocked: 4
 
 [none so far — 8/8 testable items pass. 4 blocked tests await XD-Violence extraction completion.]
 
+## Profiling Results (2026-04-08)
+
+Profiled 100 frames from `A.Beautiful.Mind.2001__#00-23-50_00-24-31_label_A.mp4` (640x346, vcc-skeleton env, RTX 4090 GPU):
+
+| Component | Mean | P50 | P95 | Fraction |
+|-----------|------|-----|-----|----------|
+| Decode (cv2) | 0.3ms | 0.3ms | 0.5ms | 0.7% |
+| Inference (det+pose) | 45.9ms | 45.5ms | 51.2ms | 99.3% |
+| **Total per frame** | **46.3ms** | **45.9ms** | **51.6ms** | 100% |
+
+- Effective FPS: 21.6 (1-person scenes), estimated ~15 FPS for multi-person
+- Two ONNX models per frame: `yolox_m` (detection) + `rtmpose-m` (pose)
+- rtmlib does NOT support batch inference (hardcoded batch=1)
+- rtmlib does NOT support TensorRT backend (NotImplementedError despite README)
+- Threaded decode pipeline would NOT help (decode is only 0.7%)
+- Frame sampling NOT viable: CTR-GCN requires native-FPS consecutive frames for motion streams (jm/bm)
+
+### Timeline Estimates (skeleton extraction only)
+
+| Metric | Value |
+|--------|-------|
+| Done (as of profiling) | 939/4754 (20%) |
+| Remaining | 3815 videos, ~10M frames |
+| Measured rate (1-person) | 21.6 FPS → **5.3 days** |
+| Pessimistic (multi-person) | 15 FPS → **7.7 days** |
+
+After skeleton: CTR-GCN (~1-2h) + CLIP (~3-6h) for XD-Violence.
+
+### Dataset Statistics
+
+| Dataset | Total Videos | Extractable (>=64 frames) | Sub-64-frame | Avg Frames/Video |
+|---------|-------------|--------------------------|--------------|-----------------|
+| UCF-Crime | 1900 | 1728 | 172 (max 63 frames) | varies (64x64 PNGs) |
+| XD-Violence | 4754 | 4754 (min 120 frames) | 0 | 2617 |
+
+### Conclusion
+
+Bottleneck is purely GPU inference (two ONNX models per frame), not decode or I/O. No easy optimization exists without replacing rtmlib. At 5-8 days remaining, extraction is manageable within the 12-week thesis timeline. Recommendation: proceed with Phase 3 using UCF-Crime data while XD-Violence extraction runs in background.
+
 ## XD-Violence Extraction Commands (User Must Run)
 
-### Stage 1: Skeleton Extraction (~10-15h)
+### Stage 1: Skeleton Extraction (~5-8 days remaining, currently running)
 ```bash
 conda run -n vcc-skeleton python scripts/extract_skeletons.py --dataset xd --split train
 conda run -n vcc-skeleton python scripts/extract_skeletons.py --dataset xd --split val

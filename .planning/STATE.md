@@ -5,8 +5,8 @@ milestone_name: milestone
 current_phase: 02
 current_plan: 3
 status: verifying
-stopped_at: Completed 02-04-PLAN.md checkpoint — XD-Violence smoke test passed, full extraction commands documented for user
-last_updated: "2026-04-05T11:09:03.029Z"
+stopped_at: Phase 02 UAT — 8/12 pass, 4 blocked on XD-Violence extraction (~5-8 days). UCF-Crime ready for Phase 3.
+last_updated: "2026-04-08T06:00:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 2
@@ -17,8 +17,8 @@ progress:
 
 # State: ViolenceCC
 
-**Last updated:** 2026-04-03
-**Session:** Phase 02 Plan 02 complete — CTR-GCN 4-stream extraction script and CLIP ViT-B/16 extraction script built and validated on 3 UCF-Crime videos each. Features: skeleton [N,256] and CLIP [N,1024] float32, aligned by shared boundary JSON. Next: Phase 02 Plan 03 (alignment verification).
+**Last updated:** 2026-04-08
+**Session:** Phase 02 UAT in progress (8/12 pass, 4 blocked on XD-Violence extraction). UCF-Crime fully verified (1728/1900 extractable, 172 sub-64-frame). XD-Violence skeleton extraction running (~20% done, ~5-8 days remaining). Profiling shows 99.3% inference bottleneck at 21.6 FPS — no optimization available without replacing rtmlib. Ready to begin Phase 3 with UCF-Crime data while XD extraction continues.
 
 ---
 
@@ -33,17 +33,16 @@ progress:
 
 ## Current Position
 
-Phase: 02 (feature-extraction-pipeline) — EXECUTING
-Plan: 4 of 4
+Phase: 02 (feature-extraction-pipeline) — UAT VERIFICATION (partial)
+Plan: 4 of 4 (all executed)
 **Current phase:** 02
-**Current plan:** 3
-**Status:** Phase complete — ready for verification
+**Current plan:** 4
+**Status:** UAT 8/12 pass, 4 blocked on XD-Violence extraction. UCF-Crime complete.
 
 **Progress:**
 
-[██████████] 100%
 Phase 1 [██████████] 100%  Environment & Project Foundation — COMPLETE
-Phase 2 [████      ] 50%   Feature Extraction Pipeline (2/4 plans done)
+Phase 2 [████████░░] 80%   Feature Extraction Pipeline (4/4 plans done, UAT partial: XD extraction running)
 Phase 3 [          ] 0%    Model Architecture & Training Infrastructure
 Phase 4 [          ] 0%    Baseline Evaluation & Main Results
 Phase 5 [          ] 0%    TTA Infrastructure & Corruption Experiments
@@ -109,6 +108,11 @@ No experiments run yet. Targets from PRD v2.3:
 | XD-Violence val split videos are in XD_TRAIN_ROOT (train/) not XD_TEST_ROOT | val is 15% holdout from training set; code routes both train and val to train folder |
 | decord not available in vcc-skeleton; cv2.VideoCapture fallback works for XD-Violence mp4 | No code change needed; existing fallback handles XD-Violence mp4 decoding |
 | conda run on Windows (cp950 locale) fails with UnicodeEncodeError on tqdm output | Cosmetic only; scripts succeed; use direct python exe path (C:/Anaconda/envs/vcc-main/python.exe) for scripts needing stdout capture |
+| UCF-Crime has 172 sub-64-frame videos (max 63 frames) producing 0 snippets | Expected behavior; 1728/1900 are extractable; Phase 3 data loader must skip these |
+| XD-Violence has 0 sub-64-frame videos (min 120 frames) | All 4754 videos will produce at least 1 snippet |
+| Skeleton extraction bottleneck is 99.3% inference, 0.7% decode | rtmlib runs yolox_m (detection) + rtmpose-m (pose) per frame at ~46ms/frame (21.6 FPS on RTX 4090) |
+| No viable optimization for skeleton extraction speed | rtmlib: no batch inference, no TensorRT backend; frame sampling destroys CTR-GCN motion signal |
+| Proceed with Phase 3 using UCF-Crime while XD-Violence extraction runs | UCF-Crime features complete; XD-Violence ~5-8 days remaining for skeleton stage |
 
 ### Critical Pitfalls to Watch
 
@@ -137,8 +141,8 @@ None currently.
 
 ## Session Continuity
 
-**Stopped at:** Completed 02-04-PLAN.md checkpoint — XD-Violence smoke test passed, full extraction commands documented for user
-**To resume:** Read this file and ROADMAP.md. Phase 01 is COMPLETE. Phase 02 is in progress (2/4 plans done). Plans P01 (splits+skeleton) and P02 (CTR-GCN+CLIP extraction scripts) complete. Next: Phase 02 Plan 03 (alignment verification script).
+**Stopped at:** Phase 02 UAT partial — 8/12 pass, 4 blocked on XD-Violence extraction. Profiling complete. Ready for Phase 3.
+**To resume:** Read this file and ROADMAP.md. Phase 01 is COMPLETE. Phase 02 is UAT-verified for UCF-Crime (all plans executed, 8/12 UAT tests pass). XD-Violence skeleton extraction is running in background (~5-8 days). Next: Phase 03 (Model Architecture & Training Infrastructure) using UCF-Crime data.
 
 **Files of record:**
 
