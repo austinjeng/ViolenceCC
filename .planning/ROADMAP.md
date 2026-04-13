@@ -61,7 +61,15 @@ Plans:
   2. The Gated Fusion module forward pass produces frame-level anomaly scores without NaN, and its LayerNorm layers are accessible by name (verifiable by iterating `model.named_modules()` and confirming `nn.LayerNorm` instances exist)
   3. Early stopping triggers correctly: training halts when validation MIL loss has not improved for 10 consecutive epochs, and the saved checkpoint corresponds to the best validation epoch (confirmed by cross-checking `train_log.csv`)
   4. A config snapshot (JSON) is saved alongside every checkpoint, and re-running with `--config results/<run>/config_snapshot.json` reproduces bit-identical loss curves (confirmed by fixed seed)
-**Plans**: TBD
+**Plans:** 7 plans
+Plans:
+- [ ] 03-01-PLAN.md — Foundation primitives (seed utility, MILHead, MODEL_REGISTRY skeleton, pytest scaffold, requirements pins)
+- [ ] 03-02-PLAN.md — MIL Ranking Loss (RTFM-exact sparsity+smoothness, masked top-k, MOD-01)
+- [ ] 03-03-PLAN.md — MILFeatureDataset + paired DataLoaders (D-04/D-09/D-10/D-12, MOD-02)
+- [ ] 03-04-PLAN.md — SkeletonProj + CLIPProj + LateFusion wrappers with named LNs (MOD-03/04/05/07)
+- [ ] 03-05-PLAN.md — GatedFusion module with 3 named LNs + m1 gate init mitigation (MOD-06/07)
+- [ ] 03-06-PLAN.md — Training loop: scheduler, early stopping, atomic checkpoint, CSV logger, src/train.py, bit-identical repro (TRN-01..04, TRN-06, C3, C5)
+- [ ] 03-07-PLAN.md — Config snapshot (TRN-05) + wandb mirror (D-13) + 4 variant YAMLs + e2e acceptance tests (TRN-05/06)
 
 ### Phase 4: Baseline Evaluation & Main Results
 **Goal**: The evaluation harness is validated by RTFM reproduction, and the complete ablation table with statistical stability measures is ready for the thesis
@@ -104,7 +112,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Environment & Project Foundation | 3/3 | Complete   | 2026-03-31 |
 | 2. Feature Extraction Pipeline | 1/4 | In Progress|  |
-| 3. Model Architecture & Training Infrastructure | 0/? | Not started | - |
+| 3. Model Architecture & Training Infrastructure | 0/7 | Planned | - |
 | 4. Baseline Evaluation & Main Results | 0/? | Not started | - |
 | 5. TTA Infrastructure & Corruption Experiments | 0/? | Not started | - |
 | 6. Analysis & Visualization | 0/? | Not started | - |
