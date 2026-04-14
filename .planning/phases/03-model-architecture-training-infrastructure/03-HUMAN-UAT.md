@@ -18,14 +18,14 @@ result: [pending]
 
 ### 2. WR-01 fix (LR off-by-one in CSV/wandb logs)
 expected: After swapping `lr = optimizer.param_groups[0]["lr"]` to execute before `scheduler.step()` in `src/train.py:174-176`, logged LR at epoch 0 should be the warmup start LR (~1e-6), not the epoch-1 value. Training correctness unaffected; this is an instrumentation fix so thesis LR curves are accurate before Phase 4 produces final result tables.
-result: [pending]
+result: passed (commit 2656992) — micro-smoke with warmup_epochs=3, epochs=10, lr=1e-3 confirms epoch-0 logs lr=1e-5 (warmup start) instead of 3.4e-4. 90/90 non-e2e regression tests still green.
 
 ## Summary
 
 total: 2
-passed: 0
+passed: 1
 issues: 0
-pending: 2
+pending: 1
 skipped: 0
 blocked: 0
 
