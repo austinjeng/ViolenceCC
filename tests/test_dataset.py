@@ -49,7 +49,14 @@ def test_train_resample_long(tmp_feature_dir, tmp_path):
 
 
 def test_train_pad_short(tmp_feature_dir, tmp_path):
-    """D-10: N < T → zero-pad with mask."""
+    """D-10 (revised): N < T → sample-with-replacement, mask all-ones.
+
+    Original D-10 (zero-pad + mask) was NaN-unsafe with D-01 top-k=3 when
+    N<k: masked-fill to -inf propagated through the paired hinge as NaN.
+    Revised D-10 follows RTFM/VadCLIP sample-with-replacement: every
+    snippet in the bag is a real observation copied from the source cache,
+    so mask is all-ones and top-k is always well-defined.
+    """
     split = tmp_path / "split.txt"
     _write_split(split, ["Abuse001_x264"])
     _write_video(tmp_feature_dir / "skeleton", tmp_feature_dir / "clip",
@@ -62,11 +69,16 @@ def test_train_pad_short(tmp_feature_dir, tmp_path):
     )
     item = ds[0]
     assert item["skel"].shape == (32, 256)
-    assert (item["mask"][:10] == 1.0).all()
-    assert (item["mask"][10:] == 0.0).all()
-    # Padded positions are zero rows
-    assert torch.allclose(item["skel"][10:], torch.zeros(22, 256))
-    assert torch.allclose(item["clip"][10:], torch.zeros(22, 1024))
+    assert item["clip"].shape == (32, 1024)
+    # Revised D-10: mask is all-ones — every row is a real observation (possibly repeated)
+    assert (item["mask"] == 1.0).all()
+    # Every sampled row must match one of the 10 source rows (sample-with-replacement)
+    src_skel = np.load(tmp_feature_dir / "skeleton" / "Abuse001_x264.npy")
+    for i in range(32):
+        row = item["skel"][i].numpy()
+        assert any(np.allclose(row, src_skel[j]) for j in range(10)), (
+            f"row {i} does not match any source row — sample-with-replacement broken"
+        )
 
 
 def test_skip_empty_videos(tmp_feature_dir, tmp_path):

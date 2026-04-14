@@ -186,21 +186,27 @@ class MILFeatureDataset(Dataset):
         }
 
     def _sample_or_pad(self, skel: np.ndarray, clip: np.ndarray, N: int):
-        """D-09: uniform 32-segment sub-sample; D-10: zero-pad + mask.
+        """D-09: uniform 32-segment sub-sample; D-10 (revised): sample-with-replacement.
 
         D-09 math (N >= T):
           1. Partition [0, N] into T equal segments via
              ``np.linspace(0, N, T + 1, dtype=np.int64)``.
           2. Pick one index per segment uniformly at random.
           3. The ``max(lo+1, hi)`` guard handles degenerate segments where
-             integer rounding collapses ``hi == lo`` (shouldn't happen for
-             our N >= T case but kept as defence-in-depth).
+             integer rounding collapses ``hi == lo``.
 
-        D-10 math (N < T):
-          1. Allocate zero arrays of shape ``(T, D)``.
-          2. Copy real features into the first N positions.
-          3. Mask: 1s for real, 0s for padded — downstream MIL top-k masks
-             padded positions to ``-inf`` so they cannot win.
+        D-10 (revised) math (N < T):
+          1. Sample T indices in [0, N) with replacement, then sort.
+             Matches RTFM/VadCLIP reference behavior: repeat-sampling
+             upsamples short videos to T valid snippets instead of
+             zero-padding. Every snippet is a real observation.
+          2. Mask is all-ones — MIL top-k is well-defined for all bags.
+
+        Original D-10 (zero-pad + mask) was incompatible with D-01 top-k=3
+        for videos with N<k: masked positions became ``-inf`` and the
+        paired hinge evaluated to NaN. UCF has ~41% of videos with N<3,
+        which produced NaN loss from epoch 0. Reverted to RTFM's
+        sample-with-replacement pattern; see commit history for context.
         """
         T = self.T
         if N >= T:
@@ -210,17 +216,10 @@ class MILFeatureDataset(Dataset):
             for i in range(T):
                 lo, hi = int(segs[i]), max(int(segs[i]) + 1, int(segs[i + 1]))
                 idxs[i] = np.random.randint(lo, hi)
-            skel_t = torch.from_numpy(skel[idxs].astype(np.float32))
-            clip_t = torch.from_numpy(clip[idxs].astype(np.float32))
-            mask = torch.ones(T, dtype=torch.float32)
         else:
-            # D-10: zero-pad + mask
-            skel_pad = np.zeros((T, skel.shape[1]), dtype=np.float32)
-            clip_pad = np.zeros((T, clip.shape[1]), dtype=np.float32)
-            skel_pad[:N] = skel.astype(np.float32)
-            clip_pad[:N] = clip.astype(np.float32)
-            skel_t = torch.from_numpy(skel_pad)
-            clip_t = torch.from_numpy(clip_pad)
-            mask = torch.ones(T, dtype=torch.float32)
-            mask[N:] = 0.0
+            # D-10 (revised): sample T indices with replacement from [0, N), sorted
+            idxs = np.sort(np.random.randint(0, N, size=T).astype(np.int64))
+        skel_t = torch.from_numpy(skel[idxs].astype(np.float32))
+        clip_t = torch.from_numpy(clip[idxs].astype(np.float32))
+        mask = torch.ones(T, dtype=torch.float32)
         return skel_t, clip_t, mask
