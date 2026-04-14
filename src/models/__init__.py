@@ -2,6 +2,7 @@ from src.models.mil_head import MILHead
 from src.models.registry import MODEL_REGISTRY, build_model
 from src.models.skeleton_only import SkeletonProj
 from src.models.clip_only import CLIPProj
+from src.models.late_fusion import LateFusion
 
 __all__ = [
     "MILHead",
@@ -9,4 +10,5 @@ __all__ = [
     "build_model",
     "SkeletonProj",
     "CLIPProj",
+    "LateFusion",
 ]
