@@ -390,3 +390,72 @@ def test_score_variance(tmp_path):
     assert mean_std > 0.005, (
         f"per-video score std={mean_std:.4f} -- model may have collapsed (C5)"
     )
+
+
+# ---- m1 mitigation: post-training gate saturation check (RESEARCH.md 13 line 1394) ----
+
+def test_gate_not_saturated(tmp_path):
+    """m1 (VALIDATION.md line 71): after 5 smoke epochs on variant=gated_fusion,
+    the mean of the sigmoid-gate output lies in (0.2, 0.8) -- NOT saturated.
+
+    Contract:
+      - Run main() with a tiny gated_fusion YAML; seed=42 for determinism.
+      - Load best_model.pth into a fresh GatedFusion (same kwargs).
+      - Register a forward hook on model.gate (the pre-sigmoid `nn.Linear`);
+        sigmoid is applied in the test (no Plan 05 API change).
+      - Feed 10 synthetic batches of [B=8, T=32, skel=256] + [B=8, T=32, clip=1024]
+        through model.eval(); average the per-batch mean of sigmoid(gate_linear_out).
+      - Assert 0.2 < overall_mean < 0.8.
+
+    Uses the variant-agnostic smoke fixtures from _build_gated_fusion_smoke_dataset.
+    Plan 05's GatedFusion is intentionally untouched -- we hook, not modify.
+    """
+    cfg_path, results, cfg = _build_gated_fusion_smoke_dataset(tmp_path, epochs=5)
+
+    # Run the training smoke
+    rc = main(["--config", str(cfg_path)])
+    assert rc == 0, "gated_fusion 5-epoch smoke failed"
+    run = _latest_run(results)
+    best_pth = run / "best_model.pth"
+    assert best_pth.exists(), f"missing best_model.pth in {run}"
+
+    # Rebuild the same GatedFusion and load trained weights
+    from src.models.registry import build_model
+    from src.utils.checkpoint import load_checkpoint
+    model = build_model(**cfg["model"])
+    model.load_state_dict(load_checkpoint(best_pth))
+    model.eval()
+
+    # Forward hook on self.gate -- captures pre-sigmoid Linear output.
+    # (Plan 05's GatedFusion.forward() applies sigmoid inline: g = torch.sigmoid(self.gate(...)).
+    # We mirror that in the test by hooking self.gate and applying torch.sigmoid ourselves.)
+    captured = []
+
+    def _hook(module, inputs, output):
+        # output: [B, T, shared_dim] -- pre-sigmoid logits
+        captured.append(output.detach())
+
+    handle = model.gate.register_forward_hook(_hook)
+    try:
+        torch.manual_seed(123)  # independent stream from training seed
+        gate_means = []
+        for _ in range(10):
+            skel = torch.randn(8, 32, 256)
+            clip = torch.randn(8, 32, 1024)
+            captured.clear()
+            with torch.no_grad():
+                model(skel=skel, clip=clip)
+            # Exactly one capture per forward (only one gate call in GatedFusion)
+            assert len(captured) == 1, f"expected 1 gate capture, got {len(captured)}"
+            g = torch.sigmoid(captured[0])
+            gate_means.append(g.mean().item())
+    finally:
+        handle.remove()
+
+    overall = sum(gate_means) / len(gate_means)
+    # 13 line 1394 / VALIDATION.md line 71 contract:
+    assert 0.2 < overall < 0.8, (
+        f"m1 mitigation violated: mean(gate)={overall:.3f} after 5 smoke epochs on "
+        f"variant=gated_fusion. Expected (0.2, 0.8) per RESEARCH.md 13 line 1394. "
+        f"Per-batch means: {gate_means}"
+    )
