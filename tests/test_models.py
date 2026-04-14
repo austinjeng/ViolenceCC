@@ -163,3 +163,156 @@ def test_build_model_late_fusion_round_trip():
         skel_dim=256, clip_dim=1024, proj_dim=512, alpha="equal",
     )
     assert isinstance(model, LateFusion)
+
+
+# ---- MOD-06 / MOD-07 Gated Fusion ----
+
+from src.models.gated_fusion import GatedFusion
+
+
+def test_gated_fusion_shapes():
+    """MOD-06 (VALIDATION.md): [B,T,256]+[B,T,1024] -> [B,T]; gate sigmoid in [0,1]."""
+    torch.manual_seed(0)
+    model = GatedFusion(skel_dim=256, clip_dim=1024, shared_dim=256)
+    skel = torch.randn(2, 32, 256)
+    clip = torch.randn(2, 32, 1024)
+    out = model(skel=skel, clip=clip)
+    assert out.shape == (2, 32)
+    assert torch.isfinite(out).all()
+    assert (out >= 0).all() and (out <= 1).all()
+
+
+def test_gated_fusion_real_features(tmp_feature_dir):
+    """MOD-06 (VALIDATION.md): forward on real UCF features produces finite, [0,1] scores.
+
+    Uses a single real UCF feature file if E:/features/ucf/ is mounted; otherwise
+    skips (marked requires_features so the CI-mode run does not need E:/).
+    """
+    import numpy as np
+    from pathlib import Path
+    ucf_root = Path("E:/features/ucf")
+    if not (ucf_root / "skeleton").exists() or not (ucf_root / "clip").exists():
+        pytest.skip("E:/features/ucf not mounted")
+    # Pick the first skeleton feature file that has N >= 32 for a real-shape test
+    skel_files = sorted((ucf_root / "skeleton").glob("*.npy"))
+    skel = clip = None
+    for sf in skel_files:
+        arr = np.load(sf, mmap_mode="r")
+        if arr.shape[0] >= 32:
+            cf = ucf_root / "clip" / sf.name
+            if cf.exists():
+                skel = np.load(sf)
+                clip = np.load(cf)
+                break
+    if skel is None or clip is None:
+        pytest.skip("no UCF video with N>=32 found in cache")
+    # Pad to N==32 (take first 32 snippets)
+    skel = torch.from_numpy(skel[:32].astype(np.float32)).unsqueeze(0)
+    clip = torch.from_numpy(clip[:32].astype(np.float32)).unsqueeze(0)
+    torch.manual_seed(0)
+    model = GatedFusion()
+    out = model(skel=skel, clip=clip)
+    assert out.shape == (1, 32)
+    assert torch.isfinite(out).all()
+    assert (out >= 0).all() and (out <= 1).all()
+
+
+def test_gated_fusion_layernorms():
+    """MOD-07 (VALIDATION.md): >= 3 named nn.LayerNorm in GatedFusion per D-07.
+
+    Expected names: ln_skel, ln_clip, ln_fused (PRD 9.2 + CONTEXT.md D-07).
+    """
+    model = GatedFusion()
+    ln_entries = [
+        (n, m) for n, m in model.named_modules() if isinstance(m, nn.LayerNorm)
+    ]
+    ln_names = [n for n, _ in ln_entries]
+    assert len(ln_entries) >= 3, f"need >= 3 LN, got {ln_names}"
+    assert "ln_skel" in ln_names
+    assert "ln_clip" in ln_names
+    assert "ln_fused" in ln_names
+
+
+def test_gated_fusion_layernorm_attribute_access():
+    """MOD-07: LN layers accessible as model.ln_<name> for Phase 5 TTA."""
+    model = GatedFusion()
+    assert hasattr(model, "ln_skel") and isinstance(model.ln_skel, nn.LayerNorm)
+    assert hasattr(model, "ln_clip") and isinstance(model.ln_clip, nn.LayerNorm)
+    assert hasattr(model, "ln_fused") and isinstance(model.ln_fused, nn.LayerNorm)
+    # Each LN normalizes over shared_dim (default 256)
+    assert model.ln_skel.normalized_shape == (256,)
+    assert model.ln_clip.normalized_shape == (256,)
+    assert model.ln_fused.normalized_shape == (256,)
+
+
+def test_gated_fusion_gate_not_saturated_at_init():
+    """m1 mitigation: Xavier gain=0.1 -> initial mean(gate) ~= 0.5.
+
+    Stress the expectation by using 10 random input batches and averaging.
+    """
+    torch.manual_seed(123)
+    model = GatedFusion()
+    gate_means = []
+    for _ in range(10):
+        skel = torch.randn(4, 32, 256)
+        clip = torch.randn(4, 32, 1024)
+        p_skel = model.ln_skel(model.skel_proj(skel))
+        p_clip = model.ln_clip(model.clip_proj(clip))
+        g = torch.sigmoid(model.gate(torch.cat([p_skel, p_clip], dim=-1)))
+        gate_means.append(g.mean().item())
+    overall = sum(gate_means) / len(gate_means)
+    assert 0.4 < overall < 0.6, (
+        f"Gate saturated at init: mean(gate)={overall:.3f} "
+        "(m1 mitigation expects ~0.5 due to Xavier gain=0.1)"
+    )
+
+
+def test_gated_fusion_gate_xavier_gain_small():
+    """Regression guard: gate weight norm is small due to gain=0.1."""
+    model = GatedFusion()
+    # Xavier uniform with gain=0.1 produces weights in a much smaller range
+    # than the default gain=1.0. The weight std should be < 0.1.
+    assert model.gate.weight.std().item() < 0.1, (
+        f"gate weight std={model.gate.weight.std().item():.4f} "
+        "suggests Xavier gain is too large (m1 mitigation regressed)"
+    )
+    # Bias should be exactly zero at init
+    assert torch.all(model.gate.bias == 0.0)
+
+
+def test_gated_fusion_residual_is_sum_of_both_projections():
+    """Structural: residual = fused + p_skel + p_clip (gradient highway)."""
+    torch.manual_seed(0)
+    model = GatedFusion()
+    model.eval()
+    skel = torch.randn(1, 4, 256)
+    clip = torch.randn(1, 4, 1024)
+
+    # Compute expected residual path by hand
+    with torch.no_grad():
+        p_skel = model.ln_skel(model.skel_proj(skel))
+        p_clip = model.ln_clip(model.clip_proj(clip))
+        g = torch.sigmoid(model.gate(torch.cat([p_skel, p_clip], dim=-1)))
+        fused = g * p_skel + (1 - g) * p_clip
+        residual_manual = fused + p_skel + p_clip
+        out_manual = model.head(model.ln_fused(residual_manual)).squeeze(-1)
+
+    out_model = model(skel=skel, clip=clip)
+    # Dropout is inactive in eval mode, so manual and model paths match exactly
+    assert torch.allclose(out_model, out_manual, atol=1e-6)
+
+
+def test_gated_fusion_raises_without_both_inputs():
+    model = GatedFusion()
+    with pytest.raises(ValueError, match="requires both"):
+        model(skel=torch.randn(1, 4, 256))
+    with pytest.raises(ValueError, match="requires both"):
+        model(clip=torch.randn(1, 4, 1024))
+
+
+def test_build_model_gated_fusion_round_trip():
+    """MODEL_REGISTRY now resolves all 4 variants."""
+    from src.models.registry import build_model
+    model = build_model("gated_fusion",
+                        skel_dim=256, clip_dim=1024, shared_dim=256)
+    assert isinstance(model, GatedFusion)
