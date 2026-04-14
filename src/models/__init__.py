@@ -3,6 +3,7 @@ from src.models.registry import MODEL_REGISTRY, build_model
 from src.models.skeleton_only import SkeletonProj
 from src.models.clip_only import CLIPProj
 from src.models.late_fusion import LateFusion
+from src.models.gated_fusion import GatedFusion
 
 __all__ = [
     "MILHead",
@@ -11,4 +12,5 @@ __all__ = [
     "SkeletonProj",
     "CLIPProj",
     "LateFusion",
+    "GatedFusion",
 ]
