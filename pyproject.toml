@@ -1,0 +1,10 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "e2e: end-to-end acceptance tests that run full src/train.py CLI (slow, ~2-3 min)",
+    "requires_features: tests that require E:/features/ucf/*.npy to be present on disk",
+]
+addopts = "-ra --tb=short"
