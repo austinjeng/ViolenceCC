@@ -459,3 +459,30 @@ def test_gate_not_saturated(tmp_path):
         f"variant=gated_fusion. Expected (0.2, 0.8) per RESEARCH.md 13 line 1394. "
         f"Per-batch means: {gate_means}"
     )
+
+
+# ---- Plan 07 additions: TRN-05 config snapshot smoke tests ----
+
+def test_config_snapshot_written(tmp_path):
+    """TRN-05: every run produces a config_snapshot.json with full provenance."""
+    import json
+    cfg_path, results = _build_smoke_dataset(tmp_path)
+    main(["--config", str(cfg_path)])
+    run = _latest_run(results)
+    snap_path = run / "config_snapshot.json"
+    assert snap_path.exists(), f"missing snapshot in {run}"
+    snap = json.loads(snap_path.read_text())
+    expected = {"config", "git", "python", "torch", "numpy", "cuda", "env", "packages"}
+    assert set(snap.keys()) == expected
+
+
+def test_snapshot_can_drive_rerun(tmp_path):
+    """A saved config_snapshot.json can be fed back in as --config and parsed."""
+    cfg_path, results = _build_smoke_dataset(tmp_path)
+    rc1 = main(["--config", str(cfg_path)])
+    assert rc1 == 0
+    run = _latest_run(results)
+    snap_path = run / "config_snapshot.json"
+    # Second run uses the snapshot as input
+    rc2 = main(["--config", str(snap_path)])
+    assert rc2 == 0
