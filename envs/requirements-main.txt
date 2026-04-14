@@ -2,7 +2,9 @@
 # Python 3.11, PyTorch 2.6.0+cu124 (via pip --index-url)
 # Purpose: MIL training, CLIP extraction, TTA, evaluation
 # Frozen from pip freeze 2026-03-31
+# Updated Phase 3: added pytest, pytest-timeout; wandb 0.25.1 kept (API-compatible with 0.26.x for define_metric / resume)
 # NOTE: PyTorch stack installed via: pip install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cu124
+# NOTE: pytest pinned per RESEARCH.md section 12.1 (supply-chain integrity for ASVS L1)
 torch==2.6.0+cu124
 torchvision==0.21.0+cu124
 torchaudio==2.6.0+cu124
@@ -19,3 +21,5 @@ tensorboard==2.20.0
 kornia==0.8.2
 Pillow==12.1.1
 decord==0.6.0
+pytest==7.4.4
+pytest-timeout==2.3.1
