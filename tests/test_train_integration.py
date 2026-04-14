@@ -133,7 +133,8 @@ def test_smoke_2_epoch_produces_artifacts(tmp_path):
     assert (run / "train_log.csv").exists()
     assert (run / "best_model.pth").exists()
     assert (run / "last_model.pth").exists()
-    assert (run / "config.yaml").exists()
+    # Plan 07 (TRN-05): config.yaml copy replaced by config_snapshot.json
+    assert (run / "config_snapshot.json").exists()
 
 
 def test_csv_header(tmp_path):

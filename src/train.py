@@ -7,7 +7,6 @@ os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
 # Standard imports come AFTER the env var is set.
 import argparse
 import datetime
-import shutil
 import sys
 from pathlib import Path
 
@@ -19,16 +18,17 @@ if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
 import torch
-import yaml
 
 from src.data.loaders import build_dataloaders
 from src.losses.mil_loss import mil_ranking_loss
 from src.models.registry import build_model
 from src.utils.checkpoint import save_checkpoint_atomic
+from src.utils.config import load_config, snapshot_config
 from src.utils.csv_logger import CSVLogger
 from src.utils.early_stopping import EarlyStopping
 from src.utils.scheduler import build_optimizer, build_scheduler
 from src.utils.seed import set_deterministic
+from src.utils.wandb_logger import WandbLogger
 
 
 def parse_args(argv=None):
@@ -41,11 +41,6 @@ def parse_args(argv=None):
     ap.add_argument("--results-dir", type=str, default=None,
                     help="Override cfg['paths']['results_dir']")
     return ap.parse_args(argv)
-
-
-def load_config(path: str) -> dict:
-    with open(path, "r", encoding="utf-8") as f:
-        return yaml.safe_load(f)
 
 
 def apply_cli_overrides(cfg: dict, args) -> dict:
@@ -153,11 +148,13 @@ def main(argv=None) -> int:
     # Run dir (D-14)
     run_dir = Path(cfg["paths"]["results_dir"]) / run_name(cfg)
     run_dir.mkdir(parents=True, exist_ok=True)
-    # Minimal cfg copy; Plan 07 will replace with full config_snapshot.json
-    shutil.copyfile(args.config, run_dir / "config.yaml")
+    # TRN-05: full snapshot (git SHA + pip freeze + env + resolved cfg) replaces
+    # the minimal config.yaml copy from Plan 06.
+    snapshot_config(cfg, run_dir / "config_snapshot.json")
 
     # Loggers
     csv_logger = CSVLogger(run_dir / "train_log.csv")
+    wandb_logger = WandbLogger(cfg, run_dir)
 
     # Model + data + training pieces
     model = build_model(**cfg["model"]).to(device)
@@ -169,32 +166,39 @@ def main(argv=None) -> int:
     best_path = run_dir / "best_model.pth"
     last_path = run_dir / "last_model.pth"
 
-    for epoch in range(int(cfg["train"]["epochs"])):
-        train_loss = train_one_epoch(
-            model, nor_loader, abn_loader, optimizer, device, cfg["train"])
-        val_loss = validate(model, val_loader, device, cfg["train"])
-        scheduler.step()
+    try:
+        for epoch in range(int(cfg["train"]["epochs"])):
+            train_loss = train_one_epoch(
+                model, nor_loader, abn_loader, optimizer, device, cfg["train"])
+            val_loss = validate(model, val_loader, device, cfg["train"])
+            scheduler.step()
 
-        lr = optimizer.param_groups[0]["lr"]
-        csv_logger.log(
-            epoch=epoch,
-            train_loss=f"{train_loss:.6f}",
-            val_loss=f"{val_loss:.6f}",
-            lr=f"{lr:.8f}",
-        )
-        print(f"[epoch {epoch:03d}] train_loss={train_loss:.4f} val_loss={val_loss:.4f} lr={lr:.6g}",
-              flush=True)
-
-        decision = early.step(epoch, val_loss)
-        # Always save last (D-15)
-        save_checkpoint_atomic(model.state_dict(), last_path)
-        if decision["is_best"]:
-            save_checkpoint_atomic(model.state_dict(), best_path)
-
-        if decision["should_stop"]:
-            print(f"[early stop] best_epoch={early.best_epoch} best_loss={early.best_loss:.4f}",
+            lr = optimizer.param_groups[0]["lr"]
+            csv_logger.log(
+                epoch=epoch,
+                train_loss=f"{train_loss:.6f}",
+                val_loss=f"{val_loss:.6f}",
+                lr=f"{lr:.8f}",
+            )
+            wandb_logger.log(
+                {"train/loss": train_loss, "val/loss": val_loss, "lr": lr},
+                step=epoch,
+            )
+            print(f"[epoch {epoch:03d}] train_loss={train_loss:.4f} val_loss={val_loss:.4f} lr={lr:.6g}",
                   flush=True)
-            break
+
+            decision = early.step(epoch, val_loss)
+            # Always save last (D-15)
+            save_checkpoint_atomic(model.state_dict(), last_path)
+            if decision["is_best"]:
+                save_checkpoint_atomic(model.state_dict(), best_path)
+
+            if decision["should_stop"]:
+                print(f"[early stop] best_epoch={early.best_epoch} best_loss={early.best_loss:.4f}",
+                      flush=True)
+                break
+    finally:
+        wandb_logger.finish()
 
     return 0
 
