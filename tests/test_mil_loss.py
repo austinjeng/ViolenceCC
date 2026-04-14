@@ -133,24 +133,55 @@ def test_mil_ranking_loss_gradient_flows():
 def test_regularizers_apply_to_abnormal_only():
     """Sparsity / smoothness evaluated on scores[n_normal:] only (RTFM convention).
 
-    Case A: normal=0, abnormal=0.5 -> sparsity > 0
-    Case B: normal=0.5, abnormal=0 -> sparsity == 0 (abnormal half is empty of mass)
+    Verifies the "abnormal half only" contract by holding rank-hinge constant
+    and isolating the regularizer delta in two configurations:
+
+    Case A: mass on abnormal half -> sparsity contribution > 0
+    Case B: mass on normal half, abnormal half all-zero -> sparsity contribution == 0
+
+    The rank-hinge is zeroed via margin=0.0 and scores chosen so that
+    relu(0 - topk_abn + topk_nor) = 0 in both cases (topk_abn >= topk_nor).
     """
     T, n_nor = 32, 2
     mask = torch.ones(4, T)
-    # Case A
+    # Case A: abnormal half has mass -> sparsity on abn should be > 0
+    # topk_abn=0.5, topk_nor=0 -> relu(0 - 0.5 + 0) = 0 (rank = 0)
     s_a = torch.zeros(4, T)
     s_a[n_nor:] = 0.5
     loss_a = mil_ranking_loss(s_a, mask, n_nor, margin=0.0,
                               lam_sparse=8e-3, lam_smooth=0.0)
-    # Case B (flip normal/abnormal)
+    # Reference: rank=0, sparsity = 8e-3 * mean(norm(arr_abn, dim=0))
+    expected_a = _rtfm_sparsity_ref(s_a[n_nor:], 8e-3)
+    assert torch.allclose(loss_a, expected_a, atol=1e-6), (
+        f"loss_a={loss_a.item():.6f} != sparsity(abn)={expected_a.item():.6f} "
+        "(rank should be 0 with margin=0 and topk_abn>=topk_nor)"
+    )
+    assert loss_a.item() > 0, "sparsity on abn=0.5 must be positive"
+
+    # Case B: abnormal half is all-zero -> sparsity on abn should be exactly 0
+    # We also zero normal half so rank = relu(0 - 0 + 0) = 0 (isolate reg)
     s_b = torch.zeros(4, T)
-    s_b[:n_nor] = 0.5
+    # abnormal half remains zero; sparsity(0-tensor) == 0
     loss_b = mil_ranking_loss(s_b, mask, n_nor, margin=0.0,
                               lam_sparse=8e-3, lam_smooth=0.0)
-    assert loss_a.item() > loss_b.item(), (
-        f"regularizer-on-abnormal contract violated: "
-        f"loss_a (abn=0.5)={loss_a.item():.6f}, loss_b (nor=0.5)={loss_b.item():.6f}"
+    assert abs(loss_b.item()) < 1e-8, (
+        f"loss_b should be 0 when abnormal half is all-zero, got {loss_b.item():.6f} "
+        "(confirms regularizer ignores normal half)"
+    )
+
+    # Cross-check: giving normal half mass must NOT change loss (regularizer scope)
+    # Build s_c: same as s_b but with normal half = 0.5 (abn stays 0)
+    s_c = torch.zeros(4, T)
+    s_c[:n_nor] = 0.5  # normal mass; rank hinge with margin=0 = relu(0 - 0 + 0.5) = 0.5
+    loss_c = mil_ranking_loss(s_c, mask, n_nor, margin=0.0,
+                              lam_sparse=8e-3, lam_smooth=0.0)
+    # loss_c = rank(0.5) + sparsity(abn=0)=0 -> 0.5. Regularizer contribution is still 0.
+    # Same config with lam_sparse=0 should produce identical loss (sparsity on abn=0 adds 0).
+    loss_c_no_reg = mil_ranking_loss(s_c, mask, n_nor, margin=0.0,
+                                     lam_sparse=0.0, lam_smooth=0.0)
+    assert torch.allclose(loss_c, loss_c_no_reg, atol=1e-8), (
+        f"regularizer leaked into normal-half: "
+        f"with_reg={loss_c.item():.6f}, without_reg={loss_c_no_reg.item():.6f}"
     )
 
 
