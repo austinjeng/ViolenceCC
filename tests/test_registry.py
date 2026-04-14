@@ -19,8 +19,15 @@ def test_build_model_unknown_variant_raises():
         assert key in str(exc.value)
 
 
-def test_build_model_lazy_import_not_ready():
-    """Plans 04/05 have not yet landed — lazy imports should surface that clearly."""
-    # PLAN-04 REMOVES THIS
-    with pytest.raises(ModuleNotFoundError):
-        build_model("skeleton_only", skel_dim=256)
+def test_build_model_lazy_import_resolves():
+    """After Plan 04: skeleton_only, clip_only, late_fusion all resolve.
+    After Plan 05: gated_fusion also resolves.
+    This test confirms the lazy factory mechanism does not cache errors."""
+    # Should not raise:
+    from src.models.registry import build_model
+    m1 = build_model("skeleton_only", skel_dim=256)
+    m2 = build_model("clip_only", clip_dim=1024, proj_dim=512)
+    m3 = build_model("late_fusion", skel_dim=256, clip_dim=1024, proj_dim=512)
+    assert m1 is not None
+    assert m2 is not None
+    assert m3 is not None
