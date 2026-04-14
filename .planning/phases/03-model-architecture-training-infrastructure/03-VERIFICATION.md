@@ -1,16 +1,18 @@
 ---
 phase: 03-model-architecture-training-infrastructure
 verified: 2026-04-14T18:30:00Z
-status: human_needed
-score: 4/4 success criteria automated (SC1 uses synthetic data; real UCF run needs human)
+resolved: 2026-04-15T04:15:00Z
+status: passed
+score: 4/4 success criteria verified (automated + human-confirmed on real UCF)
 overrides_applied: 0
-human_verification:
-  - test: "Run `python src/train.py --config configs/skeleton_only.yaml` against real E:/features/ucf cached features (not synthetic tmp_path data)"
-    expected: "Completes without crashing; results/<run>/ contains best_model.pth, last_model.pth, train_log.csv, config_snapshot.json; best_model.pth corresponds to the min val_loss row in train_log.csv"
-    why_human: "Success Criterion #1 specifies 'on UCF-Crime cached features'. The automated test test_skeleton_only_trains runs against synthetic numpy arrays in tmp_path, not E:/features/ucf. The test validates the code path and artifact contract but not the real-data execution. One manual smoke run on real features is needed to fully satisfy SC1."
-  - test: "Fix and re-run to verify WR-01 correction: LR logged in CSV/wandb should reflect the LR used during that epoch, not the LR for the next epoch"
-    expected: "After swapping `lr = optimizer.param_groups[0]['lr']` to execute before `scheduler.step()` in src/train.py, the logged LR at epoch 0 should be the warmup start LR (~1e-6), not the epoch-1 value. The thesis-reported LR curves will then be accurate."
-    why_human: "WR-01 is a real instrumentation bug in src/train.py line 174-176 (scheduler.step() called before reading lr). Training correctness is unaffected, but the logged LR curve in train_log.csv and wandb is off by one epoch throughout. For thesis reporting, this must be fixed before Phase 4 produces final results. The fix is trivial (swap two lines) but requires a code change outside verification scope."
+human_verification_resolved:
+  - test: "Real UCF-Crime smoke run (SC1)"
+    result: "passed — run results/ucf_skeleton_only_42_20260415-041040/; 4/4 artifacts; monotone-descent loss; best_model.pth loads cleanly (8 tensors)"
+    root_cause_fix: "commit c42d38c — D-10 revised from zero-pad+mask to sample-with-replacement (RTFM/VadCLIP pattern). Original D-10 caused NaN loss via masked_fill(-inf) propagation through paired hinge when N<k=3 (41.2% of UCF videos)."
+  - test: "WR-01 LR-off-by-one fix"
+    result: "passed — commit 2656992; micro-smoke + real UCF CSV both show epoch-0 lr=1.00e-6 (warmup start)"
+nit_gaps:
+  - "WANDB_MODE=disabled does not suppress wandb first-run wizard prompt; defer to Phase 4 pre-flight"
 ---
 
 # Phase 3: Model Architecture & Training Infrastructure — Verification Report
