@@ -171,9 +171,9 @@ def main(argv=None) -> int:
             train_loss = train_one_epoch(
                 model, nor_loader, abn_loader, optimizer, device, cfg["train"])
             val_loss = validate(model, val_loader, device, cfg["train"])
+            lr = optimizer.param_groups[0]["lr"]
             scheduler.step()
 
-            lr = optimizer.param_groups[0]["lr"]
             csv_logger.log(
                 epoch=epoch,
                 train_loss=f"{train_loss:.6f}",
