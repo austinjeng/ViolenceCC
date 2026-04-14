@@ -1,0 +1,33 @@
+# configs/skeleton_only.yaml -- minimal smoke-ready config for Plan 06 tests
+# Plan 07 extends this with wandb block, full paths, and per-variant configs.
+seed: 42
+dataset: ucf
+
+paths:
+  skeleton_features: "E:/features/ucf/skeleton"
+  clip_features: "E:/features/ucf/clip"
+  splits_dir: "data/splits"
+  results_dir: "results"
+
+model:
+  variant: skeleton_only
+  skel_dim: 256
+  head_hidden: [128, 32]
+  dropout: 0.3
+
+data:
+  T: 32
+  batch_size: 16
+  num_workers: 0
+  pin_memory: false
+
+train:
+  lr: 1.0e-4
+  weight_decay: 1.0e-2
+  epochs: 50
+  warmup_epochs: 5
+  patience: 10
+  k_topk: 3
+  margin: 1.0
+  lam_sparse: 8.0e-3
+  lam_smooth: 8.0e-4
