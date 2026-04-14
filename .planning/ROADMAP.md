@@ -69,7 +69,7 @@ Plans:
 - [x] 03-04-PLAN.md — SkeletonProj + CLIPProj + LateFusion wrappers with named LNs (MOD-03/04/05/07)
 - [x] 03-05-PLAN.md — GatedFusion module with 3 named LNs + m1 gate init mitigation (MOD-06/07)
 - [x] 03-06-PLAN.md — Training loop: scheduler, early stopping, atomic checkpoint, CSV logger, src/train.py, bit-identical repro (TRN-01..04, TRN-06, C3, C5)
-- [ ] 03-07-PLAN.md — Config snapshot (TRN-05) + wandb mirror (D-13) + 4 variant YAMLs + e2e acceptance tests (TRN-05/06)
+- [x] 03-07-PLAN.md — Config snapshot (TRN-05) + wandb mirror (D-13) + 4 variant YAMLs + e2e acceptance tests (TRN-05/06)
 
 ### Phase 4: Baseline Evaluation & Main Results
 **Goal**: The evaluation harness is validated by RTFM reproduction, and the complete ablation table with statistical stability measures is ready for the thesis
