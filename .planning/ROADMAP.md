@@ -63,9 +63,9 @@ Plans:
   4. A config snapshot (JSON) is saved alongside every checkpoint, and re-running with `--config results/<run>/config_snapshot.json` reproduces bit-identical loss curves (confirmed by fixed seed)
 **Plans:** 7 plans
 Plans:
-- [ ] 03-01-PLAN.md — Foundation primitives (seed utility, MILHead, MODEL_REGISTRY skeleton, pytest scaffold, requirements pins)
-- [ ] 03-02-PLAN.md — MIL Ranking Loss (RTFM-exact sparsity+smoothness, masked top-k, MOD-01)
-- [ ] 03-03-PLAN.md — MILFeatureDataset + paired DataLoaders (D-04/D-09/D-10/D-12, MOD-02)
+- [x] 03-01-PLAN.md — Foundation primitives (seed utility, MILHead, MODEL_REGISTRY skeleton, pytest scaffold, requirements pins)
+- [x] 03-02-PLAN.md — MIL Ranking Loss (RTFM-exact sparsity+smoothness, masked top-k, MOD-01)
+- [x] 03-03-PLAN.md — MILFeatureDataset + paired DataLoaders (D-04/D-09/D-10/D-12, MOD-02)
 - [ ] 03-04-PLAN.md — SkeletonProj + CLIPProj + LateFusion wrappers with named LNs (MOD-03/04/05/07)
 - [ ] 03-05-PLAN.md — GatedFusion module with 3 named LNs + m1 gate init mitigation (MOD-06/07)
 - [ ] 03-06-PLAN.md — Training loop: scheduler, early stopping, atomic checkpoint, CSV logger, src/train.py, bit-identical repro (TRN-01..04, TRN-06, C3, C5)
