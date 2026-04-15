@@ -1,0 +1,50 @@
+# configs/rtfm_i3d.yaml
+# Phase 4 D-18 + D-20 + D-36: RTFM variant on XD-Violence I3D RGB features.
+# Serves as the EVAL-01 harness gate (RTFM published XD-I3D AP = 77.81%, +/-1%).
+# See RESEARCH.md Pattern 5 + Pitfall 3 for the batch_size=3 rationale.
+
+seed: 42
+dataset: xd_i3d
+
+paths:
+  i3d_features: "E:/i3d-features/i3d-features"
+  splits_dir: "data/splits"
+  results_dir: "results"
+
+model:
+  variant: rtfm_i3d
+  i3d_dim: 1024
+  head_hidden: [128, 32]
+  dropout: 0.3
+
+data:
+  T: 32
+  batch_size: 3          # Pitfall 3: 5-crop x 3 ~= 15 effective, preserving the
+                         # MIL k_topk=3 ratio from Phase 3 D-01. Can raise to 16
+                         # empirically if the RTFM gate passes without collapse.
+  num_workers: 4
+  pin_memory: true
+
+train:
+  lr: 1.0e-4             # TRN-01
+  weight_decay: 1.0e-2
+  epochs: 50
+  warmup_epochs: 5
+  patience: 10           # TRN-02
+  k_topk: 3              # Phase 3 D-01
+  margin: 1.0            # Phase 3 D-02
+  lam_sparse: 8.0e-3
+  lam_smooth: 8.0e-4
+
+wandb:
+  project: violencecc
+  mode: online           # set WANDB_MODE=disabled for CI / offline runs
+  tags: [phase4, rtfm_i3d, xd_i3d, i3d_rgb]
+
+# ----------------------------------------------------------------------------
+# Gate anchors (04-RESEARCH.md Assumption A1):
+#   primary: RTFM XD-I3D-RGB 77.81% AP (+/-1% -> 76.81%..78.81%)
+#   upper:   MGFN XD 80.11% AP (possibly VideoSwin; not vanilla I3D)
+# batch_size=3 per Pitfall 3 (5-crop inflation vs k_topk=3 ratio). Can be
+# raised to 16 empirically if the gate passes without MIL collapse.
+# ----------------------------------------------------------------------------
