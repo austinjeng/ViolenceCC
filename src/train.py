@@ -40,6 +40,9 @@ def parse_args(argv=None):
                     help="Override cfg['train']['epochs'] (for smoke tests)")
     ap.add_argument("--results-dir", type=str, default=None,
                     help="Override cfg['paths']['results_dir']")
+    ap.add_argument("--run-name", type=str, default=None,
+                    help="Override the default run_name() value "
+                         "(Phase 4 D-30: deterministic dirs for run_ablations.py)")
     return ap.parse_args(argv)
 
 
@@ -145,8 +148,9 @@ def main(argv=None) -> int:
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    # Run dir (D-14)
-    run_dir = Path(cfg["paths"]["results_dir"]) / run_name(cfg)
+    # Run dir (D-14 default timestamped; Phase 4 D-30 --run-name override)
+    run_dir_name = args.run_name if args.run_name else run_name(cfg)
+    run_dir = Path(cfg["paths"]["results_dir"]) / run_dir_name
     run_dir.mkdir(parents=True, exist_ok=True)
     # TRN-05: full snapshot (git SHA + pip freeze + env + resolved cfg) replaces
     # the minimal config.yaml copy from Plan 06.

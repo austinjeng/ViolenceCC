@@ -8,6 +8,11 @@ RESEARCH.md 9.2 contract:
   id=run_dir.name                  stable ID for crash-resume
   resume='allow'                   picks up from last logged step if reinitialized
   define_metric('train/*', step_metric='epoch')  aligns curves on epoch axis
+
+Phase 4 D-40: if wandb.init raises a wandb.errors.Error on the first call
+(auth failure, network hiccup), re-init with mode='offline' so training
+continues and metrics land in a local wandb cache. The CSV logger remains
+the source of truth for thesis tables.
 """
 from __future__ import annotations
 
@@ -39,6 +44,11 @@ class WandbLogger:
             os.environ.get("VIOLENCECC_WANDB_ENTITY")
             or wcfg.get("entity")
         )
+        # D-40: catch wandb.errors.Error specifically so auth/network failures
+        # trigger the offline fallback. Other exceptions fall through to the
+        # silent noop branch below. getattr(..., "Error", Exception) keeps the
+        # handler working against wandb versions without a stable Error class.
+        _WandbErr = getattr(getattr(wandb, "errors", None), "Error", Exception)
         try:
             self.run = wandb.init(
                 project=wcfg.get("project", "violencecc"),
@@ -51,9 +61,30 @@ class WandbLogger:
                 dir=str(run_dir),
                 tags=wcfg.get("tags", []),
             )
+        except _WandbErr as exc:
+            # D-40: auth or network failure -> re-init with mode="offline",
+            # print a diagnostic the runner picks up via stdout capture.
+            try:
+                self.run = wandb.init(
+                    project=wcfg.get("project", "violencecc"),
+                    mode="offline",
+                    id=run_id,
+                    resume="allow",
+                    name=run_id,
+                    config=cfg,
+                    dir=str(run_dir),
+                    tags=wcfg.get("tags", []),
+                )
+                print(
+                    f"[wandb] offline fallback after {type(exc).__name__}: {exc}",
+                    flush=True,
+                )
+            except Exception:
+                self.run = None
+            return
         except Exception:
-            # Any wandb-side initialization failure (network hiccup, login,
-            # directory permissions) must not halt training. Degrade to noop.
+            # Any other wandb-side init failure (directory permissions, etc.)
+            # must not halt training. Degrade to noop.
             self.run = None
             return
 
