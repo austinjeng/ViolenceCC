@@ -13,7 +13,7 @@
 - [x] **Phase 1: Environment & Project Foundation** - Three conda envs operational, CTR-GCN weights verified, directory scaffold in place (completed 2026-03-31)
 - [ ] **Phase 2: Feature Extraction Pipeline** - Skeleton and CLIP features fully extracted, aligned, and cached for both datasets
 - [ ] **Phase 3: Model Architecture & Training Infrastructure** - All model variants built, training loop operational, reproducibility hardened
-- [ ] **Phase 4: Baseline Evaluation & Main Results** - RTFM gate passed, all fusion models evaluated on UCF-Crime and XD-Violence, ablation table complete
+- [ ] **Phase 4: Baseline Evaluation & Main Results** - RTFM gate passed, UCF-Crime fusion models evaluated, ablation table complete (UCF-only per D-01)
 - [ ] **Phase 5: TTA Infrastructure & Corruption Experiments** - UCF-Crime-C generated, TENT-style and SAR-style TTA evaluated across all 20 corruption conditions
 - [ ] **Phase 6: Analysis & Visualization** - Temporal curve plots, skeleton overlays, and per-category breakdowns ready for thesis
 
@@ -72,16 +72,41 @@ Plans:
 - [x] 03-07-PLAN.md — Config snapshot (TRN-05) + wandb mirror (D-13) + 4 variant YAMLs + e2e acceptance tests (TRN-05/06)
 
 ### Phase 4: Baseline Evaluation & Main Results
-**Goal**: The evaluation harness is validated by RTFM reproduction, and the complete ablation table with statistical stability measures is ready for the thesis
+**Goal**: UCF-Crime evaluation harness validated by RTFM reproduction on XD-Violence I3D (D-03 anchor retarget), and the UCF ablation table with statistical stability measures is ready for the thesis. XD-Violence main results move to Phase 4b per D-01.
 **Depends on**: Phase 3
 **Requirements**: EVAL-01, EVAL-02, EVAL-03, EVAL-04, EVAL-05
 **Success Criteria** (what must be TRUE):
-  1. RTFM on UCF-Crime with I3D features reports frame-level AUC within ±1% of 84.30%, confirming the evaluation harness is correct (C4 resolved)
-  2. Gated Fusion achieves frame-level AUC >= 83% on UCF-Crime official test set and AP >= 80% on XD-Violence official test set, reported by `evaluate.py` with no test set used during training
-  3. An ablation table exists with results for all 6 model variants (Skeleton-Only, CLIP-Only, Late Fusion, Gated Fusion) and 2 pooling/aggregation ablations, all run on the same train/val/test split
-  4. Gated Fusion AUC/AP on both datasets is reported as mean +/- std over 3 independent seeds, and the standard deviation is below 0.5%
-  5. Per-category breakdown (UCF-Crime: Fighting+Assault; XD-Violence: Fighting+Abuse+Riot) is computed and shows higher AUC/AP on violence-specific subsets versus full test set
-**Plans**: TBD
+  1. RTFM on XD-Violence I3D RGB features reports frame-level AP within ±1% of 77.81% (D-03 retarget from UCF→XD; anchor: RTFM-XD; alt anchor: MGFN 80.11%), confirming the evaluation harness is correct (C4 resolved)
+  2. Gated Fusion achieves frame-level AUC >= 83% on UCF-Crime official test set, reported by `evaluate.py` with no test set used during training
+  3. An ablation table exists with results for all 6 model variants (Skeleton-Only, CLIP-Only, Late Fusion, Gated Fusion) and 2 pooling/aggregation ablations on UCF, all run on the same train/val/test split
+  4. Gated Fusion AUC on UCF is reported as mean +/- std over 3 independent seeds ({42, 123, 2024}), and the standard deviation is below 0.5%
+  5. Per-category breakdown (UCF-Crime: Fighting+Assault) is computed and shows higher AUC on violence-specific subsets versus full test set
+**Plans:** 7 plans
+Plans:
+- [ ] 04-01-PLAN.md — Wave 0 fixtures + snippet_to_frame + ucf_annotations parser (D-04, D-14..D-17, C4)
+- [ ] 04-02-PLAN.md — test_loader.py (C3 guards) + evaluate.py CLI + metrics.py + config_hash/checkpoint_sha/git_sha (D-06..D-13, D-31)
+- [ ] 04-03-PLAN.md — RTFMI3D model + I3DFeatureDataset (5-crop) + rtfm_i3d.yaml + MODEL_REGISTRY entry (D-18..D-20, D-36)
+- [ ] 04-04-PLAN.md — Pooling re-extraction flags + skel_agg loader + 2 ablation YAMLs + verify_pooling_caches.py (D-21..D-25, D-37)
+- [ ] 04-05-PLAN.md — scripts/run_ablations.py + wandb_preflight + csv_logger.results_index_append + train.py --run-name (D-26..D-34, D-39..D-41)
+- [ ] 04-06-PLAN.md — Empirical execution: RTFM gate, UCF main queue, pooling ablations, 3-seed stability, 6 HUMAN-UAT items (non-autonomous)
+- [ ] 04-07-PLAN.md — Insert Phase 4b entry into ROADMAP.md for XD main results (gated on XD feature completion)
+
+### Phase 4b: XD-Violence Main Results
+**Goal**: Reproduce Phase 4's complete ablation table on XD-Violence — Gated Fusion + pooling ablations + 3-seed stability + per-category breakdown — using the dataset-portable Phase 4 code (evaluate.py, run_ablations.py, extractors with flags).
+**Depends on**: Phase 4 (code artifacts), Phase 2 DATA-10 (XD skeleton+CLIP extraction complete at E:/features/xd/)
+**Activation criterion**: E:/features/xd/skeleton/ and E:/features/xd/clip/ each contain >= 4500 .npy files. Per D-02, Phase 4 does not wait on or monitor this; resume planning with `/gsd-plan-phase 4b` when features land.
+**Requirements**: EVAL-02, EVAL-03, EVAL-04, EVAL-05 (no new requirements; EVAL-01 RTFM gate already closed in Phase 4 per D-03)
+**Success Criteria** (what must be TRUE):
+  1. Gated Fusion achieves frame-level AP >= 80% on XD-Violence official test set, reported by `evaluate.py` with no test set used during training
+  2. An ablation table exists with results for all 6 XD model variants (Skeleton-Only, CLIP-Only, Late Fusion, Gated Fusion) and 2 pooling/aggregation ablations, all run on the same XD train/val/test split
+  3. Gated Fusion AP on XD-Violence is reported as mean +/- std over 3 independent seeds ({42, 123, 2024}), and the standard deviation is below 0.5%
+  4. Per-category breakdown (XD-Violence: Fighting+Abuse+Riot) is computed and shows higher AP on violence-specific subsets versus full test set
+**Deferred from Phase 4** (now active):
+  - XD skeleton 2-person aggregation re-extraction (`--keep-persons` on XD in extract_ctrgcn.py)
+  - XD CLIP mean-only re-extraction (`--pool=mean` on XD in extract_clip.py)
+  - XD pooling ablation YAMLs (`configs/gated_fusion_xd_2person.yaml`, `configs/gated_fusion_xd_clip_mean.yaml` — or reuse UCF YAMLs with dataset key swap)
+  - XD ablation orchestration queue in `scripts/run_ablations.py` (add `phase4b_main`, `phase4b_pooling`, `phase4b_seeds` sibling queues)
+**Plans**: TBD (plan once XD features land)
 
 ### Phase 5: TTA Infrastructure & Corruption Experiments
 **Goal**: The UCF-Crime-C corruption benchmark is constructed, and TENT-style and SAR-style TTA results across all 20 conditions are logged and ready for analysis
@@ -113,7 +138,8 @@ Plans:
 | 1. Environment & Project Foundation | 3/3 | Complete   | 2026-03-31 |
 | 2. Feature Extraction Pipeline | 1/4 | In Progress|  |
 | 3. Model Architecture & Training Infrastructure | 0/7 | Planned | - |
-| 4. Baseline Evaluation & Main Results | 0/? | Not started | - |
+| 4. Baseline Evaluation & Main Results | 0/7 | Planned | - |
+| 4b. XD-Violence Main Results | 0/? | Blocked on XD features | - |
 | 5. TTA Infrastructure & Corruption Experiments | 0/? | Not started | - |
 | 6. Analysis & Visualization | 0/? | Not started | - |
 
@@ -169,4 +195,4 @@ Plans:
 ---
 
 *Roadmap created: 2026-03-31*
-*Last updated: 2026-04-03 after Phase 2 planning*
+*Last updated: 2026-04-15 after Phase 4 planning (7 plans + Phase 4b entry per D-01)*
