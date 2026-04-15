@@ -35,5 +35,5 @@ train:
 
 wandb:
   project: violencecc
-  mode: online
+  mode: disabled          # Rule 3 fallback: wandb preflight exit 2 (no API key); run CSV-only per plan 04-06 Step A Option C
   tags: [phase3, clip_only, ucf]
