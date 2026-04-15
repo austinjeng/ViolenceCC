@@ -419,8 +419,11 @@ def run_extraction(
                     video_id, pickle_path, boundary_path, models,
                     device=device, keep_persons=keep_persons,
                 )
-                # Atomic write: tmp then rename
-                tmp_path = output_dir / f"{video_id}.npy.tmp"
+                # Atomic write: tmp then rename.
+                # Name tmp as "{id}.tmp.npy" (not "{id}.npy.tmp") because np.save
+                # auto-appends ".npy" to paths that don't already end in ".npy",
+                # which would produce "{id}.npy.tmp.npy" and break the rename.
+                tmp_path = output_dir / f"{video_id}.tmp.npy"
                 np.save(str(tmp_path), feats)
                 tmp_path.replace(output_path)
 
