@@ -118,8 +118,8 @@ Plans:
 Plans:
 - [x] 04b-01-PLAN.md — Wu annotation parser + `data/annotations/xd_temporal.txt` + `tests/test_xd_annotations.py` (D-07, D-10)
 - [x] 04b-02-PLAN.md — `build_dataloaders_i3d` + `collate_i3d_train` + `tests/test_loaders_i3d.py` (D-04, D-05, D-06; Pitfalls 1/4/7; Open Questions 1/2)
-- [ ] 04b-03-PLAN.md — `train_one_epoch_i3d` + `validate_i3d` + `main()` dispatch branch + `tests/test_train_i3d.py` (D-04; D-12 bag-size audit)
-- [ ] 04b-04-PLAN.md — `src/evaluate.py::_build_frame_arrays` xd_i3d branch rewrite + `tests/test_evaluate_xd_i3d.py` (D-08, D-09, D-10)
+- [x] 04b-03-PLAN.md — `train_one_epoch_i3d` + `validate_i3d` + `main()` dispatch branch + `tests/test_train_i3d.py` (D-04; D-12 bag-size audit)
+- [x] 04b-04-PLAN.md — `src/evaluate.py::_build_frame_arrays` xd_i3d branch rewrite + `tests/test_evaluate_xd_i3d.py` (D-08, D-09, D-10)
 - [ ] 04b-05-PLAN.md — Smoke test (D-16) + full `rtfm_gate` queue run + D-12 diagnostic cascade + ROADMAP/REQUIREMENTS split per D-01 + `04b-05-SUMMARY.md` (HUMAN-UAT gate)
 
 ### Phase 5: TTA Infrastructure & Corruption Experiments
