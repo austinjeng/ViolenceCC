@@ -211,27 +211,38 @@ def prepare_stream_inputs(kp_snippet: np.ndarray, sc_snippet: np.ndarray) -> dic
 # ---------------------------------------------------------------------------
 
 def extract_stream_feature(
-    model: torch.nn.Module, x_np: np.ndarray, device: str = "cuda"
+    model: torch.nn.Module, x_np: np.ndarray, device: str = "cuda",
+    keep_persons: bool = False,
 ) -> torch.Tensor:
     """
-    Run a single CTR-GCN stream backbone forward pass and pool to [1, 256].
+    Run a single CTR-GCN stream backbone forward pass and pool to [1, 256]
+    (M-pool default) or [M=2, 256] (Phase 4 D-21 per-person).
 
     Args:
-        model:  Loaded CTR-GCN model in eval mode.
-        x_np:   [M=2, T=64, V=17, C=3] float32 numpy array.
-        device: 'cuda' or 'cpu'.
+        model:         Loaded CTR-GCN model in eval mode.
+        x_np:          [M=2, T=64, V=17, C=3] float32 numpy array.
+        device:        'cuda' or 'cpu'.
+        keep_persons:  D-21: when True, emit [M, 256] by pooling ONLY T'/V'
+                       (preserving per-person features). Default False =
+                       legacy M-pool producing [1, 256].
 
     Returns:
-        [1, 256] float32 tensor (on CPU).
+        [1, 256] float32 tensor (on CPU) when keep_persons=False (default).
+        [M=2, 256] float32 tensor (on CPU) when keep_persons=True.
 
     CTR-GCN input shape: (N, M, T, V, C) — per test_ctrgcn_smoke.py notes.
-    Backbone output: (N, M, C_out, T', V') — pool mean over M, T', V' -> (N, 256).
+    Backbone output: (N, M, C_out, T', V'). Default: mean over M, T', V' -> (N, 256).
+    keep_persons: mean over T', V' only -> (M, 256) after squeeze(0).
     """
     # Add batch dim: [M, T, V, C] -> [1, M, T, V, C]
     x = torch.from_numpy(x_np).unsqueeze(0).float().to(device)
     with torch.no_grad():
         out = model.backbone(x)   # [1, M, 256, T', V']
-        feat = out.mean(dim=[1, 3, 4])  # [1, 256]
+        if keep_persons:
+            # D-21: preserve M dim; pool only spatial (T', V').
+            feat = out.mean(dim=[3, 4]).squeeze(0)  # [M=2, 256]
+        else:
+            feat = out.mean(dim=[1, 3, 4])          # [1, 256]   (legacy default)
     return feat.cpu()
 
 
@@ -245,12 +256,14 @@ def extract_video_features(
     boundary_path: pathlib.Path,
     models: dict,
     device: str = "cuda",
+    keep_persons: bool = False,
 ) -> np.ndarray:
     """
     Extract 256-d CTR-GCN features for all snippets of one video.
 
     Returns:
-        ndarray [N_snippets, 256] float32
+        ndarray [N_snippets, 256] float32 when keep_persons=False (default).
+        ndarray [N_snippets, 2, 256] float32 when keep_persons=True (D-21).
 
     Raises on unrecoverable errors (caller handles try/except).
     """
@@ -293,17 +306,22 @@ def extract_video_features(
         stream_inputs = prepare_stream_inputs(kp_snip, sc_snip)
 
         # Forward pass through each stream
-        feat_j  = extract_stream_feature(models["j"],  stream_inputs["j"],  device)   # [1, 256]
-        feat_b  = extract_stream_feature(models["b"],  stream_inputs["b"],  device)   # [1, 256]
-        feat_jm = extract_stream_feature(models["jm"], stream_inputs["jm"], device)   # [1, 256]
-        feat_bm = extract_stream_feature(models["bm"], stream_inputs["bm"], device)   # [1, 256]
+        feat_j  = extract_stream_feature(models["j"],  stream_inputs["j"],  device, keep_persons=keep_persons)
+        feat_b  = extract_stream_feature(models["b"],  stream_inputs["b"],  device, keep_persons=keep_persons)
+        feat_jm = extract_stream_feature(models["jm"], stream_inputs["jm"], device, keep_persons=keep_persons)
+        feat_bm = extract_stream_feature(models["bm"], stream_inputs["bm"], device, keep_persons=keep_persons)
 
         # Weighted average: (1.0*j + 1.0*b + 0.5*jm + 0.5*bm) / 3.0  (DATA-05, D-01)
-        feat = (1.0 * feat_j + 1.0 * feat_b + 0.5 * feat_jm + 0.5 * feat_bm) / 3.0  # [1, 256]
+        # Shape: [1, 256] in legacy mode; [M=2, 256] when keep_persons=True.
+        feat = (1.0 * feat_j + 1.0 * feat_b + 0.5 * feat_jm + 0.5 * feat_bm) / 3.0
         snippet_feats.append(feat)
 
-    # Stack all snippets: [N_snippets, 256]
-    all_feats = torch.cat(snippet_feats, dim=0)   # [N_snippets, 256]
+    if keep_persons:
+        # Each feat is [M=2, 256]; stack to [N_snippets, 2, 256] (D-21).
+        all_feats = torch.stack(snippet_feats, dim=0)
+    else:
+        # Each feat is [1, 256]; concat to [N_snippets, 256] (legacy default).
+        all_feats = torch.cat(snippet_feats, dim=0)
     return all_feats.numpy().astype(np.float32)
 
 
@@ -311,9 +329,21 @@ def extract_video_features(
 # Main extraction loop
 # ---------------------------------------------------------------------------
 
-def run_extraction(dataset: str, split: str, limit: int = None, device: str = "cuda") -> None:
+def run_extraction(
+    dataset: str,
+    split: str,
+    limit: int = None,
+    device: str = "cuda",
+    keep_persons: bool = False,
+) -> None:
     """
     Main loop: extract CTR-GCN features for all videos in a dataset split.
+
+    Args:
+        dataset, split, limit, device: see argparse below.
+        keep_persons: Phase 4 D-21 — emit [N, 2, 256] per-person tensor to
+                      <FEATURE_ROOT>/<dataset>/skeleton_2person/ instead of
+                      the legacy [N, 256] M-pool to skeleton/.
     """
     # Read video IDs from split file
     split_file = SPLITS_DIR / f"{dataset}_{split}.txt"
@@ -331,10 +361,13 @@ def run_extraction(dataset: str, split: str, limit: int = None, device: str = "c
 
     logger.info(f"Processing {len(video_ids)} videos from {dataset}/{split}.")
 
-    # Setup output directories
-    output_dir = FEATURE_ROOT / dataset / "skeleton"
+    # Setup output directories — D-24 sibling dir layout when --keep-persons
+    out_subdir = "skeleton_2person" if keep_persons else "skeleton"
+    output_dir = FEATURE_ROOT / dataset / out_subdir
     output_dir.mkdir(parents=True, exist_ok=True)
     logger.info(f"Output directory: {output_dir}")
+    if keep_persons:
+        logger.info("D-21 mode: emitting [N, 2, 256] per-person tensors.")
 
     # Error log
     error_log_path = output_dir / "errors.log"
@@ -350,9 +383,9 @@ def run_extraction(dataset: str, split: str, limit: int = None, device: str = "c
         for video_id in video_ids:
             pbar.set_description(f"ctrgcn/{dataset}: {video_id[:40]}")
 
-            # Skip-if-exists resume logic (D-14)
+            # Skip-if-exists resume logic (D-14) — validate file is non-trivial
             output_path = output_dir / f"{video_id}.npy"
-            if output_path.exists():
+            if output_path.exists() and output_path.stat().st_size > 128:
                 skipped += 1
                 pbar.update(1)
                 continue
@@ -383,13 +416,23 @@ def run_extraction(dataset: str, split: str, limit: int = None, device: str = "c
             # Per-video error handling (D-15)
             try:
                 feats = extract_video_features(
-                    video_id, pickle_path, boundary_path, models, device=device
+                    video_id, pickle_path, boundary_path, models,
+                    device=device, keep_persons=keep_persons,
                 )
-                np.save(str(output_path), feats)
+                # Atomic write: tmp then rename
+                tmp_path = output_dir / f"{video_id}.npy.tmp"
+                np.save(str(tmp_path), feats)
+                tmp_path.replace(output_path)
 
-                # Validation: check shape and dtype
-                assert feats.ndim == 2, f"Expected 2D array, got {feats.ndim}D"
-                assert feats.shape[1] == 256, f"Expected 256-d, got {feats.shape[1]}"
+                # Validation: check shape and dtype per keep_persons mode.
+                if keep_persons:
+                    assert feats.ndim == 3, f"Expected 3D array, got {feats.ndim}D"
+                    assert feats.shape[1] == 2 and feats.shape[2] == 256, (
+                        f"Expected [N, 2, 256], got {feats.shape} for {video_id}"
+                    )
+                else:
+                    assert feats.ndim == 2, f"Expected 2D array, got {feats.ndim}D"
+                    assert feats.shape[1] == 256, f"Expected 256-d, got {feats.shape[1]}"
                 assert feats.dtype == np.float32, f"Expected float32, got {feats.dtype}"
                 assert not np.any(np.isnan(feats)), "NaN detected in output features"
                 assert not np.any(np.isinf(feats)), "Inf detected in output features"
@@ -416,20 +459,22 @@ def run_extraction(dataset: str, split: str, limit: int = None, device: str = "c
 # Post-run validation
 # ---------------------------------------------------------------------------
 
-def validate_sample_outputs(dataset: str, video_ids: list) -> None:
+def validate_sample_outputs(dataset: str, video_ids: list, keep_persons: bool = False) -> None:
     """
     Validate the output .npy files for a small set of videos.
 
     Checks:
         - .npy file exists
-        - Shape [N_snippets, 256] with N > 0
+        - Shape [N_snippets, 256] (legacy) or [N_snippets, 2, 256] (keep_persons)
+        - N > 0
         - dtype float32
         - No NaN or Inf values
         - N_snippets matches the boundary JSON (alignment sanity)
     """
     logger.info("Validating sample outputs...")
     all_ok = True
-    output_dir = FEATURE_ROOT / dataset / "skeleton"
+    subdir = "skeleton_2person" if keep_persons else "skeleton"
+    output_dir = FEATURE_ROOT / dataset / subdir
 
     for video_id in video_ids:
         npy_path = output_dir / f"{video_id}.npy"
@@ -442,10 +487,21 @@ def validate_sample_outputs(dataset: str, video_ids: list) -> None:
 
         feats = np.load(str(npy_path))
 
-        # Shape check
-        if feats.ndim != 2 or feats.shape[1] != 256:
+        # Shape check — branches on keep_persons mode.
+        if keep_persons:
+            shape_ok = (
+                feats.ndim == 3
+                and feats.shape[1] == 2
+                and feats.shape[2] == 256
+            )
+            expected_label = "[N, 2, 256]"
+        else:
+            shape_ok = feats.ndim == 2 and feats.shape[1] == 256
+            expected_label = "[N, 256]"
+
+        if not shape_ok:
             logger.error(
-                f"VALIDATE FAIL: {video_id} shape {feats.shape} (expected [N, 256])"
+                f"VALIDATE FAIL: {video_id} shape {feats.shape} (expected {expected_label})"
             )
             all_ok = False
         elif feats.shape[0] == 0:
@@ -519,9 +575,24 @@ def main() -> None:
         default="cuda",
         help="Torch device: 'cuda' or 'cpu' (default: cuda).",
     )
+    parser.add_argument(
+        "--keep-persons",
+        action="store_true",
+        help=(
+            "D-21: emit [N, 2, 256] per-person tensor instead of M-pooled "
+            "[N, 256]. Output goes to <FEATURE_ROOT>/<dataset>/skeleton_2person/ "
+            "instead of <FEATURE_ROOT>/<dataset>/skeleton/."
+        ),
+    )
     args = parser.parse_args()
 
-    run_extraction(args.dataset, args.split, limit=args.limit, device=args.device)
+    run_extraction(
+        args.dataset,
+        args.split,
+        limit=args.limit,
+        device=args.device,
+        keep_persons=args.keep_persons,
+    )
 
     # Run validation on sample videos if --limit was used (smoke test)
     if args.limit is not None:
@@ -529,7 +600,7 @@ def main() -> None:
         with open(split_file) as f:
             video_ids_all = [line.strip() for line in f if line.strip()]
         sample_ids = video_ids_all[: min(args.limit, len(video_ids_all))]
-        validate_sample_outputs(args.dataset, sample_ids)
+        validate_sample_outputs(args.dataset, sample_ids, keep_persons=args.keep_persons)
 
 
 if __name__ == "__main__":

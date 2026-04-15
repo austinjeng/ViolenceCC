@@ -110,11 +110,19 @@ class MILFeatureDataset(Dataset):
         mode: str = "train",
         seed: int = 42,
         dataset: str = "ucf",
+        skel_agg: str = "none",
     ) -> None:
         if mode not in ("train", "val", "test"):
             raise ValueError(f"mode must be train|val|test, got {mode!r}")
         if dataset not in _LABEL_PARSERS:
             raise ValueError(f"dataset must be ucf|xd, got {dataset!r}")
+        # Phase 4 D-21: skel_agg selects how a 3D [N, 2, 256] 2-person cache
+        # collapses to [N, 256] or [N, 512] at load time. 'none' is the default
+        # and is REQUIRED when the cache is already 2D ([N, 256] M-pool).
+        if skel_agg not in ("none", "concat", "max", "mean"):
+            raise ValueError(
+                f"skel_agg must be none|concat|max|mean, got {skel_agg!r}"
+            )
 
         self.skel_dir = Path(skel_dir)
         self.clip_dir = Path(clip_dir)
@@ -122,6 +130,7 @@ class MILFeatureDataset(Dataset):
         self.mode = mode
         self.seed = seed
         self.dataset = dataset
+        self.skel_agg = skel_agg
         self._label_fn = _LABEL_PARSERS[dataset]
 
         # Load split + filter out missing / zero-snippet videos (D-10).
@@ -162,6 +171,21 @@ class MILFeatureDataset(Dataset):
         label = self.labels[vid]
         skel = np.load(self.skel_dir / f"{vid}.npy")
         clip = np.load(self.clip_dir / f"{vid}.npy")
+        # Phase 4 D-21: aggregate 2-person cache to 2D at load time.
+        # The cache produced by scripts/extract_ctrgcn.py --keep-persons is
+        # [N, 2, 256]; the loader contract downstream consumes [N, D].
+        if skel.ndim == 3 and skel.shape[1] == 2:
+            if self.skel_agg == "concat":
+                skel = skel.reshape(skel.shape[0], -1)  # [N, 512]
+            elif self.skel_agg == "max":
+                skel = skel.max(axis=1)                 # [N, 256]
+            elif self.skel_agg == "mean":
+                skel = skel.mean(axis=1)                # [N, 256]
+            else:
+                raise ValueError(
+                    f"2-person cache at shape {skel.shape} requires "
+                    f"cfg.data.skel_agg (got {self.skel_agg!r}) for video {vid}"
+                )
         assert skel.shape[0] == clip.shape[0], (
             f"Alignment mismatch for {vid}: skel N={skel.shape[0]} "
             f"vs clip N={clip.shape[0]} (DATA-08 must have caught this)"

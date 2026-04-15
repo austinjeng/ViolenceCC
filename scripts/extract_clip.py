@@ -262,9 +262,10 @@ def extract_clip_snippet(
     preprocess,
     batch_size: int = 64,
     device: str = "cuda",
+    pool: str = "mean_max",
 ) -> np.ndarray:
     """
-    Extract CLIP features for a list of frames and apply mean+max pooling.
+    Extract CLIP features for a list of frames and apply pooling.
 
     Args:
         frames:     List of PIL Images sampled from one snippet.
@@ -272,15 +273,18 @@ def extract_clip_snippet(
         preprocess: open_clip preprocessing transform.
         batch_size: Number of frames per GPU batch.
         device:     'cuda' or 'cpu'.
+        pool:       D-23 — "mean_max" (default, [1024]) or "mean" ([512]).
 
     Returns:
-        [1024] float32 numpy array (mean[512] + max[512] concatenated).
-        Returns zeros if no frames are available (edge case).
+        [1024] float32 numpy array (mean[512] + max[512] concatenated) when
+        pool='mean_max' (default), or [512] when pool='mean'.
+        Returns zeros of the correct dimension if no frames are available.
     """
+    expected_dim = 512 if pool == "mean" else 1024
     if len(frames) == 0:
         # Edge case: no frames sampled in this snippet range
         logger.debug("No frames for snippet — returning zero feature vector.")
-        return np.zeros(1024, dtype=np.float32)
+        return np.zeros(expected_dim, dtype=np.float32)
 
     # Preprocess all frames into a tensor stack
     tensors = torch.stack([preprocess(f) for f in frames])  # [N, 3, 224, 224]
@@ -296,10 +300,13 @@ def extract_clip_snippet(
     embeddings = torch.cat(all_feats, dim=0)   # [N_frames_in_snippet, 512]
 
     mean_feat = embeddings.mean(dim=0)          # [512]
-    max_feat = embeddings.max(dim=0).values     # [512]
-    concat = torch.cat([mean_feat, max_feat], dim=0)  # [1024]
+    if pool == "mean":
+        feat_vec = mean_feat                     # [512]
+    else:
+        max_feat = embeddings.max(dim=0).values  # [512]
+        feat_vec = torch.cat([mean_feat, max_feat], dim=0)  # [1024]
 
-    return concat.numpy().astype(np.float32)
+    return feat_vec.numpy().astype(np.float32)
 
 
 # ---------------------------------------------------------------------------
@@ -316,11 +323,15 @@ def extract_video_clip_features(
     batch_size: int = 64,
     device: str = "cuda",
     ucf_video_map: dict = None,
+    pool: str = "mean_max",
 ) -> np.ndarray:
     """
-    Extract CLIP [N_snippets, 1024] features for one video.
+    Extract CLIP [N_snippets, D] features for one video.
 
-    Returns ndarray [N_snippets, 1024] float32.
+    D = 1024 when pool='mean_max' (legacy default); D = 512 when pool='mean'
+    (D-23 ablation).
+
+    Returns ndarray [N_snippets, D] float32.
     Raises on unrecoverable error.
     """
     # Load snippet boundaries (shared contract with CTR-GCN script)
@@ -345,7 +356,7 @@ def extract_video_clip_features(
             )
         for start, end in snippet_ranges:
             frames = load_ucf_snippet_frames_pil(png_list, start, end, UCF_SAMPLE_EVERY)
-            feat = extract_clip_snippet(frames, model, preprocess, batch_size, device)
+            feat = extract_clip_snippet(frames, model, preprocess, batch_size, device, pool=pool)
             snippet_feats.append(feat)
 
     else:
@@ -362,16 +373,18 @@ def extract_video_clip_features(
 
         for start, end in snippet_ranges:
             frames = load_xd_snippet_frames_pil(video_path, start, end, fps)
-            feat = extract_clip_snippet(frames, model, preprocess, batch_size, device)
+            feat = extract_clip_snippet(frames, model, preprocess, batch_size, device, pool=pool)
             snippet_feats.append(feat)
 
-    # Stack all snippets -> [N_snippets, 1024]
-    all_feats = np.stack(snippet_feats, axis=0)  # [N_snippets, 1024]
+    # Stack all snippets -> [N_snippets, D]
+    all_feats = np.stack(snippet_feats, axis=0)
 
-    # Assertion: verify output dimension (Pitfall 5 guard — must NOT be 512-d)
-    assert all_feats.shape[1] == 1024, (
-        f"Expected 1024-d CLIP features, got {all_feats.shape[1]}. "
-        f"Cache stores mean+max concatenation before Phase 3 projection."
+    # Assertion: verify output dimension matches the requested pool mode
+    # (Pitfall 5 guard — default 1024-d is mean+max concat; 512-d is mean-only).
+    expected_dim = 512 if pool == "mean" else 1024
+    assert all_feats.shape[1] == expected_dim, (
+        f"Expected {expected_dim}-d CLIP features (pool={pool}), got {all_feats.shape[1]}. "
+        f"Cache stores pre-Phase-3-projection features."
     )
 
     return all_feats.astype(np.float32)
@@ -387,9 +400,15 @@ def run_extraction(
     limit: int = None,
     batch_size: int = 64,
     device: str = "cuda",
+    pool: str = "mean_max",
 ) -> None:
     """
     Main loop: extract CLIP features for all videos in a dataset split.
+
+    Args:
+        dataset, split, limit, batch_size, device: see argparse below.
+        pool: D-23 — "mean_max" (default, writes to clip/) or "mean"
+              (writes to clip_mean/, [N, 512] shape).
     """
     # Read video IDs from split file
     split_file = SPLITS_DIR / f"{dataset}_{split}.txt"
@@ -407,10 +426,13 @@ def run_extraction(
 
     logger.info(f"Processing {len(video_ids)} videos from {dataset}/{split}.")
 
-    # Setup output directory
-    output_dir = FEATURE_ROOT / dataset / "clip"
+    # Setup output directory — D-24 sibling dir when pool=mean.
+    out_subdir = "clip_mean" if pool == "mean" else "clip"
+    output_dir = FEATURE_ROOT / dataset / out_subdir
     output_dir.mkdir(parents=True, exist_ok=True)
     logger.info(f"Output directory: {output_dir}")
+    if pool == "mean":
+        logger.info("D-23 mode: emitting [N, 512] mean-only features to clip_mean/.")
 
     # Error log
     error_log_path = output_dir / "errors.log"
@@ -431,9 +453,9 @@ def run_extraction(
         for video_id in video_ids:
             pbar.set_description(f"clip/{dataset}: {video_id[:40]}")
 
-            # Skip-if-exists resume logic (D-14)
+            # Skip-if-exists resume logic (D-14) — validate file is non-trivial
             output_path = output_dir / f"{video_id}.npy"
-            if output_path.exists():
+            if output_path.exists() and output_path.stat().st_size > 128:
                 skipped += 1
                 pbar.update(1)
                 continue
@@ -464,12 +486,19 @@ def run_extraction(
                     batch_size=batch_size,
                     device=device,
                     ucf_video_map=ucf_video_map,
+                    pool=pool,
                 )
-                np.save(str(output_path), feats)
+                # Atomic write: tmp then rename
+                tmp_path = output_dir / f"{video_id}.npy.tmp"
+                np.save(str(tmp_path), feats)
+                tmp_path.replace(output_path)
 
-                # Runtime shape/dtype validation
+                # Runtime shape/dtype validation — branches on pool mode.
+                expected_dim = 512 if pool == "mean" else 1024
                 assert feats.ndim == 2, f"Expected 2D array, got {feats.ndim}D"
-                assert feats.shape[1] == 1024, f"Expected 1024-d, got {feats.shape[1]}"
+                assert feats.shape[1] == expected_dim, (
+                    f"Expected {expected_dim}-d (pool={pool}), got {feats.shape[1]}"
+                )
                 assert feats.dtype == np.float32, f"Expected float32, got {feats.dtype}"
                 assert not np.any(np.isnan(feats)), "NaN in CLIP features"
                 assert not np.any(np.isinf(feats)), "Inf in CLIP features"
@@ -496,13 +525,14 @@ def run_extraction(
 # Post-run validation
 # ---------------------------------------------------------------------------
 
-def validate_sample_outputs(dataset: str, video_ids: list) -> None:
+def validate_sample_outputs(dataset: str, video_ids: list, pool: str = "mean_max") -> None:
     """
     Validate CLIP .npy outputs for a small set of videos.
 
     Checks:
         - .npy file exists
-        - Shape [N_snippets, 1024] with N > 0
+        - Shape [N_snippets, expected_dim] with N > 0; expected_dim = 512 when
+          pool='mean', else 1024.
         - dtype float32
         - No NaN or Inf values
         - N_snippets matches skeleton .npy (alignment cross-check)
@@ -510,8 +540,10 @@ def validate_sample_outputs(dataset: str, video_ids: list) -> None:
     """
     logger.info("Validating CLIP sample outputs...")
     all_ok = True
-    clip_dir = FEATURE_ROOT / dataset / "clip"
+    clip_subdir = "clip_mean" if pool == "mean" else "clip"
+    clip_dir = FEATURE_ROOT / dataset / clip_subdir
     skel_dir = FEATURE_ROOT / dataset / "skeleton"
+    expected_dim = 512 if pool == "mean" else 1024
 
     for video_id in video_ids:
         clip_path = clip_dir / f"{video_id}.npy"
@@ -526,9 +558,9 @@ def validate_sample_outputs(dataset: str, video_ids: list) -> None:
         feats = np.load(str(clip_path))
 
         # Shape check
-        if feats.ndim != 2 or feats.shape[1] != 1024:
+        if feats.ndim != 2 or feats.shape[1] != expected_dim:
             logger.error(
-                f"VALIDATE FAIL: {video_id} shape {feats.shape} (expected [N, 1024])"
+                f"VALIDATE FAIL: {video_id} shape {feats.shape} (expected [N, {expected_dim}])"
             )
             all_ok = False
         elif feats.shape[0] == 0:
@@ -620,6 +652,15 @@ def main() -> None:
         default="cuda",
         help="Torch device: 'cuda' or 'cpu' (default: cuda).",
     )
+    parser.add_argument(
+        "--pool",
+        choices=["mean", "mean_max"],
+        default="mean_max",
+        help=(
+            "D-23 pooling mode: 'mean_max' (default, emits [N,1024] to clip/) "
+            "or 'mean' (emits [N,512] to clip_mean/ sibling dir)."
+        ),
+    )
     args = parser.parse_args()
 
     run_extraction(
@@ -628,6 +669,7 @@ def main() -> None:
         limit=args.limit,
         batch_size=args.batch_size,
         device=args.device,
+        pool=args.pool,
     )
 
     # Validate on sample videos if --limit was used
@@ -636,7 +678,7 @@ def main() -> None:
         with open(split_file) as f:
             all_ids = [line.strip() for line in f if line.strip()]
         sample_ids = all_ids[: min(args.limit, len(all_ids))]
-        validate_sample_outputs(args.dataset, sample_ids)
+        validate_sample_outputs(args.dataset, sample_ids, pool=args.pool)
 
 
 if __name__ == "__main__":
