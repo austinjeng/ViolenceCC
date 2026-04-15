@@ -2,7 +2,11 @@ import importlib.util
 import pytest
 import pathlib
 
-PROJECT_ROOT = pathlib.Path("D:/ViolenceCC")
+# PROJECT_ROOT resolves from this file's location so the repo works in both the
+# canonical checkout (D:/ViolenceCC) and in git worktrees under .claude/worktrees/.
+# Plan 04b-01 Rule 1 deviation: prior hardcoded "D:/ViolenceCC" broke worktree
+# pytest runs because data/annotations/* only existed on the worktree branch.
+PROJECT_ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 
 # ---------------------------------------------------------------------------
@@ -92,6 +96,21 @@ def ucf_temporal_path():
     if not p.exists():
         pytest.skip(
             "data/annotations/ucf_temporal.txt not present; Plan 04-01 Task 1 creates it"
+        )
+    return p
+
+
+@pytest.fixture
+def xd_temporal_path():
+    """Real Wu 2020 XD-Violence annotation file committed at data/annotations/xd_temporal.txt (D-07).
+
+    Parallel to ucf_temporal_path. Skips (not fails) when the file is missing so
+    environments without the committed data can still collect tests cleanly.
+    """
+    p = PROJECT_ROOT / "data" / "annotations" / "xd_temporal.txt"
+    if not p.exists():
+        pytest.skip(
+            "data/annotations/xd_temporal.txt not present; Plan 04b-01 Task 1 creates it"
         )
     return p
 
