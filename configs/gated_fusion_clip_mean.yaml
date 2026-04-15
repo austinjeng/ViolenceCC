@@ -1,0 +1,43 @@
+# configs/gated_fusion_clip_mean.yaml
+# Phase 4 D-23: CLIP mean-only pooling ablation.
+# Reuses model.variant=gated_fusion with clip_dim=512 (matches the [N, 512]
+# cache produced by scripts/extract_clip.py --pool=mean). Skeleton side uses
+# the default M-pool cache ([N, 256]); no skel_agg field needed.
+seed: 42
+dataset: ucf
+
+paths:
+  skeleton_features: "E:/features/ucf/skeleton"
+  clip_features: "E:/features/ucf/clip_mean"
+  splits_dir: "data/splits"
+  results_dir: "results"
+
+model:
+  variant: gated_fusion
+  skel_dim: 256
+  clip_dim: 512
+  shared_dim: 256
+  head_hidden: [128, 32]
+  dropout: 0.3
+
+data:
+  T: 32
+  batch_size: 16
+  num_workers: 4
+  pin_memory: true
+
+train:
+  lr: 1.0e-4
+  weight_decay: 1.0e-2
+  epochs: 50
+  warmup_epochs: 5
+  patience: 10
+  k_topk: 3
+  margin: 1.0
+  lam_sparse: 8.0e-3
+  lam_smooth: 8.0e-4
+
+wandb:
+  project: violencecc
+  mode: online
+  tags: [phase4, gated_fusion, ucf, clip_mean]

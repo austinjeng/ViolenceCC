@@ -146,22 +146,23 @@ def test_backward_compat_2d_cache(tmp_path):
     assert s.shape[-1] == 256
 
 
-def test_extract_ctrgcn_help_has_keep_persons():
-    """S7: extract_ctrgcn.py --help includes --keep-persons."""
-    import subprocess
-    import shutil
+def _run_help(script_rel: str, candidates: list) -> str:
+    """Try each python candidate in order; return help text if a candidate
+    loads the script successfully (argparse prints --help; exit 0).
 
-    # Prefer vcc-ctrgcn env python (the intended runner); argparse --help does
-    # not require mmcv/pyskl imports to resolve, so vcc-main works too.
-    candidates = [
-        "C:/Anaconda/envs/vcc-ctrgcn/python.exe",
-        "C:/Anaconda/envs/vcc-main/python.exe",
-        shutil.which("python") or "python",
-    ]
+    Skips candidates that:
+      - Don't exist on disk (FileNotFoundError)
+      - Time out
+      - Print a `ModuleNotFoundError` (the base env without torch/mmcv)
+      - Return empty output
+
+    Returns empty string if no candidate produced readable help.
+    """
+    import subprocess
     for py in candidates:
         try:
             out = subprocess.run(
-                [py, "scripts/extract_ctrgcn.py", "--help"],
+                [py, script_rel, "--help"],
                 capture_output=True, text=True, timeout=30,
             )
         except (FileNotFoundError, subprocess.TimeoutExpired):
@@ -169,36 +170,44 @@ def test_extract_ctrgcn_help_has_keep_persons():
         combined = (out.stdout + out.stderr).lower()
         if not combined:
             continue
-        # --help exits 0 under argparse; either stdout or stderr has the text
-        assert "--keep-persons" in combined, (
-            f"missing --keep-persons in help: {combined[:500]}"
-        )
-        return
-    pytest.skip("no runnable python env found for extract_ctrgcn.py --help")
+        # Skip envs where the script failed to import (e.g., no torch/mmcv).
+        if "modulenotfounderror" in combined or "no module named" in combined:
+            continue
+        if out.returncode == 0 and ("usage:" in combined or "options:" in combined):
+            return combined
+    return ""
+
+
+def test_extract_ctrgcn_help_has_keep_persons():
+    """S7: extract_ctrgcn.py --help includes --keep-persons.
+
+    Robust across pytest contexts: tries sys.executable first (the running
+    pytest's env, guaranteed importable), then vcc-ctrgcn/vcc-main envs.
+    """
+    import sys
+    candidates = [
+        sys.executable,                             # running pytest's python
+        "C:/Anaconda/envs/vcc-ctrgcn/python.exe",   # intended runner
+        "C:/Anaconda/envs/vcc-main/python.exe",     # fallback
+    ]
+    combined = _run_help("scripts/extract_ctrgcn.py", candidates)
+    if not combined:
+        pytest.skip("no runnable python env found for extract_ctrgcn.py --help")
+    assert "--keep-persons" in combined, (
+        f"missing --keep-persons in help: {combined[:500]}"
+    )
 
 
 def test_extract_clip_help_has_pool():
     """S8: extract_clip.py --help includes --pool with mean/mean_max choices."""
-    import subprocess
-    import shutil
-
+    import sys
     candidates = [
+        sys.executable,
         "C:/Anaconda/envs/vcc-main/python.exe",
-        shutil.which("python") or "python",
     ]
-    for py in candidates:
-        try:
-            out = subprocess.run(
-                [py, "scripts/extract_clip.py", "--help"],
-                capture_output=True, text=True, timeout=30,
-            )
-        except (FileNotFoundError, subprocess.TimeoutExpired):
-            continue
-        combined = (out.stdout + out.stderr).lower()
-        if not combined:
-            continue
-        assert "--pool" in combined and ("mean_max" in combined or "mean" in combined), (
-            f"missing --pool in help: {combined[:500]}"
-        )
-        return
-    pytest.skip("no runnable python env found for extract_clip.py --help")
+    combined = _run_help("scripts/extract_clip.py", candidates)
+    if not combined:
+        pytest.skip("no runnable python env found for extract_clip.py --help")
+    assert "--pool" in combined and ("mean_max" in combined or "mean" in combined), (
+        f"missing --pool in help: {combined[:500]}"
+    )
