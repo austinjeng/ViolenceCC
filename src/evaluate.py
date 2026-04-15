@@ -43,6 +43,7 @@ from src.eval.metrics import compute_frame_metrics, compute_snippet_auc
 from src.eval.snippet_to_frame import snippet_to_frame
 from src.eval.test_loader import build_test_dataset
 from src.eval.ucf_annotations import frame_labels, parse_annotations
+from src.eval.xd_annotations import parse_xd_annotations, xd_frame_labels
 from src.models.registry import build_model
 from src.utils.checkpoint import load_checkpoint
 from src.utils.config import (
@@ -169,26 +170,56 @@ def _build_frame_arrays(cfg: dict, per_video_snippet_scores: dict):
     the D-04 committed fallback at data/annotations/ucf_temporal.txt.
     Snippet window: 64 PNGs, upsample factor 10 -> original-30fps grid.
 
-    XD I3D path: stub — Plan 04-03 will wire the xd_i3d label construction
-    from the Wu et al. annotations. For Plan 04-02 testing, any xd_i3d invocation
-    produces all-zero labels since there's no ground truth yet.
+    XD I3D path (Phase 4b Plan 04): ann file at
+    cfg["paths"]["annotations_dir"]/xd_temporal.txt, or the D-07 committed
+    fallback at data/annotations/xd_temporal.txt. Snippet window 16, no
+    upsample (I3D stride == video fps). Wu 2020 file OMITS normal test
+    videos; `if vid in annos` guard routes the 500 abnormal videos through
+    xd_frame_labels and defaults the 300 normal videos to all-zero labels.
 
     Returns: (frames_map, labels_map, categories_map).
     """
     ds = cfg.get("dataset", "ucf")
 
     if ds == "xd_i3d":
+        # D-07/D-10: Wu 2020 annotation path resolution (mirror UCF D-04 canonical fallback)
+        ann_dir_cfg = cfg.get("paths", {}).get("annotations_dir")
+        ann_path = None
+        if ann_dir_cfg:
+            candidate = Path(ann_dir_cfg) / "xd_temporal.txt"
+            if candidate.exists():
+                ann_path = candidate
+        if ann_path is None:
+            # D-07 canonical fallback (parallel to UCF ucf_temporal.txt location)
+            ann_path = _PROJECT_ROOT / "data" / "annotations" / "xd_temporal.txt"
+
+        annos = parse_xd_annotations(ann_path) if ann_path.exists() else {}
+
+        # D-08: I3D stride=16, annotation-fps = video-fps (no upsample needed).
+        # Verified bit-identical to XDVioDet gt.npy (2,330,384 frames).
         snippet_window = 16
         upsample_factor = 1
-        frames_map, labels_map, cats_map = {}, {}, {}
+
+        frames_map: dict = {}
+        labels_map: dict = {}
+        cats_map: dict = {}
         for vid, scores in per_video_snippet_scores.items():
             n_frames = len(scores) * snippet_window
             frames_map[vid] = snippet_to_frame(
                 scores, n_frames=n_frames,
                 snippet_window=snippet_window, upsample_factor=upsample_factor,
             )
-            labels_map[vid] = np.zeros(n_frames, dtype=np.int64)
-            cats_map[vid] = "Normal" if vid.endswith("_label_A") else "Abuse"
+            if vid in annos:
+                # 500 abnormal test videos — Wu provides real intervals
+                anno = annos[vid]
+                labels_map[vid] = xd_frame_labels(anno, n_frames)
+                # D-10: cats_map populated for Phase 4c forward-compat (D-13 suppresses
+                # per-category surfacing for rtfm variant but the parser knows the code).
+                cats_map[vid] = anno.category
+            else:
+                # 300 normal test videos — Wu omits normals; Pitfall 2 guard.
+                labels_map[vid] = np.zeros(n_frames, dtype=np.int64)
+                cats_map[vid] = "Normal"
         return frames_map, labels_map, cats_map
 
     # ---- UCF default path (and xd falls through to the same shape) ----
