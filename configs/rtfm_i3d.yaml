@@ -38,7 +38,8 @@ train:
 
 wandb:
   project: violencecc
-  mode: online           # set WANDB_MODE=disabled for CI / offline runs
+  mode: disabled         # Plan 04-06 auth gate: no WANDB_API_KEY / ~/.netrc configured;
+                         # CSV logger remains thesis source of truth (Phase 3 D-13).
   tags: [phase4, rtfm_i3d, xd_i3d, i3d_rgb]
 
 # ----------------------------------------------------------------------------
