@@ -26,12 +26,18 @@ def _get_gated_fusion():
     from src.models.gated_fusion import GatedFusion
     return GatedFusion
 
+def _get_rtfm_i3d():
+    # Phase 4 D-18: RTFM variant on XD I3D RGB features (harness gate).
+    from src.models.rtfm_i3d import RTFMI3D
+    return RTFMI3D
+
 
 MODEL_REGISTRY: Dict[str, Callable] = {
     "skeleton_only": _get_skeleton_only,
     "clip_only":     _get_clip_only,
     "late_fusion":   _get_late_fusion,
     "gated_fusion":  _get_gated_fusion,
+    "rtfm_i3d":      _get_rtfm_i3d,   # D-18
 }
 
 
