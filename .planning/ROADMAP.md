@@ -83,7 +83,7 @@ Plans:
   5. Per-category breakdown (UCF-Crime: Fighting+Assault) is computed and shows higher AUC on violence-specific subsets versus full test set
 **Plans:** 7 plans
 Plans:
-- [ ] 04-01-PLAN.md — Wave 0 fixtures + snippet_to_frame + ucf_annotations parser (D-04, D-14..D-17, C4)
+- [x] 04-01-PLAN.md — Wave 0 fixtures + snippet_to_frame + ucf_annotations parser (D-04, D-14..D-17, C4)
 - [ ] 04-02-PLAN.md — test_loader.py (C3 guards) + evaluate.py CLI + metrics.py + config_hash/checkpoint_sha/git_sha (D-06..D-13, D-31)
 - [ ] 04-03-PLAN.md — RTFMI3D model + I3DFeatureDataset (5-crop) + rtfm_i3d.yaml + MODEL_REGISTRY entry (D-18..D-20, D-36)
 - [ ] 04-04-PLAN.md — Pooling re-extraction flags + skel_agg loader + 2 ablation YAMLs + verify_pooling_caches.py (D-21..D-25, D-37)
