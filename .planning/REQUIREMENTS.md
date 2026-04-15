@@ -136,7 +136,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TRN-04 | Phase 3 | Pending |
 | TRN-05 | Phase 3 | Pending |
 | TRN-06 | Phase 3 | Pending |
-| EVAL-01 | Phase 4 | Pending |
+| EVAL-01 | Phase 4b | Deferred — xd_i3d training dispatch not implemented in Phase 4; rescoped to Phase 4b per 04-06-UAT decision |
 | EVAL-02 | Phase 4 | Pending |
 | EVAL-03 | Phase 4 | Pending |
 | EVAL-04 | Phase 4 | Pending |
