@@ -62,15 +62,17 @@ def parse_xd_annotations(path: Path) -> Dict[str, VideoAnnotation]:
     """Parse Wu 2020 annotations.txt. Returns {video_id_normalized: VideoAnnotation}.
 
     Normalization: strip trailing '.mp4' from the first column so keys match
-    data/splits/xd_test.txt IDs (verified in RESEARCH.md Wu Annotation Format: 500/500
-    abnormal test videos match after this step). The v= prefix on YouTube-sourced
-    videos is preserved (verified: xd_test.txt also carries v= prefix on those).
+    the corresponding XD-Violence split file IDs (verified in RESEARCH.md Wu
+    Annotation Format: 500/500 abnormal videos match after this step). The v=
+    prefix on YouTube-sourced videos is preserved verbatim (split files also
+    carry the v= prefix on those rows).
 
     Categories: parsed from the _label_<code> suffix via _parse_category().
 
-    File omissions: Wu's annotations.txt contains ONLY the 500 abnormal test videos.
-    The 300 normal test videos have no entries; callers (e.g., _build_frame_arrays)
-    must guard with `if vid in annos` and default missing entries to zero labels.
+    File omissions: Wu's annotations.txt contains ONLY the 500 abnormal test-set
+    videos. The 300 normal videos have no entries; callers (e.g. downstream
+    _build_frame_arrays) must guard with `if vid in annos` and default missing
+    entries to zero labels.
 
     Raises:
         ValueError: if any non-blank line has an odd number of interval endpoints.
