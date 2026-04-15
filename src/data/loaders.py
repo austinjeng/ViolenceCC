@@ -98,18 +98,25 @@ def build_dataloaders(cfg: dict) -> Tuple[Tuple[DataLoader, DataLoader], DataLoa
     num_workers = data_cfg.get("num_workers", 0)
     pin_memory = data_cfg.get("pin_memory", False)
     seed = cfg.get("seed", 42)
+    # Phase 4 D-21 / Plan 04-06 Rule 1 fix: forward cfg.data.skel_agg to the
+    # training and val datasets so the 2-person cache shape [N, 2, 256] is
+    # collapsed via concat/max/mean at load time. Default 'none' preserves
+    # the Phase 3 contract where the M-pool cache is already 2D.
+    skel_agg = data_cfg.get("skel_agg", "none")
 
     train_full = MILFeatureDataset(
         split_file=f"{paths['splits_dir']}/{dataset}_train.txt",
         skel_dir=paths["skeleton_features"],
         clip_dir=paths["clip_features"],
         T=T, mode="train", seed=seed, dataset=dataset,
+        skel_agg=skel_agg,
     )
     val_full = MILFeatureDataset(
         split_file=f"{paths['splits_dir']}/{dataset}_val.txt",
         skel_dir=paths["skeleton_features"],
         clip_dir=paths["clip_features"],
         T=T, mode="val", seed=seed, dataset=dataset,
+        skel_agg=skel_agg,
     )
 
     # Split the training set into normal (label=0) and abnormal (label=1) subsets.
