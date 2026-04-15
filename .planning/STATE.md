@@ -5,8 +5,8 @@ milestone_name: milestone
 current_phase: 4b
 current_plan: Not started
 status: planning
-stopped_at: "Completed 04-07-PLAN.md: Phase 4 closed 7/7; Phase 4b scope expanded per Option B"
-last_updated: "2026-04-15T19:44:54.361Z"
+stopped_at: Phase 4b context gathered (narrowed to RTFM XD-I3D gate per D-01; Phase 4c to be inserted for XD main results)
+last_updated: "2026-04-15T20:36:44.851Z"
 progress:
   total_phases: 7
   completed_phases: 4
@@ -142,7 +142,7 @@ None currently.
 
 ## Session Continuity
 
-**Stopped at:** Completed 04-07-PLAN.md: Phase 4 closed 7/7; Phase 4b scope expanded per Option B
+**Stopped at:** Phase 4b context gathered (narrowed to RTFM XD-I3D gate per D-01; Phase 4c to be inserted for XD main results)
 **To resume:** Read this file and ROADMAP.md. Phase 01 is COMPLETE. Phase 02 is UAT-verified for UCF-Crime (all plans executed, 8/12 UAT tests pass). XD-Violence skeleton extraction is running in background (~5-8 days). Next: Phase 03 (Model Architecture & Training Infrastructure) using UCF-Crime data.
 
 **Files of record:**
