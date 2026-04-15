@@ -103,9 +103,12 @@ def test_truncation_long():
     assert np.allclose(frames[16:], 1.0)
 
 
-@pytest.mark.parametrize("n_frames", [140, 130, 100])
+@pytest.mark.parametrize("n_frames", [160, 150, 140, 130])
 def test_truncation_long_param(n_frames):
-    """A5 variants: scores=ones(10), window=16 → shape matches n_frames, all ones."""
+    """A5 variants: scores=ones(10), window=16 expands to 160 frames; truncation
+    within 2*tol=32 of n_frames returns correct shape all-ones.
+    (n_frames outside [160-32, 160+32] would correctly trip the C4 guard — see A6.)
+    """
     scores = np.ones(10, dtype=np.float32)
     frames = snippet_to_frame(scores, n_frames=n_frames, snippet_window=16)
     assert frames.shape == (n_frames,)
