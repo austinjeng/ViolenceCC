@@ -1,16 +1,23 @@
-"""YAML config load + snapshot (TRN-05).
+"""YAML config load + snapshot (TRN-05) + Phase 4 eval reproducibility helpers.
 
-Snapshot captures the resolved config + git + python/torch/numpy versions +
-env + pip freeze so a checkpoint is reproducible by anyone on the same machine.
+TRN-05 snapshot captures the resolved config + git + python/torch/numpy
+versions + env + pip freeze so a checkpoint is reproducible by anyone on
+the same machine.
+
+Phase 4 D-12 additions (config_hash / checkpoint_sha / git_sha): produce
+stable, whitespace- and key-order-invariant identifiers written into
+eval_metrics.json so running evaluate.py twice on the same best_model.pth
+yields byte-identical non-clock keys (SC #4 bit-identical reproducibility).
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import Union
+from typing import Any, Union
 
 import yaml
 
@@ -117,3 +124,62 @@ def snapshot_config(cfg: dict, path: Union[str, Path]) -> None:
         "packages": _pip_freeze(),
     }
     path.write_text(json.dumps(snap, indent=2, sort_keys=True), encoding="utf-8")
+
+
+# ---------------------------------------------------------------------------
+# Phase 4 D-12 reproducibility-metadata helpers.
+# These back the evaluate.py `eval_metrics.json` contract:
+#   - config_hash(cfg)  -> stable SHA256 identifier of the resolved config
+#   - checkpoint_sha(p) -> SHA256 of best_model.pth bytes (streamed for 100MB+
+#     checkpoints; keeps RAM use at ~1 MB regardless of file size)
+#   - git_sha()         -> 40-hex HEAD + "-dirty" suffix when working tree dirty
+#                          or "unknown" when git is unavailable
+# Running evaluate.py twice on the same run_dir must produce byte-identical
+# values for all three across invocations (SC #4 inherits from Phase 3).
+# ---------------------------------------------------------------------------
+
+
+def config_hash(cfg: dict) -> str:
+    """SHA256 of sort_keys=True JSON serialization — whitespace + order invariant (D-12).
+
+    pathlib.Path, numpy scalars, and other non-JSON-native values are coerced
+    to strings via the default=str hook on the outer dump; the resulting
+    plain-dict is then re-serialized with the canonical separators+sort_keys
+    combination so the byte-level payload is insensitive to Python dict
+    insertion order.
+    """
+    serializable = json.loads(json.dumps(cfg, default=str))  # Path -> str
+    payload = json.dumps(serializable, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def checkpoint_sha(path: Union[str, Path]) -> str:
+    """SHA256 of best_model.pth raw bytes, streamed in 1 MB chunks (D-12).
+
+    Never loads the whole file into RAM — safe for 100+ MB I3D-model checkpoints
+    on laptops with low free memory.
+    """
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(2**20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def git_sha() -> str:
+    """`git rev-parse HEAD` with `-dirty` suffix if working tree dirty (D-12).
+
+    Returns the string "unknown" when git is not installed, not on PATH, or
+    the current directory is not a git repo. Never raises: this helper is
+    called from evaluate.py where a missing git shouldn't take the eval down.
+    """
+    try:
+        sha = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], text=True, stderr=subprocess.DEVNULL
+        ).strip()
+        dirty = bool(subprocess.check_output(
+            ["git", "status", "--porcelain"], text=True, stderr=subprocess.DEVNULL
+        ).strip())
+        return sha + ("-dirty" if dirty else "")
+    except (subprocess.CalledProcessError, FileNotFoundError, OSError):
+        return "unknown"
