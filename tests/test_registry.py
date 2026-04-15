@@ -1,12 +1,16 @@
-"""MOD-03..06, D-16: string-based variant registry."""
+"""MOD-03..06, D-16, D-18: string-based variant registry.
+
+Phase 4 D-18 adds `rtfm_i3d` as the 5th variant (RTFM on XD-I3D gate).
+"""
 import pytest
 
 from src.models.registry import MODEL_REGISTRY, build_model
 
 
-def test_registry_has_four_keys():
+def test_registry_has_five_keys():
+    """Phase 3 shipped 4 keys; Phase 4 D-18 adds rtfm_i3d as the 5th."""
     assert set(MODEL_REGISTRY.keys()) == {
-        "skeleton_only", "clip_only", "late_fusion", "gated_fusion",
+        "skeleton_only", "clip_only", "late_fusion", "gated_fusion", "rtfm_i3d",
     }
 
 
@@ -15,7 +19,9 @@ def test_build_model_unknown_variant_raises():
         build_model("not_a_real_variant")
     assert "Unknown variant" in str(exc.value)
     assert "Valid:" in str(exc.value)
-    for key in ("skeleton_only", "clip_only", "late_fusion", "gated_fusion"):
+    for key in (
+        "skeleton_only", "clip_only", "late_fusion", "gated_fusion", "rtfm_i3d",
+    ):
         assert key in str(exc.value)
 
 
