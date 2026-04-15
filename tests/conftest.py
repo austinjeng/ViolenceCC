@@ -78,6 +78,52 @@ def synth_batch():
     return make_batch
 
 
+# ---------------------------------------------------------------------------
+# Phase 4 additions (Plan 04-01 Task 1): UCF annotation + eval fixtures.
+# Downstream Plan 02+ test files consume these to avoid re-implementing the
+# same temp-dir scaffolding in every test module.
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def ucf_temporal_path():
+    """Real Sultani 2018 annotation file committed at data/annotations/ucf_temporal.txt (D-04)."""
+    p = PROJECT_ROOT / "data" / "annotations" / "ucf_temporal.txt"
+    if not p.exists():
+        pytest.skip(
+            "data/annotations/ucf_temporal.txt not present; Plan 04-01 Task 1 creates it"
+        )
+    return p
+
+
+@pytest.fixture
+def test_anno_path(ucf_temporal_path):
+    """Alias kept for readability in evaluate/CLI tests."""
+    return ucf_temporal_path
+
+
+@pytest.fixture
+def eval_run_dir(tmp_path):
+    """Writable temp run dir used by Plan 02 test_evaluate_cli.py."""
+    d = tmp_path / "eval_run"
+    d.mkdir()
+    return d
+
+
+@pytest.fixture
+def synthetic_ucf_features(tmp_path):
+    """Return the synthetic 10-video UCF fixture (see synthetic_eval.make_synthetic_ucf)."""
+    from tests.fixtures.synthetic_eval import make_synthetic_ucf
+    return make_synthetic_ucf(tmp_path)
+
+
+@pytest.fixture
+def synthetic_i3d_features(tmp_path):
+    """Return the synthetic 5-crop I3D fixture (see synthetic_eval.make_synthetic_i3d)."""
+    from tests.fixtures.synthetic_eval import make_synthetic_i3d
+    return make_synthetic_i3d(tmp_path)
+
+
 @pytest.fixture
 def smoke_cfg(tmp_path):
     """Minimal training config dict used by integration smoke tests."""
