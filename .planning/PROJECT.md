@@ -107,4 +107,6 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-31 after Phase 1 completion*
+**Current state (2026-04-15):** Phase 4 complete — UCF-Crime evaluation harness built, 8-row ablation table produced (4 main variants at seed 42 + 2 pooling + 2 additional seeds). Gated Fusion UCF AUC 0.8227, 3-seed std 0.00291 (stable). Per-category Fighting 0.955, Assault 0.985 validates dual-modal contribution. SC #2 (AUC >= 0.83) MISS documented; SC #1 (EVAL-01 RTFM XD-I3D gate) rescoped to Phase 4b per Option B after discovering Plan 04-03 did not wire xd_i3d training dispatch. Phase 4b carves out XD main results + xd_i3d dispatch implementation.
+
+*Last updated: 2026-04-15 after Phase 4 completion*
