@@ -83,6 +83,12 @@ QUEUES = {
     "rtfm_gate": [
         RunSpec("xd_i3d", "rtfm_i3d", 42, "configs/rtfm_i3d.yaml"),
     ],
+    # Plan 04b-05 Task 3 HUMAN-UAT remediation Option A: Flow-only diagnostic.
+    # RGB cache is truncated at V/W/Y tail (729 missing); Flow is 100% complete.
+    # Directory junction E:/i3d-features-flow/ maps Flow/FlowTest to RGB/RGBTest.
+    "rtfm_gate_flow": [
+        RunSpec("xd_i3d", "rtfm_i3d_flow", 42, "configs/rtfm_i3d_flow.yaml"),
+    ],
     "phase4_main": [
         RunSpec("ucf", "skeleton_only", 42, "configs/skeleton_only.yaml"),
         RunSpec("ucf", "clip_only",     42, "configs/clip_only.yaml"),
