@@ -14,7 +14,8 @@
 - [ ] **Phase 2: Feature Extraction Pipeline** - Skeleton and CLIP features fully extracted, aligned, and cached for both datasets
 - [ ] **Phase 3: Model Architecture & Training Infrastructure** - All model variants built, training loop operational, reproducibility hardened
 - [x] **Phase 4: Baseline Evaluation & Main Results** - UCF-Crime fusion models evaluated, 8 ablation rows complete, 3-seed stability PASS (completed 2026-04-16; RTFM gate deferred to Phase 4b per 2026-04-15 Option B decision)
-- [ ] **Phase 4b: XD-Violence Main Results + RTFM XD-I3D Gate** - Gated Fusion + ablations + 3-seed stability on XD-Violence, plus the RTFM XD-I3D gate (rescoped from Phase 4 per 2026-04-15 Option B decision; activated when XD skeleton+CLIP features complete, though the RTFM gate work can start immediately since i3d features are already on disk)
+- [x] **Phase 4b: RTFM XD-I3D Gate** - xd_i3d training dispatch + Wu XD annotation parser + RTFM XD-I3D-RGB gate (AP 0.6570 vs 0.7681 target — MISS-ACCEPTED per D-11 fallback-step-4 / thesis-limitation pattern; D-12 diagnostics PASS confirm dispatch correct; Flow diagnostic ruled out data-coverage as cause; completed 2026-04-16 per D-01 scope narrowing, XD main results carved out to new Phase 4c)
+- [ ] **Phase 4c: XD-Violence Main Results** - Gated Fusion + ablations + 3-seed stability on XD-Violence (scope relocated from former Phase 4b per D-01; activated when XD skeleton+CLIP features complete)
 - [ ] **Phase 5: TTA Infrastructure & Corruption Experiments** - UCF-Crime-C generated, TENT-style and SAR-style TTA evaluated across all 20 corruption conditions
 - [ ] **Phase 6: Analysis & Visualization** - Temporal curve plots, skeleton overlays, and per-category breakdowns ready for thesis
 
@@ -92,35 +93,41 @@ Plans:
 - [x] 04-06-PLAN.md — Empirical execution: UCF main queue, pooling ablations, 3-seed stability, 6 HUMAN-UAT items (non-autonomous); RTFM gate blocked and deferred to Phase 4b
 - [x] 04-07-PLAN.md — Close Phase 4 + carve out expanded Phase 4b (XD main results + EVAL-01 RTFM XD-I3D gate + xd_i3d training dispatch implementation)
 
-### Phase 4b: XD-Violence Main Results + RTFM XD-I3D Gate
-**Goal**: (1) Reproduce Phase 4's complete ablation table on XD-Violence — Gated Fusion + pooling ablations + 3-seed stability + per-category breakdown — using the dataset-portable Phase 4 code (evaluate.py, run_ablations.py, extractors with flags). (2) Implement the missing xd_i3d training dispatch and re-run the RTFM XD-I3D gate rescoped from Phase 4 per the 2026-04-15 Option B decision (see `04-06-UAT.md`, `04-06-SUMMARY.md`).
-**Depends on**: Phase 4 (code artifacts + deferred scope), Phase 2 DATA-10 (XD skeleton+CLIP extraction complete at E:/features/xd/)
-**Activation criterion**: E:/features/xd/skeleton/ and E:/features/xd/clip/ each contain >= 4500 .npy files. Per D-02, Phase 4 does not wait on or monitor this; resume planning with `/gsd-plan-phase 4b` when features land. (Note: the xd_i3d RTFM gate work is NOT gated on XD skeleton/CLIP extraction — it only requires `E:/i3d-features/i3d-features/` which already exists, and may be prioritized ahead of the XD main results work when Phase 4b starts.)
-**Requirements**: EVAL-01, EVAL-02, EVAL-03, EVAL-04, EVAL-05 (EVAL-01 rescoped from Phase 4 per Option B decision — Plan 04-03 did not wire the xd_i3d training dispatch claimed by D-36, so the RTFM XD-I3D gate is re-owned by Phase 4b along with the integration work)
+### Phase 4b: RTFM XD-I3D Gate
+**Goal**: The xd_i3d training dispatch (`build_dataloaders_i3d`, `train_one_epoch_i3d`, `validate_i3d`, Wu et al. annotation parser) is implemented, and the RTFM XD-I3D-RGB baseline is empirically executed against the ±1% of 77.81% published anchor. (Rescoped from Phase 4 per 2026-04-15 Option B decision; scope narrowed to RTFM gate only per D-01 of 04b-CONTEXT.md, XD main results carved out to new Phase 4c.)
+**Depends on**: Phase 4 (architectural patterns + code artifacts), E:/i3d-features/i3d-features (RGB + RGBTest I3D features on disk; RGB 3225/3954 partial due to V/W/Y extraction truncation, Flow 3954/3954 complete)
+**Requirements**: EVAL-01
 **Success Criteria** (what must be TRUE):
-  1. RTFM on XD-Violence I3D RGB features reports frame-level AP within +/-1% of 77.81% (D-03 anchor: RTFM-XD; alt anchor: MGFN 80.11%), confirming the xd_i3d training dispatch and evaluation harness are correct (C4 resolved at the XD-I3D boundary)
-  2. Gated Fusion achieves frame-level AP >= 80% on XD-Violence official test set, reported by `evaluate.py` with no test set used during training
-  3. An ablation table exists with results for all 6 XD model variants (Skeleton-Only, CLIP-Only, Late Fusion, Gated Fusion) and 2 pooling/aggregation ablations, all run on the same XD train/val/test split
-  4. Gated Fusion AP on XD-Violence is reported as mean +/- std over 3 independent seeds ({42, 123, 2024}), and the standard deviation is below 0.5%
-  5. Per-category breakdown (XD-Violence: Fighting+Abuse+Riot) is computed and shows higher AP on violence-specific subsets versus full test set
-**Deferred from Phase 4** (now active):
-  - XD skeleton 2-person aggregation re-extraction (`--keep-persons` on XD in extract_ctrgcn.py)
-  - XD CLIP mean-only re-extraction (`--pool=mean` on XD in extract_clip.py)
-  - XD pooling ablation YAMLs (`configs/gated_fusion_xd_2person.yaml`, `configs/gated_fusion_xd_clip_mean.yaml` — or reuse UCF YAMLs with dataset key swap)
-  - XD ablation orchestration queue in `scripts/run_ablations.py` (add `phase4b_main`, `phase4b_pooling`, `phase4b_seeds` sibling queues)
-**Rescoped from Phase 4 via Option B** (2026-04-15 DECISION, `04-06-UAT.md`):
-  - `build_dataloaders_i3d()` — single-feature loader with 5-crop expansion at train (D-19 5x effective bags) and 5-crop averaging at test; lives in `src/data/loaders.py` alongside the existing paired skel+clip `build_dataloaders()`
-  - `train_one_epoch_i3d()` — MIL ranking loss on single `[B, T, 1024]` (or `[B*5, T, 1024]` 5-crop expanded) i3d tensors; no paired skel+clip contract; new branch in `src/train.py`
-  - `validate_i3d()` — matching validation path for the i3d-only loader
-  - Wu et al. XD-Violence annotation parser in `src/evaluate.py::_build_frame_arrays` to replace the all-zero stub (currently defaults every xd_i3d test label to zero, making AUC/AP meaningless)
-  - Re-run the RTFM gate on `xd_i3d_rtfm_i3d_s42` run dir with `scripts/run_ablations.py --queue rtfm_gate`; expected AP >= 0.7681
-**Plans:** 5 plans (planned 2026-04-16; scope narrowed to RTFM gate only per D-01 of 04b-CONTEXT.md; XD main results carved out to new Phase 4c after empirical close)
+  1. RTFM on XD-Violence I3D RGB features reports frame-level AP within ±1% of 77.81% (primary anchor RTFM 77.81%; secondary anchor MGFN I3D-RGB 79.19% per 04b-RESEARCH.md correction — NOT 80.11% VideoSwin) — **MISS-ACCEPTED per D-11 fallback-step-4 / thesis-limitation pattern:** observed AP 0.6570 (11.11 pp below primary, 13.49 pp below secondary); Flow diagnostic rerun with 100% data coverage produced worse AP 0.5916 (−6.54 pp vs RGB), confirming modeling capacity and not data coverage is the bottleneck; mirrors Phase 4 EVAL-02 UCF 0.8227 MISS-accepted pattern
+  2. xd_i3d training dispatch (`build_dataloaders_i3d`, `train_one_epoch_i3d`, `validate_i3d`) exists in `src/data/loaders.py` + `src/train.py` with D-04 parallel-functions discipline (no polymorphic dispatch) — **PASS**
+  3. Wu et al. XD-Violence annotation parser (`src/eval/xd_annotations.py`) + `data/annotations/xd_temporal.txt` committed; `src/evaluate.py::_build_frame_arrays` xd_i3d path rewritten (replacing the all-zero stub from Phase 4) — **PASS**
+  4. D-12 diagnostic passes: C4 sanity (|auc − snippet_auc| = 0.0024 < 0.02), 5-crop bag-size audit ([i3d_audit] log line with n_normal=15 n_abnormal=15 i3d_shape=(30, 32, 1024)) — **PASS** (bit-identical rerun not performed; gate-miss path triggered D-11 cascade instead)
+  5. 4 new pytest test files pass: test_xd_annotations.py (8 tests), test_loaders_i3d.py (5 tests), test_train_i3d.py (3 tests), test_evaluate_xd_i3d.py (4 tests) — **PASS**
+**Plans:** 5/5 plans complete (2026-04-16)
 Plans:
 - [x] 04b-01-PLAN.md — Wu annotation parser + `data/annotations/xd_temporal.txt` + `tests/test_xd_annotations.py` (D-07, D-10)
 - [x] 04b-02-PLAN.md — `build_dataloaders_i3d` + `collate_i3d_train` + `tests/test_loaders_i3d.py` (D-04, D-05, D-06; Pitfalls 1/4/7; Open Questions 1/2)
 - [x] 04b-03-PLAN.md — `train_one_epoch_i3d` + `validate_i3d` + `main()` dispatch branch + `tests/test_train_i3d.py` (D-04; D-12 bag-size audit)
 - [x] 04b-04-PLAN.md — `src/evaluate.py::_build_frame_arrays` xd_i3d branch rewrite + `tests/test_evaluate_xd_i3d.py` (D-08, D-09, D-10)
-- [ ] 04b-05-PLAN.md — Smoke test (D-16) + full `rtfm_gate` queue run + D-12 diagnostic cascade + ROADMAP/REQUIREMENTS split per D-01 + `04b-05-SUMMARY.md` (HUMAN-UAT gate)
+- [x] 04b-05-PLAN.md — Smoke test (D-16) + full `rtfm_gate` queue run + Flow diagnostic rerun (Rule 1 scope expansion) + D-12 diagnostic cascade + ROADMAP/REQUIREMENTS split per D-01 + `04b-05-SUMMARY.md` (HUMAN-UAT MISS-ACCEPTED)
+
+### Phase 4c: XD-Violence Main Results
+**Goal**: Reproduce Phase 4's complete ablation table on XD-Violence — Gated Fusion + pooling ablations + 3-seed stability + per-category breakdown (Fighting/Abuse/Riot) — using the dataset-portable Phase 4 code (evaluate.py, run_ablations.py, extractors with flags). Relocated from the original Phase 4b scope per D-01 scope narrowing (see 04b-CONTEXT.md).
+**Depends on**: Phase 4 (code artifacts), Phase 4b (xd_i3d dispatch + Wu annotation parser for the fusion-XD eval path), Phase 2 DATA-10 (XD skeleton+CLIP extraction complete at E:/features/xd/)
+**Activation criterion**: `ls -1 E:/features/xd/skeleton/*.npy | wc -l >= 4500 && ls -1 E:/features/xd/clip/*.npy | wc -l >= 4500`. Checked at each `/gsd-progress` invocation; when both counts pass, the user triggers `/gsd-plan-phase 4c`. No polling infrastructure needed (D-03 of 04b-CONTEXT.md).
+**Requirements**: EVAL-02, EVAL-03, EVAL-04, EVAL-05 (XD-side; UCF-side already complete in Phase 4)
+**Success Criteria** (what must be TRUE):
+  1. Gated Fusion achieves frame-level AP >= 80% on XD-Violence official test set, reported by `evaluate.py` with no test set used during training
+  2. An ablation table exists with results for all 6 XD model variants (Skeleton-Only, CLIP-Only, Late Fusion, Gated Fusion) and 2 pooling/aggregation ablations, all run on the same XD train/val/test split
+  3. Gated Fusion AP on XD-Violence is reported as mean ± std over 3 independent seeds ({42, 123, 2024}), and the standard deviation is below 0.5%
+  4. Per-category breakdown (XD-Violence: Fighting+Abuse+Riot) is computed and shows higher AP on violence-specific subsets versus full test set
+**Scope (relocated from former Phase 4b per D-01):**
+  - XD skeleton 2-person aggregation re-extraction (`--keep-persons` on XD in extract_ctrgcn.py)
+  - XD CLIP mean-only re-extraction (`--pool=mean` on XD in extract_clip.py)
+  - XD pooling ablation YAMLs (`configs/gated_fusion_xd_2person.yaml`, `configs/gated_fusion_xd_clip_mean.yaml` — or reuse UCF YAMLs with dataset key swap)
+  - XD ablation orchestration queues in `scripts/run_ablations.py` (add `phase4c_main`, `phase4c_pooling`, `phase4c_seeds` queues)
+  - Per-category Fighting/Abuse/Riot breakdown (uses `_parse_category` from `src/eval/xd_annotations.py` delivered in Phase 4b)
+**Plans**: TBD (plan with `/gsd-plan-phase 4c` once XD skeleton+CLIP features land)
 
 ### Phase 5: TTA Infrastructure & Corruption Experiments
 **Goal**: The UCF-Crime-C corruption benchmark is constructed, and TENT-style and SAR-style TTA results across all 20 conditions are logged and ready for analysis
@@ -153,7 +160,8 @@ Plans:
 | 2. Feature Extraction Pipeline | 1/4 | In Progress|  |
 | 3. Model Architecture & Training Infrastructure | 0/7 | Planned | - |
 | 4. Baseline Evaluation & Main Results | 7/7 | Complete | 2026-04-16 |
-| 4b. XD-Violence Main Results + RTFM XD-I3D Gate | 0/? | Blocked on XD features (RTFM gate + xd_i3d dispatch can start ahead: i3d features already on disk) | - |
+| 4b. RTFM XD-I3D Gate | 5/5 | Complete (MISS-ACCEPTED) | 2026-04-16 |
+| 4c. XD-Violence Main Results | 0/? | Blocked on XD features | - |
 | 5. TTA Infrastructure & Corruption Experiments | 0/? | Not started | - |
 | 6. Analysis & Visualization | 0/? | Not started | - |
 
@@ -189,11 +197,11 @@ Plans:
 | TRN-04 | Phase 3 |
 | TRN-05 | Phase 3 |
 | TRN-06 | Phase 3 |
-| EVAL-01 | Phase 4 |
-| EVAL-02 | Phase 4 |
-| EVAL-03 | Phase 4 |
-| EVAL-04 | Phase 4 |
-| EVAL-05 | Phase 4 |
+| EVAL-01 | Phase 4b |
+| EVAL-02 | Phase 4 (UCF), Phase 4c (XD) |
+| EVAL-03 | Phase 4 (UCF), Phase 4c (XD) |
+| EVAL-04 | Phase 4 (UCF), Phase 4c (XD) |
+| EVAL-05 | Phase 4 (UCF), Phase 4c (XD) |
 | TTA-01 | Phase 5 |
 | TTA-02 | Phase 5 |
 | TTA-03 | Phase 5 |
@@ -209,4 +217,4 @@ Plans:
 ---
 
 *Roadmap created: 2026-03-31*
-*Last updated: 2026-04-16 after Phase 4 closeout (04-07): Phase 4 = 7/7 Complete (UCF-only per D-01); Phase 4b scope expanded to include EVAL-01 RTFM XD-I3D gate + xd_i3d training dispatch per 2026-04-15 Option B decision*
+*Last updated: 2026-04-16 after Phase 4b closeout (04b-05): Phase 4b narrowed to RTFM XD-I3D Gate (5/5 Complete, MISS-ACCEPTED per D-11 fallback-step-4 — AP 0.6570 vs 0.7681 gate, Flow diagnostic 0.5916 ruled out data coverage as cause); new Phase 4c detail block inserted for XD-Violence Main Results per D-01 scope narrowing*

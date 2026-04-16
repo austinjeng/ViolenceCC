@@ -47,11 +47,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Evaluation
 
-- [ ] **EVAL-01**: RTFM baseline reproduction on UCF-Crime using I3D features — target 84.30% AUC within ±1% (retargeted to XD-I3D per Phase 4 D-03; deferred to Phase 4b per 2026-04-15 Option B decision — xd_i3d training dispatch not wired in Plan 04-03)
-- [x] **EVAL-02**: Frame-level AUC (ROC) evaluation on UCF-Crime official test set with correct snippet-to-frame score expansion (UCF complete in Phase 4; XD-side Phase 4b)
-- [x] **EVAL-03**: Frame-level AP evaluation on XD-Violence official test set (UCF-adapted ablation table complete in Phase 4; XD AP pending Phase 4b)
-- [x] **EVAL-04**: Per-category violence subset breakdown (UCF-Crime: Fighting+Assault complete in Phase 4; XD-Violence: Fighting+Abuse+Riot pending Phase 4b)
-- [x] **EVAL-05**: Key results (Gated Fusion on both datasets) repeated 3 times with mean +/- std (UCF complete in Phase 4: std 0.00291; XD pending Phase 4b)
+- [x] **EVAL-01**: RTFM baseline reproduction — frame-level AP gate on XD-Violence I3D-RGB 5-crop features within ±1% of 77.81% per D-03 (Rescoped from Phase 4 per 2026-04-15 Option B decision; completed in Phase 4b per D-01 scope narrowing; AP 0.6570 MISS-ACCEPTED per D-11 fallback-step-4 — shortfall 11.11 pp, Flow diagnostic rerun with 100% data coverage produced AP 0.5916 (−6.54 pp) confirming modeling capacity not data coverage is the bottleneck; xd_i3d training dispatch + Wu annotation parser implemented in Phase 4b)
+- [x] **EVAL-02**: Frame-level AUC (ROC) evaluation on UCF-Crime official test set with correct snippet-to-frame score expansion (UCF complete in Phase 4; XD-side Phase 4c per D-01 scope narrowing)
+- [x] **EVAL-03**: Frame-level AP evaluation on XD-Violence official test set (UCF-adapted ablation table complete in Phase 4; XD AP pending Phase 4c per D-01 scope narrowing)
+- [x] **EVAL-04**: Per-category violence subset breakdown (UCF-Crime: Fighting+Assault complete in Phase 4; XD-Violence: Fighting+Abuse+Riot pending Phase 4c per D-01 scope narrowing)
+- [x] **EVAL-05**: Key results (Gated Fusion on both datasets) repeated 3 times with mean +/- std (UCF complete in Phase 4: std 0.00291; XD pending Phase 4c per D-01 scope narrowing)
 
 ### TTA
 
@@ -136,11 +136,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TRN-04 | Phase 3 | Pending |
 | TRN-05 | Phase 3 | Pending |
 | TRN-06 | Phase 3 | Pending |
-| EVAL-01 | Phase 4b | Deferred — xd_i3d training dispatch not implemented in Phase 4; rescoped to Phase 4b per 2026-04-15 Option B decision (04-06-UAT.md). Phase 4b must implement `build_dataloaders_i3d` + `train_one_epoch_i3d` + Wu et al. annotation parser before re-running the RTFM gate. |
-| EVAL-02 | Phase 4 (UCF), Phase 4b (XD) | Complete (UCF): observed Gated Fusion AUC 0.8227 (documented miss vs 0.83 target, 3-seed mean 0.81982, std 0.00291); XD-side pending Phase 4b |
-| EVAL-03 | Phase 4 (UCF), Phase 4b (XD) | Complete (UCF): 8 UCF rows in results/results-index.csv; XD-side pending Phase 4b |
-| EVAL-04 | Phase 4 (UCF), Phase 4b (XD) | Complete (UCF): Fighting 0.955 (+13.23 pp), Assault 0.985 (+16.19 pp); XD-side (Fighting+Abuse+Riot) pending Phase 4b |
-| EVAL-05 | Phase 4 (UCF), Phase 4b (XD) | Complete (UCF): 3-seed AUC std 0.00291 < 0.5% gate; XD-side pending Phase 4b |
+| EVAL-01 | Phase 4b | MISS-ACCEPTED: AP 0.6570 (shortfall 11.11 pp below RTFM 77.81% gate; 13.49 pp below MGFN I3D-RGB 79.19% secondary); D-11 fallback-step-4 thesis-limitation pattern applied; Flow diagnostic rerun (Plan 04b-05 Rule 1 scope expansion) produced AP 0.5916 with 100% data coverage (−6.54 pp vs RGB) confirming modeling capacity not data coverage is the bottleneck; D-12 diagnostics PASS (C4 sanity delta 0.0024, bag-size audit correct); xd_i3d dispatch + Wu parser implemented in Phase 4b; 4 new pytest files pass. |
+| EVAL-02 | Phase 4 (UCF), Phase 4c (XD) | Complete (UCF): observed Gated Fusion AUC 0.8227 (documented miss vs 0.83 target, 3-seed mean 0.81982, std 0.00291); XD-side pending Phase 4c per D-01 scope narrowing |
+| EVAL-03 | Phase 4 (UCF), Phase 4c (XD) | Complete (UCF): 8 UCF rows in results/results-index.csv; XD-side pending Phase 4c per D-01 scope narrowing |
+| EVAL-04 | Phase 4 (UCF), Phase 4c (XD) | Complete (UCF): Fighting 0.955 (+13.23 pp), Assault 0.985 (+16.19 pp); XD-side (Fighting+Abuse+Riot) pending Phase 4c per D-01 scope narrowing |
+| EVAL-05 | Phase 4 (UCF), Phase 4c (XD) | Complete (UCF): 3-seed AUC std 0.00291 < 0.5% gate; XD-side pending Phase 4c per D-01 scope narrowing |
 | TTA-01 | Phase 5 | Pending |
 | TTA-02 | Phase 5 | Pending |
 | TTA-03 | Phase 5 | Pending |
@@ -158,4 +158,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-03-31*
-*Last updated: 2026-04-16 after Phase 4 closeout (04-07): EVAL-02..EVAL-05 complete on UCF and rescoped dual-dataset; EVAL-01 rescoped to Phase 4b per 2026-04-15 Option B decision*
+*Last updated: 2026-04-16 after Phase 4b closeout (04b-05): EVAL-01 MISS-ACCEPTED in Phase 4b (RTFM XD-I3D gate, D-11 fallback-step-4); EVAL-02..EVAL-05 XD-side annotations flipped from Phase 4b to Phase 4c per D-01 scope narrowing*
