@@ -205,16 +205,8 @@ def load_ucf_frames(video_id: str) -> tuple:
 # XD-Violence frame loading
 # ---------------------------------------------------------------------------
 
-def load_xd_frames(video_id: str, split: str) -> tuple:
-    """
-    Load all frames from an XD-Violence mp4 file.
-
-    Tries decord first, falls back to cv2.VideoCapture on error.
-
-    Returns (frames, img_shape) where:
-        frames:    list of np.ndarray (H, W, 3) in BGR
-        img_shape: (H, W) tuple from the first frame
-    """
+def resolve_xd_video_path(video_id: str, split: str) -> pathlib.Path:
+    """Resolve the filesystem path for an XD-Violence video."""
     if split in ("train", "val"):
         video_path = XD_TRAIN_ROOT / f"{video_id}.mp4"
     else:
@@ -222,44 +214,192 @@ def load_xd_frames(video_id: str, split: str) -> tuple:
 
     if not video_path.exists():
         raise FileNotFoundError(f"XD-Violence video not found: {video_path}")
+    return video_path
 
-    frames = []
-    img_shape = None
 
-    # Try decord first
+def get_xd_frame_count(video_path: pathlib.Path) -> int:
+    """Get total frame count from a video without loading frames."""
+    cap = cv2.VideoCapture(str(video_path))
+    if not cap.isOpened():
+        raise IOError(f"cv2.VideoCapture failed to open: {video_path}")
+    n = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    cap.release()
+    return n
+
+
+def get_xd_img_shape(video_path: pathlib.Path) -> tuple:
+    """Read first frame to get (H, W) without loading the entire video."""
+    cap = cv2.VideoCapture(str(video_path))
+    if not cap.isOpened():
+        raise IOError(f"cv2.VideoCapture failed to open: {video_path}")
+    ret, frame = cap.read()
+    cap.release()
+    if not ret or frame is None:
+        raise ValueError(f"Cannot read first frame from {video_path}")
+    return (frame.shape[0], frame.shape[1])
+
+
+def _checkpoint_path(dataset: str, video_id: str) -> pathlib.Path:
+    """Path for mid-video checkpoint file."""
+    return SKELETON_ROOT / dataset / f"{video_id}.ckpt.npz"
+
+
+def _save_checkpoint(ckpt_path: pathlib.Path, keypoint, keypoint_score, img_shape, actual_count, n_frames):
+    """Save mid-video checkpoint. Corrupt checkpoints are handled by _load_checkpoint."""
+    np.savez(
+        ckpt_path,
+        keypoint=keypoint[:, :actual_count, :, :],
+        keypoint_score=keypoint_score[:, :actual_count, :],
+        img_shape=np.array(img_shape),
+        actual_count=np.array(actual_count),
+        n_frames=np.array(n_frames),
+    )
+
+
+def _load_checkpoint(ckpt_path: pathlib.Path) -> dict:
+    """Load a mid-video checkpoint. Returns None if missing or corrupt."""
+    if not ckpt_path.exists():
+        return None
     try:
-        import decord
-        decord.bridge.set_bridge("native")
-        vr = decord.VideoReader(str(video_path), ctx=decord.cpu(0))
-        n_frames = len(vr)
-        # Load all frames
-        all_frame_indices = list(range(n_frames))
-        decoded = vr.get_batch(all_frame_indices).asnumpy()  # (T, H, W, 3) RGB
-        for frame_rgb in decoded:
-            frame_bgr = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR)
-            if img_shape is None:
-                img_shape = (frame_bgr.shape[0], frame_bgr.shape[1])
-            frames.append(frame_bgr)
+        data = np.load(ckpt_path)
+        return {
+            "keypoint": data["keypoint"],
+            "keypoint_score": data["keypoint_score"],
+            "img_shape": tuple(data["img_shape"]),
+            "actual_count": int(data["actual_count"]),
+            "n_frames": int(data["n_frames"]),
+        }
     except Exception as e:
-        logger.warning(f"decord failed for {video_id}: {e}. Falling back to cv2.")
-        frames = []
-        img_shape = None
-        cap = cv2.VideoCapture(str(video_path))
-        if not cap.isOpened():
-            raise IOError(f"cv2.VideoCapture failed to open: {video_path}")
-        while True:
-            ret, frame = cap.read()
-            if not ret:
-                break
-            if img_shape is None:
-                img_shape = (frame.shape[0], frame.shape[1])
-            frames.append(frame)
+        logger.warning(f"Corrupt checkpoint {ckpt_path}: {e}. Starting fresh.")
+        ckpt_path.unlink(missing_ok=True)
+        return None
+
+
+def stream_xd_keypoints(video_path: pathlib.Path, video_id: str, dataset: str) -> tuple:
+    """
+    Stream-process an XD-Violence video: read frames in chunks, run RTMPose,
+    discard raw pixels immediately. Keeps RAM usage constant (~CHUNK_SIZE frames).
+
+    Saves a checkpoint after every chunk so processing can resume mid-video
+    if the process is interrupted.
+
+    Returns:
+        keypoint:       ndarray [M=2, T, V=17, C=2]  float32
+        keypoint_score: ndarray [M=2, T, V=17]        float32
+        img_shape:      (H, W)
+        total_frames:   int
+    """
+    ckpt_path = _checkpoint_path(dataset, video_id)
+
+    cap = cv2.VideoCapture(str(video_path))
+    if not cap.isOpened():
+        raise IOError(f"cv2.VideoCapture failed to open: {video_path}")
+
+    # Get metadata without loading all frames
+    n_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    ret, first_frame = cap.read()
+    if not ret or first_frame is None:
         cap.release()
+        raise ValueError(f"Cannot read first frame from {video_path}")
+    img_shape = (first_frame.shape[0], first_frame.shape[1])
 
-    if not frames:
-        raise ValueError(f"No frames loaded from {video_path}")
+    # Check for mid-video checkpoint
+    ckpt = _load_checkpoint(ckpt_path)
+    if ckpt is not None and ckpt["n_frames"] == n_frames:
+        actual_count = ckpt["actual_count"]
+        logger.info(f"[{video_id}] Resuming from checkpoint: {actual_count}/{n_frames} frames ({100*actual_count/n_frames:.0f}%)")
 
-    return frames, img_shape
+        # Pre-allocate and copy checkpoint data
+        keypoint = np.zeros((2, n_frames, 17, 2), dtype=np.float32)
+        keypoint_score = np.zeros((2, n_frames, 17), dtype=np.float32)
+        keypoint[:, :actual_count, :, :] = ckpt["keypoint"]
+        keypoint_score[:, :actual_count, :] = ckpt["keypoint_score"]
+
+        # Seek video to resume position
+        cap.set(cv2.CAP_PROP_POS_FRAMES, actual_count)
+    else:
+        # Fresh start
+        keypoint = np.zeros((2, n_frames, 17, 2), dtype=np.float32)
+        keypoint_score = np.zeros((2, n_frames, 17), dtype=np.float32)
+        actual_count = 0
+
+        logger.info(f"[{video_id}] Streaming {n_frames} frames ({n_frames/24/60:.1f} min @ 24fps)...")
+
+        # Process first frame (already read above)
+        model = get_wholebody_model()
+        _infer_single_frame(model, first_frame, 0, keypoint, keypoint_score)
+        actual_count = 1
+
+    model = get_wholebody_model()  # singleton — needed for both fresh and resume paths
+
+    # Stream remaining frames in chunks
+    chunk = []
+    chunk_start_idx = actual_count
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+        chunk.append(frame)
+
+        if len(chunk) >= CHUNK_SIZE:
+            _infer_chunk(model, chunk, chunk_start_idx, keypoint, keypoint_score)
+            actual_count += len(chunk)
+            chunk_start_idx += len(chunk)
+            chunk = []  # free raw pixels
+            # Per-chunk progress
+            logger.info(f"[{video_id}] {actual_count}/{n_frames} frames ({100*actual_count/n_frames:.0f}%)")
+            # Save checkpoint after each chunk
+            _save_checkpoint(ckpt_path, keypoint, keypoint_score, img_shape, actual_count, n_frames)
+
+    # Process remaining frames
+    if chunk:
+        _infer_chunk(model, chunk, chunk_start_idx, keypoint, keypoint_score)
+        actual_count += len(chunk)
+
+    cap.release()
+
+    # Clean up checkpoint — video is fully processed
+    ckpt_path.unlink(missing_ok=True)
+
+    # Trim to actual frame count (CAP_PROP_FRAME_COUNT can overestimate)
+    if actual_count < n_frames:
+        keypoint = keypoint[:, :actual_count, :, :]
+        keypoint_score = keypoint_score[:, :actual_count, :]
+
+    return keypoint, keypoint_score, img_shape, actual_count
+
+
+def _infer_single_frame(model, frame, t, keypoint, keypoint_score):
+    """Run RTMPose on a single frame and store results in pre-allocated arrays."""
+    try:
+        kps, scores = model(frame)
+    except Exception as e:
+        logger.warning(f"RTMPose inference failed at frame {t}: {e}. Using zeros.")
+        return
+
+    if kps is None or len(kps) == 0:
+        return
+
+    # Body model already outputs [N, 17, 2] — no slicing needed
+    n_persons = kps.shape[0]
+
+    if n_persons == 1:
+        keypoint[0, t] = kps[0]
+        keypoint_score[0, t] = scores[0]
+    elif n_persons >= 2:
+        mean_conf = scores.mean(axis=1)
+        top2_idx = np.argsort(mean_conf)[-2:][::-1]
+        keypoint[0, t] = kps[top2_idx[0]]
+        keypoint_score[0, t] = scores[top2_idx[0]]
+        keypoint[1, t] = kps[top2_idx[1]]
+        keypoint_score[1, t] = scores[top2_idx[1]]
+
+
+def _infer_chunk(model, chunk, chunk_start_idx, keypoint, keypoint_score):
+    """Run RTMPose on a chunk of frames."""
+    for i, frame in enumerate(chunk):
+        _infer_single_frame(model, frame, chunk_start_idx + i, keypoint, keypoint_score)
 
 
 # ---------------------------------------------------------------------------
@@ -270,17 +410,17 @@ _wholebody_model = None
 
 
 def get_wholebody_model():
-    """Lazy-initialize the Wholebody model (singleton)."""
+    """Lazy-initialize the Body model (singleton)."""
     global _wholebody_model
     if _wholebody_model is None:
-        from rtmlib import Wholebody
-        logger.info("Initializing Wholebody model (mode=balanced, backend=onnxruntime, device=cuda)...")
-        _wholebody_model = Wholebody(
-            mode="balanced",    # RTMWholebody-DW-X-L: 133 keypoints (COCO-17 body + face + hands)
+        from rtmlib import Body
+        logger.info("Initializing Body model (mode=balanced, backend=onnxruntime, device=cuda)...")
+        _wholebody_model = Body(
+            mode="balanced",    # RTMPose-m: 17 COCO body keypoints only
             backend="onnxruntime",
             device="cuda",
         )
-        logger.info("Wholebody model initialized.")
+        logger.info("Body model initialized.")
     return _wholebody_model
 
 
@@ -306,8 +446,8 @@ def process_frames_to_keypoints(frames: list, img_shape: tuple) -> tuple:
             frame = frames[t]
             try:
                 kps, scores = model(frame)
-                # kps:    [N_persons, 133, 2]  (wholebody has 133 keypoints)
-                # scores: [N_persons, 133]
+                # kps:    [N_persons, 17, 2]  (Body model outputs COCO-17 directly)
+                # scores: [N_persons, 17]
             except Exception as e:
                 logger.warning(f"RTMPose inference failed at frame {t}: {e}. Using zeros.")
                 continue
@@ -316,24 +456,20 @@ def process_frames_to_keypoints(frames: list, img_shape: tuple) -> tuple:
                 # 0 detections: both person slots remain all-zero (D-07)
                 continue
 
-            # Take only first 17 COCO-17 body keypoints
-            kps = kps[:, :17, :]        # [N, 17, 2]
-            scores_17 = scores[:, :17]  # [N, 17]
-
             n_persons = kps.shape[0]
 
             if n_persons == 1:
                 # 1 detection: person 0 = detected, person 1 = all-zero (D-08)
                 keypoint[0, t] = kps[0]
-                keypoint_score[0, t] = scores_17[0]
+                keypoint_score[0, t] = scores[0]
             elif n_persons >= 2:
                 # 2+ detections: select top-2 by mean keypoint confidence (D-05)
-                mean_conf = scores_17.mean(axis=1)          # [N]
+                mean_conf = scores.mean(axis=1)              # [N]
                 top2_idx = np.argsort(mean_conf)[-2:][::-1]  # descending order
                 keypoint[0, t] = kps[top2_idx[0]]
-                keypoint_score[0, t] = scores_17[top2_idx[0]]
+                keypoint_score[0, t] = scores[top2_idx[0]]
                 keypoint[1, t] = kps[top2_idx[1]]
-                keypoint_score[1, t] = scores_17[top2_idx[1]]
+                keypoint_score[1, t] = scores[top2_idx[1]]
 
     return keypoint, keypoint_score
 
@@ -349,18 +485,17 @@ def process_video(video_id: str, dataset: str, split: str) -> dict:
     Returns a dict with all data needed to write pickle + boundary JSON.
     Raises on unrecoverable error (caller handles try/except).
     """
-    # Step 1: Load frames
     if dataset == "ucf":
+        # UCF-Crime: PNGs are small enough to load all at once
         frames, img_shape = load_ucf_frames(video_id)
+        T = len(frames)
+        keypoint, keypoint_score = process_frames_to_keypoints(frames, img_shape)
     else:
-        frames, img_shape = load_xd_frames(video_id, split)
+        # XD-Violence: stream frames to avoid loading entire video into RAM
+        video_path = resolve_xd_video_path(video_id, split)
+        keypoint, keypoint_score, img_shape, T = stream_xd_keypoints(video_path, video_id, dataset)
 
-    T = len(frames)
-
-    # Step 2: RTMPose inference
-    keypoint, keypoint_score = process_frames_to_keypoints(frames, img_shape)
-
-    # Step 3: Coordinate normalization assertion (DATA-04, C1 pitfall)
+    # Coordinate normalization assertion (DATA-04, C1 pitfall)
     normalized_kp = prenormalize2d(keypoint, img_shape)
     max_abs = np.abs(normalized_kp).max()
     if max_abs > 2.0:
@@ -369,7 +504,7 @@ def process_video(video_id: str, dataset: str, split: str) -> dict:
             f"img_shape={img_shape}. Check coordinate system."
         )
 
-    # Step 4: Compute snippet boundaries
+    # Compute snippet boundaries
     boundaries = compute_snippet_boundaries(T, FRAMES_PER_SNIPPET)
 
     return {
@@ -396,8 +531,9 @@ def write_outputs(data: dict, dataset: str) -> None:
     skeleton_dir.mkdir(parents=True, exist_ok=True)
     snippet_dir.mkdir(parents=True, exist_ok=True)
 
-    # Write PYSKL-compatible pickle
+    # Write PYSKL-compatible pickle (atomic: write tmp then rename)
     pickle_path = skeleton_dir / f"{video_id}.pkl"
+    pickle_tmp = skeleton_dir / f"{video_id}.pkl.tmp"
     pickle_data = {
         "keypoint": data["keypoint"],
         "keypoint_score": data["keypoint_score"],
@@ -405,12 +541,14 @@ def write_outputs(data: dict, dataset: str) -> None:
         "total_frames": data["total_frames"],
         "video_id": video_id,
     }
-    with open(pickle_path, "wb") as f:
+    with open(pickle_tmp, "wb") as f:
         pickle.dump(pickle_data, f)
+    pickle_tmp.replace(pickle_path)
 
-    # Write snippet boundary JSON
+    # Write snippet boundary JSON (atomic: write tmp then rename)
     boundaries = data["snippet_boundaries"]
     boundary_path = snippet_dir / f"{video_id}_boundaries.json"
+    boundary_tmp = snippet_dir / f"{video_id}_boundaries.json.tmp"
     boundary_data = {
         "video_id": video_id,
         "total_frames": data["total_frames"],
@@ -419,8 +557,9 @@ def write_outputs(data: dict, dataset: str) -> None:
         "n_snippets": len(boundaries),
         "img_shape": list(data["img_shape"]),  # [H, W] for JSON serialization
     }
-    with open(boundary_path, "w") as f:
+    with open(boundary_tmp, "w") as f:
         json.dump(boundary_data, f, indent=2)
+    boundary_tmp.replace(boundary_path)
 
 
 # ---------------------------------------------------------------------------

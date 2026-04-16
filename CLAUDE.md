@@ -202,3 +202,11 @@ Do not make direct repo edits outside a GSD workflow unless the user explicitly 
 > Profile not yet configured. Run `/gsd:profile-user` to generate your developer profile.
 > This section is managed by `generate-claude-profile` -- do not edit manually.
 <!-- GSD:profile-end -->
+
+## Use playwright-cli when needed
+
+If you need to search the web, you can use playwright-cli to help you. It can also test web-related applications.
+
+## Execute codes in session when needed. User intervention is last resort
+
+In the claude code sessions, if you can run the code yourself, you should. You can use sub-agents or seperate shells if the code is complex or need a lot of time to run. If the code has some nature that MUST need users to execute, give the user the complete steps and commands to do so.
