@@ -41,17 +41,20 @@ def test_help_has_expected_queues():
 
 def test_queue_definitions():
     """D-26/D-27/D-28: rtfm_gate=1, phase4_main=4, phase4_pooling=2,
-    phase4_seeds=2 (seed=42 covered by phase4_main, not duplicated)."""
+    phase4_seeds=2 (seed=42 covered by phase4_main, not duplicated).
+    Plan 04b-05 Rule 1 scope expansion: rtfm_gate_flow=1 (Flow diagnostic)."""
     assert len(QUEUES["rtfm_gate"]) == 1
     assert QUEUES["rtfm_gate"][0].run_name == "xd_i3d_rtfm_i3d_s42"
+    assert len(QUEUES["rtfm_gate_flow"]) == 1
+    assert QUEUES["rtfm_gate_flow"][0].run_name == "xd_i3d_rtfm_i3d_flow_s42"
     assert len(QUEUES["phase4_main"]) == 4
     assert len(QUEUES["phase4_pooling"]) == 2
     assert len(QUEUES["phase4_seeds"]) == 2
-    # Total unique specs across all queues = 9.
+    # Total unique specs across all queues = 10 (9 Phase 4 + 1 Plan 04b-05 Flow diagnostic).
     all_run_names = {
         s.run_name for q in QUEUES.values() for s in q
     }
-    assert len(all_run_names) == 9, f"expected 9 unique run_names, got {sorted(all_run_names)}"
+    assert len(all_run_names) == 10, f"expected 10 unique run_names, got {sorted(all_run_names)}"
 
 
 def test_run_name_deterministic():
