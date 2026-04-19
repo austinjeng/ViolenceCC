@@ -138,6 +138,12 @@ No experiments run yet. Targets from PRD v2.3:
 
 None currently.
 
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260419-079 | Fix 5 REAL code review findings from ML expert review | 2026-04-19 | pending | [260419-079-fix-code-review-findings](./quick/260419-079-fix-code-review-findings/) |
+
 ---
 
 ## Session Continuity

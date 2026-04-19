@@ -205,7 +205,8 @@ def load_ucf_snippet_frames_pil(
 # ---------------------------------------------------------------------------
 
 def load_xd_snippet_frames_pil(
-    video_path: pathlib.Path, start: int, end: int, fps: float
+    video_path: pathlib.Path, start: int, end: int, fps: float,
+    vr=None,
 ) -> list:
     """
     Load frames for an XD-Violence snippet as PIL Images for CLIP preprocessing.
@@ -228,7 +229,8 @@ def load_xd_snippet_frames_pil(
     # Primary: decord (confirmed available in vcc-main)
     try:
         import decord
-        vr = decord.VideoReader(str(video_path), ctx=decord.cpu(0))
+        if vr is None:
+            vr = decord.VideoReader(str(video_path), ctx=decord.cpu(0))
         # Clamp indices to valid range
         frame_indices = [i for i in frame_indices if i < len(vr)]
         if not frame_indices:
@@ -283,7 +285,7 @@ def extract_clip_snippet(
     expected_dim = 512 if pool == "mean" else 1024
     if len(frames) == 0:
         # Edge case: no frames sampled in this snippet range
-        logger.debug("No frames for snippet — returning zero feature vector.")
+        logger.warning("No frames for snippet — returning zero feature vector.")
         return np.zeros(expected_dim, dtype=np.float32)
 
     # Preprocess all frames into a tensor stack
@@ -369,12 +371,21 @@ def extract_video_clip_features(
         if not video_path.exists():
             raise FileNotFoundError(f"XD-Violence video not found: {video_path}")
 
-        fps = get_xd_video_fps(video_path)
+        import decord as _decord
+        vr = _decord.VideoReader(str(video_path), ctx=_decord.cpu(0))
+        fps = float(vr.get_avg_fps())
 
         for start, end in snippet_ranges:
-            frames = load_xd_snippet_frames_pil(video_path, start, end, fps)
+            frames = load_xd_snippet_frames_pil(video_path, start, end, fps, vr=vr)
             feat = extract_clip_snippet(frames, model, preprocess, batch_size, device, pool=pool)
             snippet_feats.append(feat)
+
+    zero_count = sum(1 for f in snippet_feats if not np.any(f))
+    if zero_count > 0:
+        logger.warning(
+            f"{video_id}: {zero_count}/{len(snippet_feats)} snippets produced "
+            f"zero vectors (decoder failures)"
+        )
 
     # Stack all snippets -> [N_snippets, D]
     all_feats = np.stack(snippet_feats, axis=0)

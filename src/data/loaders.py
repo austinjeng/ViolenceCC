@@ -209,7 +209,7 @@ def build_dataloaders(cfg: dict) -> Tuple[Tuple[DataLoader, DataLoader], DataLoa
                             worker_init_fn=seed_worker,
                             generator=g_val, pin_memory=pin_memory,
                             persistent_workers=persistent,
-                            drop_last=False, shuffle=False)
+                            drop_last=False, shuffle=True)
 
     return (nor_loader, abn_loader), val_loader
 

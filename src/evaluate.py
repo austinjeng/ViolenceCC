@@ -325,7 +325,7 @@ def main(argv=None) -> int:
     # Phase 3 checkpoints are plain state_dicts (save_checkpoint_atomic saves
     # only the state_dict); but we accept wrapped dicts too for forward compat.
     state_dict = state.get("model", state) if isinstance(state, dict) else state
-    model.load_state_dict(state_dict, strict=False)
+    model.load_state_dict(state_dict, strict=True)
     model.eval()
 
     # ---- Build test/val dataset through the guarded module (D-07, D-08) ----
@@ -341,6 +341,8 @@ def main(argv=None) -> int:
         per_video_snippet_scores = _run_inference(model, dataset, device)
         eval_duration_s = float(time.time() - t0)
         metadata = _build_metadata(cfg, run_dir, args.split, eval_duration_s)
+        print("NOTE: --split val writes mil_loss=0.0 (stub). "
+              "Scores saved to eval_scores.npz; loss not recomputed.")
         out = {"mil_loss": 0.0, **metadata}
         _write_json_atomic(out, run_dir / "eval_metrics.json")
         np.savez_compressed(

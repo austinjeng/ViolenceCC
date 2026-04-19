@@ -172,7 +172,21 @@ A PyTorch research codebase for weakly supervised violence-oriented video anomal
 <!-- GSD:conventions-start source:CONVENTIONS.md -->
 ## Conventions
 
-Conventions not yet established. Will populate as patterns emerge during development.
+### DataLoader Conventions
+- Val loaders MUST use `shuffle=True` to prevent single-class batch bias in MIL ranking loss (validate() skips single-class batches)
+- Train loaders: already paired (nor/abn separate), shuffle is correct
+
+### Checkpoint Loading
+- Always use `strict=True` with `model.load_state_dict()` — `strict=False` silently accepts partial loads and produces misleading metrics
+- If architecture migration is needed, handle key remapping explicitly rather than using `strict=False`
+
+### Feature Extraction (Video)
+- Reuse `decord.VideoReader` across snippets for the same video — do NOT create a new one per snippet
+- Log decoder failures at WARNING level, not DEBUG — zero-vector features from failed snippets must be visible at runtime
+- After extraction, log a per-video zero-snippet count so silent degradation is caught
+
+### Evaluation Stubs
+- When a code path produces placeholder metrics (e.g. `mil_loss=0.0`), emit a runtime warning so downstream tooling does not consume stubs as real values
 <!-- GSD:conventions-end -->
 
 <!-- GSD:architecture-start source:ARCHITECTURE.md -->
