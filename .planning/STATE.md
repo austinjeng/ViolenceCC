@@ -5,8 +5,8 @@ milestone_name: milestone
 current_phase: 4c
 current_plan: Not started
 status: planning
-stopped_at: Phase 4b context gathered (narrowed to RTFM XD-I3D gate per D-01; Phase 4c to be inserted for XD main results)
-last_updated: "2026-04-16T10:07:10.882Z"
+stopped_at: Phase 5 context gathered (corruption pipeline + TTA implementation + experiment orchestration decisions captured)
+last_updated: "2026-04-20T12:07:00.000Z"
 progress:
   total_phases: 8
   completed_phases: 5
