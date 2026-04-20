@@ -135,11 +135,17 @@ Plans:
 **Requirements**: TTA-01, TTA-02, TTA-03, TTA-04, TTA-05, TTA-06, TTA-07
 **Success Criteria** (what must be TRUE):
   1. UCF-Crime-C exists on disk as structured subdirectories with all 20 corruption conditions (4 types x 5 severities); a spot-check visually confirms each corruption type is perceptually distinguishable
-  2. CLIP features are re-extracted for all 20 conditions; skeleton features are re-extracted for motion blur and JPEG corruption conditions only, and the feature directories follow the expected structured layout
+  2. CLIP features are re-extracted for all 20 conditions; skeleton features are re-extracted for motion blur and JPEG compression conditions only, and the feature directories follow the expected structured layout
   3. TENT-style adaptation updates only LN affine parameters (gamma, beta), with per-video reset to the source-trained state confirmed by comparing parameter values before and after processing each test video
   4. SAR-style adaptation converges with a grid-searched rho value (not the ImageNet default), and its per-video AUC is logged alongside TENT-style and Source-Only for every corruption condition
   5. A 4x5 results table (corruption type x severity) exists for Source-Only, TENT-style, and SAR-style, and at least one of the TTA methods shows a statistically meaningful improvement over Source-Only on at least one corruption type
-**Plans**: TBD
+**Plans:** 5 plans
+Plans:
+- [ ] 05-01-PLAN.md — Corruption transform module (scripts/corruption.py) with 4 types x 5 severities using numpy+cv2 (TTA-01, TTA-03)
+- [ ] 05-02-PLAN.md — TENT/SAR/SAM adaptation modules (src/tta/) with LN targeting and binary entropy (TTA-04, TTA-05, TTA-07)
+- [ ] 05-03-PLAN.md — Extraction script corruption flags + human-supervised batch re-extraction ~15h (TTA-02, TTA-03)
+- [ ] 05-04-PLAN.md — TTA evaluation entry point (src/tta/evaluate_tta.py) wiring adaptation + Phase 4 metrics (TTA-06, TTA-07)
+- [ ] 05-05-PLAN.md — Queue orchestrator extension (TTARunSpec + 500-run grid) + empirical execution (TTA-06)
 
 ### Phase 6: Analysis & Visualization
 **Goal**: Qualitative figures and temporal analysis are complete and polished enough to drop directly into the thesis document
@@ -162,7 +168,7 @@ Plans:
 | 4. Baseline Evaluation & Main Results | 7/7 | Complete | 2026-04-16 |
 | 4b. RTFM XD-I3D Gate | 5/5 | Complete (MISS-ACCEPTED) | 2026-04-16 |
 | 4c. XD-Violence Main Results | 0/? | Blocked on XD features | - |
-| 5. TTA Infrastructure & Corruption Experiments | 0/? | Not started | - |
+| 5. TTA Infrastructure & Corruption Experiments | 0/5 | Planned | - |
 | 6. Analysis & Visualization | 0/? | Not started | - |
 
 ---
@@ -217,4 +223,4 @@ Plans:
 ---
 
 *Roadmap created: 2026-03-31*
-*Last updated: 2026-04-16 after Phase 4b closeout (04b-05): Phase 4b narrowed to RTFM XD-I3D Gate (5/5 Complete, MISS-ACCEPTED per D-11 fallback-step-4 — AP 0.6570 vs 0.7681 gate, Flow diagnostic 0.5916 ruled out data coverage as cause); new Phase 4c detail block inserted for XD-Violence Main Results per D-01 scope narrowing*
+*Last updated: 2026-04-20 after Phase 5 planning: 5 plans created across 3 waves (corruption module, TENT/SAR adaptation, extraction flags, TTA evaluation, 500-run grid execution)*
