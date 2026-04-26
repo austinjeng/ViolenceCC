@@ -1,0 +1,40 @@
+# configs/gated_fusion_xd.yaml
+# Phase 4c: XD-Violence Gated Fusion (primary thesis model). Mirrors gated_fusion.yaml with XD paths.
+seed: 42
+dataset: xd
+
+paths:
+  skeleton_features: "E:/features/xd/skeleton"
+  clip_features: "E:/features/xd/clip"
+  splits_dir: "data/splits"
+  results_dir: "results"
+
+model:
+  variant: gated_fusion
+  skel_dim: 256
+  clip_dim: 1024
+  shared_dim: 256          # PRD 9.2 shared projection space
+  head_hidden: [128, 32]
+  dropout: 0.3
+
+data:
+  T: 32
+  batch_size: 16
+  num_workers: 4
+  pin_memory: true
+
+train:
+  lr: 1.0e-4
+  weight_decay: 1.0e-2
+  epochs: 50
+  warmup_epochs: 5
+  patience: 10
+  k_topk: 3
+  margin: 1.0
+  lam_sparse: 8.0e-3
+  lam_smooth: 8.0e-4
+
+wandb:
+  project: violencecc
+  mode: disabled          # Rule 3 fallback: wandb preflight exit 2 (no API key); run CSV-only per plan 04-06 Step A Option C
+  tags: [phase4c, gated_fusion, xd]

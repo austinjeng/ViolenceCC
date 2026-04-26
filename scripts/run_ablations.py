@@ -110,6 +110,27 @@ QUEUES = {
         RunSpec("ucf", "gated_fusion", 2024, "configs/gated_fusion.yaml"),
         # seed=42 covered by phase4_main; not duplicated per D-27/D-28.
     ],
+    "phase4c_main": [
+        RunSpec("xd", "skeleton_only", 42, "configs/skeleton_only_xd.yaml"),
+        RunSpec("xd", "clip_only",     42, "configs/clip_only_xd.yaml"),
+        RunSpec("xd", "late_fusion",   42, "configs/late_fusion_xd.yaml"),
+        RunSpec("xd", "gated_fusion",  42, "configs/gated_fusion_xd.yaml"),
+    ],
+    "phase4c_pooling": [
+        RunSpec(
+            "xd", "gated_fusion", 42,
+            "configs/gated_fusion_xd_2person.yaml", "2person",
+        ),
+        RunSpec(
+            "xd", "gated_fusion", 42,
+            "configs/gated_fusion_xd_clip_mean.yaml", "clip_mean",
+        ),
+    ],
+    "phase4c_seeds": [
+        RunSpec("xd", "gated_fusion", 123, "configs/gated_fusion_xd.yaml"),
+        RunSpec("xd", "gated_fusion", 2024, "configs/gated_fusion_xd.yaml"),
+        # seed=42 covered by phase4c_main; not duplicated per D-27/D-28.
+    ],
 }
 
 
@@ -273,7 +294,7 @@ def main() -> int:
     )
     ap.add_argument(
         "--queue", required=True, choices=sorted(QUEUES),
-        help="Queue to run: rtfm_gate, phase4_main, phase4_pooling, phase4_seeds",
+        help="Queue to run: rtfm_gate, phase4_main, phase4_pooling, phase4_seeds, phase4c_main, phase4c_pooling, phase4c_seeds",
     )
     ap.add_argument(
         "--dry-run", action="store_true",

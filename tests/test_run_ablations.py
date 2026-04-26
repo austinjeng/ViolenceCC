@@ -8,7 +8,7 @@ Tests:
   R5 train failure logs to runner-errors.log and returns non-zero status
   R6 queue continues to next spec after a failure
   R7 RunSpec.run_name + wandb_tags match D-30 / D-41 formats
-  R8 queue definitions: 1 + 4 + 2 + 2 = 9 specs
+  R8 queue definitions: 1 + 1 + 4 + 2 + 2 + 4 + 2 + 2 = 18 specs
 """
 import json
 import subprocess
@@ -35,7 +35,8 @@ def test_help_has_expected_queues():
         cwd=str(PROJECT_ROOT), capture_output=True, text=True,
     )
     combined = (out.stdout + out.stderr).lower()
-    for q in ("rtfm_gate", "phase4_main", "phase4_pooling", "phase4_seeds"):
+    for q in ("rtfm_gate", "phase4_main", "phase4_pooling", "phase4_seeds",
+              "phase4c_main", "phase4c_pooling", "phase4c_seeds"):
         assert q in combined, f"missing queue {q!r} in --help: {combined[:300]}"
 
 
@@ -50,11 +51,19 @@ def test_queue_definitions():
     assert len(QUEUES["phase4_main"]) == 4
     assert len(QUEUES["phase4_pooling"]) == 2
     assert len(QUEUES["phase4_seeds"]) == 2
-    # Total unique specs across all queues = 10 (9 Phase 4 + 1 Plan 04b-05 Flow diagnostic).
+    # Phase 4c queues (D-02)
+    assert len(QUEUES["phase4c_main"]) == 4
+    assert len(QUEUES["phase4c_pooling"]) == 2
+    assert len(QUEUES["phase4c_seeds"]) == 2
+    # Phase 4c run_name spot checks
+    assert QUEUES["phase4c_main"][3].run_name == "xd_gated_fusion_s42"
+    assert QUEUES["phase4c_seeds"][0].run_name == "xd_gated_fusion_s123"
+    assert QUEUES["phase4c_pooling"][0].run_name == "xd_gated_fusion_2person_s42"
+    # Total unique specs across all queues = 18 (10 Phase 4/4b + 8 Phase 4c).
     all_run_names = {
         s.run_name for q in QUEUES.values() for s in q
     }
-    assert len(all_run_names) == 10, f"expected 10 unique run_names, got {sorted(all_run_names)}"
+    assert len(all_run_names) == 18, f"expected 18 unique run_names, got {sorted(all_run_names)}"
 
 
 def test_run_name_deterministic():
