@@ -127,7 +127,11 @@ Plans:
   - XD pooling ablation YAMLs (`configs/gated_fusion_xd_2person.yaml`, `configs/gated_fusion_xd_clip_mean.yaml` — or reuse UCF YAMLs with dataset key swap)
   - XD ablation orchestration queues in `scripts/run_ablations.py` (add `phase4c_main`, `phase4c_pooling`, `phase4c_seeds` queues)
   - Per-category Fighting/Abuse/Riot breakdown (uses `_parse_category` from `src/eval/xd_annotations.py` delivered in Phase 4b)
-**Plans**: TBD (plan with `/gsd-plan-phase 4c` once XD skeleton+CLIP features land)
+**Plans:** 3 plans
+Plans:
+- [ ] 04C-01-PLAN.md — XD split cleaning + evaluate.py XD fusion branch + 6 configs + 3 queues + tests
+- [ ] 04C-02-PLAN.md — Execute phase4c_main and phase4c_seeds queues (6 XD runs) + D-06 AP assessment
+- [ ] 04C-03-PLAN.md — User re-extraction checkpoint + phase4c_pooling queue (2 runs) + final ablation table
 
 ### Phase 5: TTA Infrastructure & Corruption Experiments
 **Goal**: The UCF-Crime-C corruption benchmark is constructed, and TENT-style and SAR-style TTA results across all 20 conditions are logged and ready for analysis
@@ -167,7 +171,7 @@ Plans:
 | 3. Model Architecture & Training Infrastructure | 0/7 | Planned | - |
 | 4. Baseline Evaluation & Main Results | 7/7 | Complete | 2026-04-16 |
 | 4b. RTFM XD-I3D Gate | 5/5 | Complete (MISS-ACCEPTED) | 2026-04-16 |
-| 4c. XD-Violence Main Results | 0/? | Blocked on XD features | - |
+| 4c. XD-Violence Main Results | 0/3 | Planned | - |
 | 5. TTA Infrastructure & Corruption Experiments | 0/5 | Planned | - |
 | 6. Analysis & Visualization | 0/? | Not started | - |
 
