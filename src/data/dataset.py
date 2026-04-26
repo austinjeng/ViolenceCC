@@ -143,7 +143,10 @@ class MILFeatureDataset(Dataset):
     @staticmethod
     def _load_split(path: str) -> List[str]:
         with open(path, "r", encoding="utf-8") as f:
-            return [line.strip() for line in f if line.strip()]
+            return [
+                line.strip() for line in f
+                if line.strip() and not line.strip().startswith("#")
+            ]
 
     def _is_loadable(self, vid: str) -> bool:
         """A video is loadable iff both .npy files exist AND ``N >= 1``.

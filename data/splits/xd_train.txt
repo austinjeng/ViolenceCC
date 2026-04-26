@@ -1,3 +1,5 @@
+# Excluded: v=8cTqh9tMz_I__#1_label_A (corrupt MP4, missing moov atom)
+# Excluded: v=Gm73TwtUyGY__#1_label_G-0-0 (34 frames, below 64-frame window)
 A.Beautiful.Mind.2001__#00-01-45_00-02-50_label_A
 A.Beautiful.Mind.2001__#00-04-20_00-05-35_label_A
 A.Beautiful.Mind.2001__#00-05-52_00-08-22_label_A
@@ -1801,7 +1803,6 @@ v=8RRnCEaQrqE__#1_label_A
 v=8TDaA_4tR-U__#1_label_B4-0-0
 v=8UzJN4Z-_yQ__#1_label_A
 v=8VPI7etQP1U__#1_label_A
-v=8cTqh9tMz_I__#1_label_A
 v=8dbxn1vb2k8__#1_label_A
 v=8jHXvaUbzHc__#1_label_A
 v=8lr4JyJjsOk__#1_label_A
@@ -2033,7 +2034,6 @@ v=GeQ5tcbDabk__#1_label_B4-0-0
 v=GgXLASW-bpg__#1_label_A
 v=GjBI4hyO2-8__#1_label_G-0-0
 v=Gk11cLZ_67g__#1_label_A
-v=Gm73TwtUyGY__#1_label_G-0-0
 v=GmN002rn6qY__#1_label_B4-0-0
 v=GmOLGb8qgag__#1_label_G-0-0
 v=GqMh_HBNWZE__#00-00-00_00-00-51_label_B6-0-0

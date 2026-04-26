@@ -222,7 +222,45 @@ def _build_frame_arrays(cfg: dict, per_video_snippet_scores: dict):
                 cats_map[vid] = "Normal"
         return frames_map, labels_map, cats_map
 
-    # ---- UCF default path (and xd falls through to the same shape) ----
+    elif ds == "xd":
+        # Phase 4c: XD fusion (skeleton+CLIP) evaluation path.
+        # Annotation routing mirrors xd_i3d (D-07/D-10 canonical fallback).
+        ann_dir_cfg = cfg.get("paths", {}).get("annotations_dir")
+        ann_path = None
+        if ann_dir_cfg:
+            candidate = Path(ann_dir_cfg) / "xd_temporal.txt"
+            if candidate.exists():
+                ann_path = candidate
+        if ann_path is None:
+            ann_path = _PROJECT_ROOT / "data" / "annotations" / "xd_temporal.txt"
+
+        annos = parse_xd_annotations(ann_path) if ann_path.exists() else {}
+
+        # XD fusion: skeleton+CLIP extraction uses 64-frame snippet windows
+        # (same as UCF), but XD video frames are native FPS (no PNG 10x
+        # upsample). So snippet_window=64, upsample_factor=1.
+        snippet_window = 64
+        upsample_factor = 1
+
+        frames_map: dict = {}
+        labels_map: dict = {}
+        cats_map: dict = {}
+        for vid, scores in per_video_snippet_scores.items():
+            n_frames = len(scores) * snippet_window
+            frames_map[vid] = snippet_to_frame(
+                scores, n_frames=n_frames,
+                snippet_window=snippet_window, upsample_factor=upsample_factor,
+            )
+            if vid in annos:
+                anno = annos[vid]
+                labels_map[vid] = xd_frame_labels(anno, n_frames)
+                cats_map[vid] = anno.category
+            else:
+                labels_map[vid] = np.zeros(n_frames, dtype=np.int64)
+                cats_map[vid] = "Normal"
+        return frames_map, labels_map, cats_map
+
+    # ---- UCF default path ----
     ann_dir_cfg = cfg.get("paths", {}).get("annotations_dir")
     ann_path = None
     if ann_dir_cfg:
