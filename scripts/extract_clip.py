@@ -44,6 +44,11 @@ from pathlib import Path
 sys.stdout.reconfigure(line_buffering=True)
 sys.stderr.reconfigure(line_buffering=True)
 
+# Ensure scripts/ is on sys.path so `from corruption import ...` works
+_SCRIPTS_DIR = Path(__file__).resolve().parent
+if str(_SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(_SCRIPTS_DIR))
+
 import numpy as np
 import torch
 from PIL import Image
@@ -172,7 +177,9 @@ def build_ucf_video_category_map(train: bool = True, test: bool = True) -> dict:
 
 
 def load_ucf_snippet_frames_pil(
-    png_list: list, start: int, end: int, sample_every: int = UCF_SAMPLE_EVERY
+    png_list: list, start: int, end: int, sample_every: int = UCF_SAMPLE_EVERY,
+    corruption_type: str = None, corruption_severity: int = None,
+    corruption_rng: np.random.Generator = None,
 ) -> list:
     """
     Load frames for a UCF-Crime snippet as PIL Images for CLIP preprocessing.
@@ -182,6 +189,9 @@ def load_ucf_snippet_frames_pil(
         start:        Snippet start index (inclusive).
         end:          Snippet end index (exclusive).
         sample_every: Take every Nth frame within [start, end) for 1-FPS coverage.
+        corruption_type:     Phase 5 TTA: corruption type (None = clean).
+        corruption_severity: Phase 5 TTA: severity 1-5 (None = clean).
+        corruption_rng:      Numpy RNG for reproducible corruption.
 
     Returns:
         List of PIL Images (RGB). Empty list if no valid frames.
@@ -194,6 +204,12 @@ def load_ucf_snippet_frames_pil(
         try:
             # Load PNG directly with PIL (RGB); avoids cv2 dependency in vcc-main
             pil_img = Image.open(str(png_path)).convert("RGB")
+            # Phase 5 TTA: apply corruption BEFORE CLIP preprocessing
+            if corruption_type is not None:
+                from corruption import apply_corruption
+                frame_np = np.array(pil_img)  # uint8 [H,W,3] RGB
+                frame_np = apply_corruption(frame_np, corruption_type, corruption_severity, rng=corruption_rng)
+                pil_img = Image.fromarray(frame_np)
             frames.append(pil_img)
         except Exception as e:
             logger.debug(f"Frame load failed: {png_path}: {e}")
@@ -207,6 +223,8 @@ def load_ucf_snippet_frames_pil(
 def load_xd_snippet_frames_pil(
     video_path: pathlib.Path, start: int, end: int, fps: float,
     vr=None,
+    corruption_type: str = None, corruption_severity: int = None,
+    corruption_rng: np.random.Generator = None,
 ) -> list:
     """
     Load frames for an XD-Violence snippet as PIL Images for CLIP preprocessing.
@@ -216,6 +234,10 @@ def load_xd_snippet_frames_pil(
         start:      Snippet start frame index (inclusive).
         end:        Snippet end frame index (exclusive).
         fps:        Video FPS (from decord or cv2).
+        vr:         Reusable decord VideoReader instance.
+        corruption_type:     Phase 5 TTA: corruption type (None = clean).
+        corruption_severity: Phase 5 TTA: severity 1-5 (None = clean).
+        corruption_rng:      Numpy RNG for reproducible corruption.
 
     Returns:
         List of PIL Images (RGB). Falls back to cv2 if decord fails.
@@ -236,7 +258,13 @@ def load_xd_snippet_frames_pil(
         if not frame_indices:
             return []
         batch = vr.get_batch(frame_indices).asnumpy()  # [N, H, W, 3] RGB
-        frames = [Image.fromarray(frame) for frame in batch]
+        frames = []
+        for frame_np in batch:
+            # Phase 5 TTA: apply corruption BEFORE CLIP preprocessing
+            if corruption_type is not None:
+                from corruption import apply_corruption
+                frame_np = apply_corruption(frame_np, corruption_type, corruption_severity, rng=corruption_rng)
+            frames.append(Image.fromarray(frame_np))
         return frames
     except Exception as e:
         logger.warning(f"decord failed for {video_path.stem}: {e}. No fallback available.")
@@ -326,12 +354,20 @@ def extract_video_clip_features(
     device: str = "cuda",
     ucf_video_map: dict = None,
     pool: str = "mean_max",
+    corruption_type: str = None,
+    corruption_severity: int = None,
+    corruption_rng: np.random.Generator = None,
 ) -> np.ndarray:
     """
     Extract CLIP [N_snippets, D] features for one video.
 
     D = 1024 when pool='mean_max' (legacy default); D = 512 when pool='mean'
     (D-23 ablation).
+
+    Args:
+        corruption_type:     Phase 5 TTA: corruption type (None = clean).
+        corruption_severity: Phase 5 TTA: severity 1-5 (None = clean).
+        corruption_rng:      Numpy RNG for reproducible corruption.
 
     Returns ndarray [N_snippets, D] float32.
     Raises on unrecoverable error.
@@ -357,7 +393,12 @@ def extract_video_clip_features(
                 f"Check UCF-Crime directory structure."
             )
         for start, end in snippet_ranges:
-            frames = load_ucf_snippet_frames_pil(png_list, start, end, UCF_SAMPLE_EVERY)
+            frames = load_ucf_snippet_frames_pil(
+                png_list, start, end, UCF_SAMPLE_EVERY,
+                corruption_type=corruption_type,
+                corruption_severity=corruption_severity,
+                corruption_rng=corruption_rng,
+            )
             feat = extract_clip_snippet(frames, model, preprocess, batch_size, device, pool=pool)
             snippet_feats.append(feat)
 
@@ -376,7 +417,12 @@ def extract_video_clip_features(
         fps = float(vr.get_avg_fps())
 
         for start, end in snippet_ranges:
-            frames = load_xd_snippet_frames_pil(video_path, start, end, fps, vr=vr)
+            frames = load_xd_snippet_frames_pil(
+                video_path, start, end, fps, vr=vr,
+                corruption_type=corruption_type,
+                corruption_severity=corruption_severity,
+                corruption_rng=corruption_rng,
+            )
             feat = extract_clip_snippet(frames, model, preprocess, batch_size, device, pool=pool)
             snippet_feats.append(feat)
 
@@ -412,6 +458,8 @@ def run_extraction(
     batch_size: int = 64,
     device: str = "cuda",
     pool: str = "mean_max",
+    corruption_type: str = None,
+    corruption_severity: int = None,
 ) -> None:
     """
     Main loop: extract CLIP features for all videos in a dataset split.
@@ -420,6 +468,8 @@ def run_extraction(
         dataset, split, limit, batch_size, device: see argparse below.
         pool: D-23 — "mean_max" (default, writes to clip/) or "mean"
               (writes to clip_mean/, [N, 512] shape).
+        corruption_type:     Phase 5 TTA: corruption type (None = clean).
+        corruption_severity: Phase 5 TTA: severity 1-5 (None = clean).
     """
     # Read video IDs from split file
     split_file = SPLITS_DIR / f"{dataset}_{split}.txt"
@@ -437,12 +487,29 @@ def run_extraction(
 
     logger.info(f"Processing {len(video_ids)} videos from {dataset}/{split}.")
 
-    # Setup output directory — D-24 sibling dir when pool=mean.
-    out_subdir = "clip_mean" if pool == "mean" else "clip"
+    # Phase 5 TTA: initialize deterministic RNG for corruption reproducibility
+    corruption_rng = None
+    if corruption_type is not None:
+        corruption_rng = np.random.default_rng(42)
+        logger.info(
+            f"Phase 5 TTA corruption mode: type={corruption_type}, "
+            f"severity={corruption_severity}, rng_seed=42"
+        )
+
+    # Setup output directory
+    # Phase 5 TTA: override to corruption-specific subdir (D-04 layout)
+    if corruption_type is not None:
+        out_subdir = f"clip_{corruption_type}_{corruption_severity}"
+    elif pool == "mean":
+        out_subdir = "clip_mean"  # D-24 sibling dir
+    else:
+        out_subdir = "clip"
     output_dir = FEATURE_ROOT / dataset / out_subdir
     output_dir.mkdir(parents=True, exist_ok=True)
     logger.info(f"Output directory: {output_dir}")
-    if pool == "mean":
+    if corruption_type is not None:
+        logger.info(f"Phase 5 TTA: writing corrupted features to {out_subdir}/")
+    elif pool == "mean":
         logger.info("D-23 mode: emitting [N, 512] mean-only features to clip_mean/.")
 
     # Error log
@@ -498,6 +565,9 @@ def run_extraction(
                     device=device,
                     ucf_video_map=ucf_video_map,
                     pool=pool,
+                    corruption_type=corruption_type,
+                    corruption_severity=corruption_severity,
+                    corruption_rng=corruption_rng,
                 )
                 # Atomic write: tmp then rename.
                 # Name tmp as "{id}.tmp.npy" (not "{id}.npy.tmp") because np.save
@@ -675,7 +745,25 @@ def main() -> None:
             "or 'mean' (emits [N,512] to clip_mean/ sibling dir)."
         ),
     )
+    parser.add_argument(
+        "--corruption",
+        type=str,
+        default=None,
+        choices=["gaussian_noise", "jpeg_compression", "brightness", "motion_blur"],
+        help="Phase 5 TTA: corruption type to apply before CLIP preprocessing.",
+    )
+    parser.add_argument(
+        "--severity",
+        type=int,
+        default=None,
+        choices=[1, 2, 3, 4, 5],
+        help="Phase 5 TTA: corruption severity (1=mild, 5=harsh).",
+    )
     args = parser.parse_args()
+
+    # Validate: --corruption and --severity must both be set or both be unset
+    if (args.corruption is None) != (args.severity is None):
+        parser.error("--corruption and --severity must be used together.")
 
     run_extraction(
         args.dataset,
@@ -684,10 +772,13 @@ def main() -> None:
         batch_size=args.batch_size,
         device=args.device,
         pool=args.pool,
+        corruption_type=args.corruption,
+        corruption_severity=args.severity,
     )
 
     # Validate on sample videos if --limit was used
-    if args.limit is not None:
+    # Skip validation in corruption mode (output dir differs from clean cache)
+    if args.limit is not None and args.corruption is None:
         split_file = SPLITS_DIR / f"{args.dataset}_{args.split}.txt"
         with open(split_file) as f:
             all_ids = [line.strip() for line in f if line.strip()]
