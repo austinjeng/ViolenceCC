@@ -49,9 +49,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **EVAL-01**: RTFM baseline reproduction — frame-level AP gate on XD-Violence I3D-RGB 5-crop features within ±1% of 77.81% per D-03 (Rescoped from Phase 4 per 2026-04-15 Option B decision; completed in Phase 4b per D-01 scope narrowing; AP 0.6570 MISS-ACCEPTED per D-11 fallback-step-4 — shortfall 11.11 pp, Flow diagnostic rerun with 100% data coverage produced AP 0.5916 (−6.54 pp) confirming modeling capacity not data coverage is the bottleneck; xd_i3d training dispatch + Wu annotation parser implemented in Phase 4b)
 - [x] **EVAL-02**: Frame-level AUC (ROC) evaluation on UCF-Crime official test set with correct snippet-to-frame score expansion (UCF complete in Phase 4; XD-side Phase 4c per D-01 scope narrowing)
-- [x] **EVAL-03**: Frame-level AP evaluation on XD-Violence official test set (UCF-adapted ablation table complete in Phase 4; XD AP pending Phase 4c per D-01 scope narrowing)
-- [x] **EVAL-04**: Per-category violence subset breakdown (UCF-Crime: Fighting+Assault complete in Phase 4; XD-Violence: Fighting+Abuse+Riot pending Phase 4c per D-01 scope narrowing)
-- [x] **EVAL-05**: Key results (Gated Fusion on both datasets) repeated 3 times with mean +/- std (UCF complete in Phase 4: std 0.00291; XD pending Phase 4c per D-01 scope narrowing)
+- [x] **EVAL-03**: Frame-level AP evaluation on XD-Violence official test set (UCF-adapted ablation table complete in Phase 4; XD 8-row ablation table complete in Phase 4c: Gated Fusion AP=71.92% MISS-ACCEPTED per D-06)
+- [x] **EVAL-04**: Per-category violence subset breakdown (UCF-Crime: Fighting+Assault complete in Phase 4; XD-Violence: all 6 categories complete in Phase 4c, Fighting 77.76% + Riot 88.15% exceed full AP, Abuse 44.89% identified as hardest)
+- [x] **EVAL-05**: Key results (Gated Fusion on both datasets) repeated 3 times with mean +/- std (UCF complete in Phase 4: AUC std 0.29%; XD complete in Phase 4c: AP std 1.08%, AUC std 0.29%; AP seed sensitivity documented as thesis finding)
 
 ### TTA
 

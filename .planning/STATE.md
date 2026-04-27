@@ -5,14 +5,14 @@ milestone_name: milestone
 current_phase: 4c
 current_plan: Not started
 status: executing
-stopped_at: Completed 04C-01-PLAN.md
+stopped_at: Completed 04C-03-PLAN.md (checkpoint: human-verify for Phase 4c final results)
 last_updated: "2026-04-26T17:33:55.151Z"
 progress:
   total_phases: 8
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 34
-  completed_plans: 27
-  percent: 79
+  completed_plans: 30
+  percent: 88
 ---
 
 # State: ViolenceCC
@@ -36,12 +36,12 @@ progress:
 Phase: 04b (xd-violence-main-results-rtfm-xd-i3d-gate) — EXECUTING
 Plan: 2 of 5
 **Current phase:** 4c
-**Current plan:** Not started
-**Status:** Ready to execute
+**Current plan:** 3 of 3 (checkpoint: human-verify)
+**Status:** Awaiting user approval of final Phase 4c results
 
 **Progress:**
 
-[████████░░] 79%
+[████████░░] 88%
 Phase 2 [████████░░] 80%   Feature Extraction Pipeline (4/4 plans done, UAT partial: XD extraction running)
 Phase 3 [          ] 0%    Model Architecture & Training Infrastructure
 Phase 4 [          ] 0%    Baseline Evaluation & Main Results
@@ -73,6 +73,8 @@ No experiments run yet. Targets from PRD v2.3:
 | Phase 02-feature-extraction-pipeline P04 | 15min | 1 tasks | 4 files |
 | Phase 04 P07 | 4min | 1 tasks | 3 files |
 | Phase 04C P01 | 9min | 2 tasks | 12 files |
+| Phase 04C P02 | 16min | 1 tasks | 6 files |
+| Phase 04C P03 | 10min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -115,6 +117,9 @@ No experiments run yet. Targets from PRD v2.3:
 | Skeleton extraction bottleneck is 99.3% inference, 0.7% decode | rtmlib runs yolox_m (detection) + rtmpose-m (pose) per frame at ~46ms/frame (21.6 FPS on RTX 4090) |
 | No viable optimization for skeleton extraction speed | rtmlib: no batch inference, no TensorRT backend; frame sampling destroys CTR-GCN motion signal |
 | Proceed with Phase 3 using UCF-Crime while XD-Violence extraction runs | UCF-Crime features complete; XD-Violence ~5-8 days remaining for skeleton stage |
+| Default pooling outperforms alternatives on XD-Violence | 2-person concat (-0.90% AP) and CLIP mean-only (-2.32% AP) both worse than default M-pool+global-pool |
+| Abuse (B5) is hardest XD category for skeleton+CLIP fusion | AP=44.89% vs full test-set 71.92%; subtle interpersonal violence lacks distinctive motion/visual signatures |
+| XD AP seed sensitivity higher than UCF | AP std=1.08% (3-seed) vs UCF AUC std=0.29%; precision-recall is more sensitive to score calibration than ROC-AUC |
 
 ### Critical Pitfalls to Watch
 
