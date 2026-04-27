@@ -127,11 +127,12 @@ def brightness(img: np.ndarray, severity: int,
 
 def motion_blur(img: np.ndarray, severity: int,
                 rng: np.random.Generator = None) -> np.ndarray:
-    """Apply horizontal motion blur using a line kernel.
+    """Apply horizontal motion blur using a Gaussian-weighted line kernel.
 
-    Simplified horizontal kernel per Assumption A1 (RESEARCH.md). The second
-    element of MOTION_BLUR_PARAMS (sigma) is unused; the kernel is a uniform
-    horizontal line of length ``kernel_size``.
+    Uses both kernel_size and sigma from MOTION_BLUR_PARAMS. The kernel is a
+    horizontal Gaussian profile of width ``kernel_size`` and spread ``sigma``,
+    which ensures all 5 severity levels produce distinct blur amounts (severities
+    2 and 3 share kernel_size=15 but differ in sigma).
 
     ``rng`` is unused but present for uniform signature.
 
@@ -149,9 +150,14 @@ def motion_blur(img: np.ndarray, severity: int,
     np.ndarray
         uint8 [H, W, 3] corrupted RGB image.
     """
-    size, _ = MOTION_BLUR_PARAMS[severity - 1]
+    size, sigma = MOTION_BLUR_PARAMS[severity - 1]
     kernel = np.zeros((size, size), dtype=np.float32)
-    kernel[size // 2, :] = 1.0 / size  # horizontal line kernel
+    # Build 1-D Gaussian profile along the horizontal center row
+    center = size // 2
+    x = np.arange(size, dtype=np.float32) - center
+    gauss = np.exp(-0.5 * (x / sigma) ** 2)
+    gauss /= gauss.sum()  # normalize to sum=1
+    kernel[center, :] = gauss
     return cv2.filter2D(img, -1, kernel)
 
 
