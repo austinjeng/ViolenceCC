@@ -47,6 +47,12 @@ import warnings
 sys.stdout.reconfigure(line_buffering=True)
 sys.stderr.reconfigure(line_buffering=True)
 
+# Ensure scripts/ is on sys.path so `from corruption import ...` works
+from pathlib import Path
+_SCRIPTS_DIR = Path(__file__).resolve().parent
+if str(_SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(_SCRIPTS_DIR))
+
 # ---------------------------------------------------------------------------
 # cuDNN PATH fix (ISSUE 2 from CLAUDE.md)
 # onnxruntime-gpu requires cudnn64_9.dll to be on PATH for CUDAExecutionProvider.
@@ -158,9 +164,19 @@ def find_ucf_category(video_id: str) -> tuple:
     raise FileNotFoundError(f"No PNGs found for video_id={video_id} in UCF-Crime directories")
 
 
-def load_ucf_frames(video_id: str) -> tuple:
+def load_ucf_frames(
+    video_id: str,
+    corruption_type: str = None,
+    corruption_severity: int = None,
+    corruption_rng: np.random.Generator = None,
+) -> tuple:
     """
     Load all PNG frames for a UCF-Crime video.
+
+    Args:
+        corruption_type:     Phase 5 TTA: corruption type (None = clean).
+        corruption_severity: Phase 5 TTA: severity 1-5 (None = clean).
+        corruption_rng:      Numpy RNG for reproducible corruption.
 
     Returns (frames, img_shape) where:
         frames:     list of np.ndarray (H, W, 3) in BGR (cv2 default)
@@ -193,6 +209,13 @@ def load_ucf_frames(video_id: str) -> tuple:
             continue
         if img_shape is None:
             img_shape = (img.shape[0], img.shape[1])  # (H, W)
+        # Phase 5 TTA: apply corruption BEFORE RTMPose inference
+        # Corruption expects RGB; cv2.imread returns BGR
+        if corruption_type is not None:
+            from corruption import apply_corruption
+            frame_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            frame_rgb = apply_corruption(frame_rgb, corruption_type, corruption_severity, rng=corruption_rng)
+            img = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR)
         frames.append(img)
 
     if not frames:
@@ -275,13 +298,22 @@ def _load_checkpoint(ckpt_path: pathlib.Path) -> dict:
         return None
 
 
-def stream_xd_keypoints(video_path: pathlib.Path, video_id: str, dataset: str) -> tuple:
+def stream_xd_keypoints(
+    video_path: pathlib.Path, video_id: str, dataset: str,
+    corruption_type: str = None, corruption_severity: int = None,
+    corruption_rng: np.random.Generator = None,
+) -> tuple:
     """
     Stream-process an XD-Violence video: read frames in chunks, run RTMPose,
     discard raw pixels immediately. Keeps RAM usage constant (~CHUNK_SIZE frames).
 
     Saves a checkpoint after every chunk so processing can resume mid-video
     if the process is interrupted.
+
+    Args:
+        corruption_type:     Phase 5 TTA: corruption type (None = clean).
+        corruption_severity: Phase 5 TTA: severity 1-5 (None = clean).
+        corruption_rng:      Numpy RNG for reproducible corruption.
 
     Returns:
         keypoint:       ndarray [M=2, T, V=17, C=2]  float32
@@ -327,6 +359,9 @@ def stream_xd_keypoints(video_path: pathlib.Path, video_id: str, dataset: str) -
 
         # Process first frame (already read above)
         model = get_wholebody_model()
+        # Phase 5 TTA: apply corruption to first frame before RTMPose
+        if corruption_type is not None:
+            first_frame = _corrupt_frame(first_frame, corruption_type, corruption_severity, corruption_rng)
         _infer_single_frame(model, first_frame, 0, keypoint, keypoint_score)
         actual_count = 1
 
@@ -343,7 +378,9 @@ def stream_xd_keypoints(video_path: pathlib.Path, video_id: str, dataset: str) -
         chunk.append(frame)
 
         if len(chunk) >= CHUNK_SIZE:
-            _infer_chunk(model, chunk, chunk_start_idx, keypoint, keypoint_score)
+            _infer_chunk(model, chunk, chunk_start_idx, keypoint, keypoint_score,
+                         corruption_type=corruption_type, corruption_severity=corruption_severity,
+                         corruption_rng=corruption_rng)
             actual_count += len(chunk)
             chunk_start_idx += len(chunk)
             chunk = []  # free raw pixels
@@ -354,7 +391,9 @@ def stream_xd_keypoints(video_path: pathlib.Path, video_id: str, dataset: str) -
 
     # Process remaining frames
     if chunk:
-        _infer_chunk(model, chunk, chunk_start_idx, keypoint, keypoint_score)
+        _infer_chunk(model, chunk, chunk_start_idx, keypoint, keypoint_score,
+                     corruption_type=corruption_type, corruption_severity=corruption_severity,
+                     corruption_rng=corruption_rng)
         actual_count += len(chunk)
 
     cap.release()
@@ -396,9 +435,20 @@ def _infer_single_frame(model, frame, t, keypoint, keypoint_score):
         keypoint_score[1, t] = scores[top2_idx[1]]
 
 
-def _infer_chunk(model, chunk, chunk_start_idx, keypoint, keypoint_score):
-    """Run RTMPose on a chunk of frames."""
+def _corrupt_frame(frame_bgr, corruption_type, corruption_severity, corruption_rng):
+    """Apply Phase 5 TTA corruption to a BGR frame. Returns corrupted BGR frame."""
+    from corruption import apply_corruption
+    frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
+    frame_rgb = apply_corruption(frame_rgb, corruption_type, corruption_severity, rng=corruption_rng)
+    return cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR)
+
+
+def _infer_chunk(model, chunk, chunk_start_idx, keypoint, keypoint_score,
+                 corruption_type=None, corruption_severity=None, corruption_rng=None):
+    """Run RTMPose on a chunk of frames, optionally corrupting each frame first."""
     for i, frame in enumerate(chunk):
+        if corruption_type is not None:
+            frame = _corrupt_frame(frame, corruption_type, corruption_severity, corruption_rng)
         _infer_single_frame(model, frame, chunk_start_idx + i, keypoint, keypoint_score)
 
 
@@ -478,22 +528,43 @@ def process_frames_to_keypoints(frames: list, img_shape: tuple) -> tuple:
 # Per-video processing
 # ---------------------------------------------------------------------------
 
-def process_video(video_id: str, dataset: str, split: str) -> dict:
+def process_video(
+    video_id: str, dataset: str, split: str,
+    corruption_type: str = None, corruption_severity: int = None,
+    corruption_rng: np.random.Generator = None,
+) -> dict:
     """
     Extract skeleton keypoints from a single video.
+
+    Args:
+        corruption_type:     Phase 5 TTA: corruption type (None = clean).
+        corruption_severity: Phase 5 TTA: severity 1-5 (None = clean).
+        corruption_rng:      Numpy RNG for reproducible corruption.
 
     Returns a dict with all data needed to write pickle + boundary JSON.
     Raises on unrecoverable error (caller handles try/except).
     """
     if dataset == "ucf":
         # UCF-Crime: PNGs are small enough to load all at once
-        frames, img_shape = load_ucf_frames(video_id)
+        # Corruption is applied per-frame inside load_ucf_frames
+        frames, img_shape = load_ucf_frames(
+            video_id,
+            corruption_type=corruption_type,
+            corruption_severity=corruption_severity,
+            corruption_rng=corruption_rng,
+        )
         T = len(frames)
         keypoint, keypoint_score = process_frames_to_keypoints(frames, img_shape)
     else:
         # XD-Violence: stream frames to avoid loading entire video into RAM
+        # Corruption is applied per-frame inside stream_xd_keypoints
         video_path = resolve_xd_video_path(video_id, split)
-        keypoint, keypoint_score, img_shape, T = stream_xd_keypoints(video_path, video_id, dataset)
+        keypoint, keypoint_score, img_shape, T = stream_xd_keypoints(
+            video_path, video_id, dataset,
+            corruption_type=corruption_type,
+            corruption_severity=corruption_severity,
+            corruption_rng=corruption_rng,
+        )
 
     # Coordinate normalization assertion (DATA-04, C1 pitfall)
     normalized_kp = prenormalize2d(keypoint, img_shape)
@@ -521,12 +592,21 @@ def process_video(video_id: str, dataset: str, split: str) -> dict:
 # Output writing
 # ---------------------------------------------------------------------------
 
-def write_outputs(data: dict, dataset: str) -> None:
+def write_outputs(data: dict, dataset: str, corruption_type: str = None,
+                  corruption_severity: int = None) -> None:
     """
     Write PYSKL pickle and snippet boundary JSON for one video.
+
+    When corruption_type is set, skeleton pickles go to a corruption-specific
+    subdirectory (e.g. E:/skeletons/ucf/skeleton_motion_blur_3/).
+    Boundary JSONs always go to the standard snippet dir (same boundaries).
     """
     video_id = data["video_id"]
-    skeleton_dir = SKELETON_ROOT / dataset
+    # Phase 5 TTA: override skeleton output dir for corruption mode
+    if corruption_type is not None:
+        skeleton_dir = SKELETON_ROOT / dataset / f"skeleton_{corruption_type}_{corruption_severity}"
+    else:
+        skeleton_dir = SKELETON_ROOT / dataset
     snippet_dir = SNIPPET_ROOT / dataset
     skeleton_dir.mkdir(parents=True, exist_ok=True)
     snippet_dir.mkdir(parents=True, exist_ok=True)
@@ -566,9 +646,14 @@ def write_outputs(data: dict, dataset: str) -> None:
 # Main extraction loop
 # ---------------------------------------------------------------------------
 
-def run_extraction(dataset: str, split: str, limit: int = None, workers: int = 1) -> None:
+def run_extraction(dataset: str, split: str, limit: int = None, workers: int = 1,
+                   corruption_type: str = None, corruption_severity: int = None) -> None:
     """
     Main extraction loop for one dataset/split combination.
+
+    Args:
+        corruption_type:     Phase 5 TTA: corruption type (None = clean).
+        corruption_severity: Phase 5 TTA: severity 1-5 (None = clean).
     """
     # Read video IDs from split file
     split_file = SPLITS_DIR / f"{dataset}_{split}.txt"
@@ -586,12 +671,26 @@ def run_extraction(dataset: str, split: str, limit: int = None, workers: int = 1
 
     logger.info(f"Processing {len(video_ids)} videos from {dataset}/{split}.")
 
+    # Phase 5 TTA: initialize deterministic RNG for corruption reproducibility
+    corruption_rng = None
+    if corruption_type is not None:
+        corruption_rng = np.random.default_rng(42)
+        logger.info(
+            f"Phase 5 TTA corruption mode: type={corruption_type}, "
+            f"severity={corruption_severity}, rng_seed=42"
+        )
+
     # Setup output directories
-    (SKELETON_ROOT / dataset).mkdir(parents=True, exist_ok=True)
+    # Phase 5 TTA: corruption-specific skeleton output dir
+    if corruption_type is not None:
+        skeleton_out = SKELETON_ROOT / dataset / f"skeleton_{corruption_type}_{corruption_severity}"
+    else:
+        skeleton_out = SKELETON_ROOT / dataset
+    skeleton_out.mkdir(parents=True, exist_ok=True)
     (SNIPPET_ROOT / dataset).mkdir(parents=True, exist_ok=True)
 
     # Error log path
-    error_log_path = SKELETON_ROOT / dataset / "errors.log"
+    error_log_path = skeleton_out / "errors.log"
 
     skipped = 0
     processed = 0
@@ -602,7 +701,8 @@ def run_extraction(dataset: str, split: str, limit: int = None, workers: int = 1
             pbar.set_description(f"{dataset}/{split}: {video_id[:40]}")
 
             # Resume logic (D-14): skip if both outputs already exist
-            pickle_path = SKELETON_ROOT / dataset / f"{video_id}.pkl"
+            # In corruption mode, check the corruption-specific skeleton dir
+            pickle_path = skeleton_out / f"{video_id}.pkl"
             boundary_path = SNIPPET_ROOT / dataset / f"{video_id}_boundaries.json"
             if pickle_path.exists() and boundary_path.exists():
                 skipped += 1
@@ -611,8 +711,15 @@ def run_extraction(dataset: str, split: str, limit: int = None, workers: int = 1
 
             # Per-video error handling (D-15)
             try:
-                data = process_video(video_id, dataset, split)
-                write_outputs(data, dataset)
+                data = process_video(
+                    video_id, dataset, split,
+                    corruption_type=corruption_type,
+                    corruption_severity=corruption_severity,
+                    corruption_rng=corruption_rng,
+                )
+                write_outputs(data, dataset,
+                              corruption_type=corruption_type,
+                              corruption_severity=corruption_severity)
                 processed += 1
             except Exception as exc:
                 failed += 1
@@ -732,7 +839,25 @@ def main() -> None:
         default=1,
         help="Number of parallel workers (default 1; skeleton extraction is GPU-bound).",
     )
+    parser.add_argument(
+        "--corruption",
+        type=str,
+        default=None,
+        choices=["gaussian_noise", "jpeg_compression", "brightness", "motion_blur"],
+        help="Phase 5 TTA: corruption type to apply before RTMPose inference.",
+    )
+    parser.add_argument(
+        "--severity",
+        type=int,
+        default=None,
+        choices=[1, 2, 3, 4, 5],
+        help="Phase 5 TTA: corruption severity (1=mild, 5=harsh).",
+    )
     args = parser.parse_args()
+
+    # Validate: --corruption and --severity must both be set or both be unset
+    if (args.corruption is None) != (args.severity is None):
+        parser.error("--corruption and --severity must be used together.")
 
     if args.workers != 1:
         logger.warning(
@@ -740,10 +865,12 @@ def main() -> None:
             "Using 1 worker."
         )
 
-    run_extraction(args.dataset, args.split, limit=args.limit, workers=1)
+    run_extraction(args.dataset, args.split, limit=args.limit, workers=1,
+                   corruption_type=args.corruption, corruption_severity=args.severity)
 
     # Run validation on sample videos if --limit was used (smoke test)
-    if args.limit is not None:
+    # Skip validation in corruption mode (output dir differs from clean cache)
+    if args.limit is not None and args.corruption is None:
         split_file = SPLITS_DIR / f"{args.dataset}_{args.split}.txt"
         with open(split_file) as f:
             video_ids = [line.strip() for line in f if line.strip()]
