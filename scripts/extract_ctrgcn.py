@@ -335,6 +335,8 @@ def run_extraction(
     limit: int = None,
     device: str = "cuda",
     keep_persons: bool = False,
+    corruption: str = None,
+    severity: int = None,
 ) -> None:
     """
     Main loop: extract CTR-GCN features for all videos in a dataset split.
@@ -362,7 +364,12 @@ def run_extraction(
     logger.info(f"Processing {len(video_ids)} videos from {dataset}/{split}.")
 
     # Setup output directories — D-24 sibling dir layout when --keep-persons
-    out_subdir = "skeleton_2person" if keep_persons else "skeleton"
+    if corruption:
+        out_subdir = f"skeleton_{corruption}_{severity}"
+    elif keep_persons:
+        out_subdir = "skeleton_2person"
+    else:
+        out_subdir = "skeleton"
     output_dir = FEATURE_ROOT / dataset / out_subdir
     output_dir.mkdir(parents=True, exist_ok=True)
     logger.info(f"Output directory: {output_dir}")
@@ -391,7 +398,10 @@ def run_extraction(
                 continue
 
             # Input paths
-            pickle_path = SKELETON_ROOT / dataset / f"{video_id}.pkl"
+            if corruption:
+                pickle_path = SKELETON_ROOT / dataset / f"skeleton_{corruption}_{severity}" / f"{video_id}.pkl"
+            else:
+                pickle_path = SKELETON_ROOT / dataset / f"{video_id}.pkl"
             boundary_path = SNIPPET_ROOT / dataset / f"{video_id}_boundaries.json"
 
             # Missing input files (D-15): log and skip
@@ -587,7 +597,19 @@ def main() -> None:
             "instead of <FEATURE_ROOT>/<dataset>/skeleton/."
         ),
     )
+    parser.add_argument(
+        "--corruption", type=str, default=None,
+        choices=["gaussian_noise", "jpeg_compression", "brightness", "motion_blur"],
+        help="Phase 5 TTA: read corrupted skeleton pickles from skeleton_{type}_{severity}/",
+    )
+    parser.add_argument(
+        "--severity", type=int, default=None, choices=[1, 2, 3, 4, 5],
+        help="Phase 5 TTA: corruption severity (1=mild, 5=harsh)",
+    )
     args = parser.parse_args()
+
+    if (args.corruption is None) != (args.severity is None):
+        parser.error("--corruption and --severity must be used together")
 
     run_extraction(
         args.dataset,
@@ -595,6 +617,8 @@ def main() -> None:
         limit=args.limit,
         device=args.device,
         keep_persons=args.keep_persons,
+        corruption=args.corruption,
+        severity=args.severity,
     )
 
     # Run validation on sample videos if --limit was used (smoke test)
