@@ -171,7 +171,7 @@ Plans:
 | 3. Model Architecture & Training Infrastructure | 0/7 | Planned | - |
 | 4. Baseline Evaluation & Main Results | 7/7 | Complete | 2026-04-16 |
 | 4b. RTFM XD-I3D Gate | 5/5 | Complete (MISS-ACCEPTED) | 2026-04-16 |
-| 4c. XD-Violence Main Results | 0/3 | Planned | - |
+| 4c. XD-Violence Main Results | 3/3 | Complete (MISS-ACCEPTED) | 2026-04-28 |
 | 5. TTA Infrastructure & Corruption Experiments | 0/5 | Planned | - |
 | 6. Analysis & Visualization | 0/? | Not started | - |
 
@@ -227,4 +227,4 @@ Plans:
 ---
 
 *Roadmap created: 2026-03-31*
-*Last updated: 2026-04-20 after Phase 5 planning: 5 plans created across 3 waves (corruption module, TENT/SAR adaptation, extraction flags, TTA evaluation, 500-run grid execution)*
+*Last updated: 2026-04-28 after Phase 4c completion: 8-row XD ablation table, Gated Fusion AP=71.92% MISS-ACCEPTED, hyperparameter sweep deferred as Phase 4d candidate*

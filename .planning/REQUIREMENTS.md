@@ -137,10 +137,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TRN-05 | Phase 3 | Pending |
 | TRN-06 | Phase 3 | Pending |
 | EVAL-01 | Phase 4b | MISS-ACCEPTED: AP 0.6570 (shortfall 11.11 pp below RTFM 77.81% gate; 13.49 pp below MGFN I3D-RGB 79.19% secondary); D-11 fallback-step-4 thesis-limitation pattern applied; Flow diagnostic rerun (Plan 04b-05 Rule 1 scope expansion) produced AP 0.5916 with 100% data coverage (−6.54 pp vs RGB) confirming modeling capacity not data coverage is the bottleneck; D-12 diagnostics PASS (C4 sanity delta 0.0024, bag-size audit correct); xd_i3d dispatch + Wu parser implemented in Phase 4b; 4 new pytest files pass. |
-| EVAL-02 | Phase 4 (UCF), Phase 4c (XD) | Complete (UCF): observed Gated Fusion AUC 0.8227 (documented miss vs 0.83 target, 3-seed mean 0.81982, std 0.00291); XD-side pending Phase 4c per D-01 scope narrowing |
-| EVAL-03 | Phase 4 (UCF), Phase 4c (XD) | Complete (UCF): 8 UCF rows in results/results-index.csv; XD-side pending Phase 4c per D-01 scope narrowing |
-| EVAL-04 | Phase 4 (UCF), Phase 4c (XD) | Complete (UCF): Fighting 0.955 (+13.23 pp), Assault 0.985 (+16.19 pp); XD-side (Fighting+Abuse+Riot) pending Phase 4c per D-01 scope narrowing |
-| EVAL-05 | Phase 4 (UCF), Phase 4c (XD) | Complete (UCF): 3-seed AUC std 0.00291 < 0.5% gate; XD-side pending Phase 4c per D-01 scope narrowing |
+| EVAL-02 | Phase 4 (UCF), Phase 4c (XD) | Complete: UCF Gated Fusion AUC 0.8227 (MISS-ACCEPTED, 3-seed mean 0.81982, std 0.00291); XD Gated Fusion AUC 0.9200, 3-seed mean 0.9172, std 0.0029 |
+| EVAL-03 | Phase 4 (UCF), Phase 4c (XD) | Complete: 8 UCF rows + 8 XD rows in results/results-index.csv (16 total); XD Gated Fusion AP 71.92% MISS-ACCEPTED per D-06 (70-79% range) |
+| EVAL-04 | Phase 4 (UCF), Phase 4c (XD) | Complete: UCF Fighting 0.955, Assault 0.985; XD Riot 88.15%, Fighting 77.76% exceed full AP, Abuse 44.89% lowest category |
+| EVAL-05 | Phase 4 (UCF), Phase 4c (XD) | Complete: UCF 3-seed AUC std 0.29%; XD 3-seed AP std 1.08% (exceeds 0.5% gate, seed sensitivity documented), AUC std 0.29% |
 | TTA-01 | Phase 5 | Pending |
 | TTA-02 | Phase 5 | Pending |
 | TTA-03 | Phase 5 | Pending |
@@ -158,4 +158,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-03-31*
-*Last updated: 2026-04-16 after Phase 4b closeout (04b-05): EVAL-01 MISS-ACCEPTED in Phase 4b (RTFM XD-I3D gate, D-11 fallback-step-4); EVAL-02..EVAL-05 XD-side annotations flipped from Phase 4b to Phase 4c per D-01 scope narrowing*
+*Last updated: 2026-04-28 after Phase 4c closeout: EVAL-02..EVAL-05 XD-side complete (Gated Fusion AP 71.92% MISS-ACCEPTED, 8-row ablation table, 3-seed stability, per-category breakdown)*

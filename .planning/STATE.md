@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 4c
+current_phase: 5
 current_plan: Not started
-status: executing
-stopped_at: Completed 04C-03-PLAN.md (checkpoint: human-verify for Phase 4c final results)
-last_updated: "2026-04-26T17:33:55.151Z"
+status: planning
+stopped_at: Phase 4c complete (MISS-ACCEPTED), advancing to Phase 5
+last_updated: "2026-04-28T00:00:00.000Z"
 progress:
   total_phases: 8
   completed_phases: 6
   total_plans: 34
-  completed_plans: 30
-  percent: 88
+  completed_plans: 29
+  percent: 85
 ---
 
 # State: ViolenceCC
@@ -139,6 +139,7 @@ No experiments run yet. Targets from PRD v2.3:
 - [x] Verify XD-Violence zip access and extraction feasibility before Phase 2 planning — DONE: 3954 training videos extracted flat to E:\XD_Violence\train\ (Plan 02)
 - [x] Confirm CTR-GCN weights (j/b/jm/bm) are available for download from PYSKL repo — DONE: all 4 files downloaded ~6.1MB each (Plan 03)
 - [ ] Scan UCF-Crime and XD-Violence FPS distribution in Phase 2 Week 1 to size snippet window computation
+- [ ] Phase 4d candidate: XD hyperparameter sweep (lr × k_topk grid, ~20 runs) + investigate RTFM repro gap (65.70% vs 77.81%) — deferred from Phase 4c, revisit after Phase 5 if timeline permits
 
 ### Blockers
 
@@ -154,8 +155,8 @@ None currently.
 
 ## Session Continuity
 
-**Stopped at:** Completed 04C-01-PLAN.md
-**To resume:** Read this file and ROADMAP.md. Phase 01 is COMPLETE. Phase 02 is UAT-verified for UCF-Crime (all plans executed, 8/12 UAT tests pass). XD-Violence skeleton extraction is running in background (~5-8 days). Next: Phase 03 (Model Architecture & Training Infrastructure) using UCF-Crime data.
+**Stopped at:** Phase 4c complete (MISS-ACCEPTED), advancing to Phase 5
+**To resume:** Phase 4c delivered 8-row XD ablation table (Gated Fusion AP=71.92% MISS-ACCEPTED). Hyperparameter sweep deferred as Phase 4d candidate (see Todos). Next: Phase 5 (TTA Infrastructure & Corruption Experiments) — plans already created (5 plans, 3 waves).
 
 **Files of record:**
 
