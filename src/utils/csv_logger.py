@@ -65,6 +65,12 @@ RESULTS_INDEX_COLUMNS = [
     "start_time",
     "end_time",
     "config_hash",
+    # Phase 5 TTA columns (empty for Phase 4 rows, filled for TTA rows)
+    "method",
+    "corruption_type",
+    "severity",
+    "lr",
+    "rho",
 ]
 
 
