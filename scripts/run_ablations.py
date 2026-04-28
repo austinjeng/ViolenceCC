@@ -1,4 +1,4 @@
-"""Subprocess ablation orchestrator for Phase 4 (D-26).
+"""Subprocess ablation orchestrator for Phase 4 + Phase 5 TTA (D-26, D-09).
 
 Loops over (variant, seed, dataset, cache_variant) tuples, invokes
 ``src/train.py`` and ``src/evaluate.py`` as subprocesses, and appends one
@@ -7,12 +7,20 @@ probe on ``<run_dir>/.done`` provides resume-on-restart semantics (D-31).
 Failed subprocess exit codes are logged to ``runner-errors.log`` and the
 queue continues (D-32, D-34). wandb tags are per-spec (D-41).
 
+Phase 5 TTA extension (D-09): Three TTA queues (tta_source_only,
+tta_tent_grid, tta_sar_grid) invoke ``src/tta/evaluate_tta.py`` as
+subprocesses for ~500 total runs across 4 corruption types x 5 severities
+x {source_only, TENT(4 LRs), SAR(4 LRs x 5 rhos)}.
+
 Usage:
     python scripts/run_ablations.py --queue rtfm_gate
     python scripts/run_ablations.py --queue phase4_main
     python scripts/run_ablations.py --queue phase4_pooling --dry-run
     python scripts/run_ablations.py --queue phase4_seeds --no-preflight
     python scripts/run_ablations.py --queue rtfm_gate --results-root /tmp/x
+    python scripts/run_ablations.py --queue tta_source_only --no-preflight
+    python scripts/run_ablations.py --queue tta_tent_grid --no-preflight
+    python scripts/run_ablations.py --queue tta_sar_grid --no-preflight --dry-run
 """
 from __future__ import annotations
 
@@ -73,6 +81,29 @@ class RunSpec:
         return tags
 
 
+@dataclass
+class TTARunSpec:
+    """Single TTA evaluation run (D-09).
+
+    D-13 deterministic naming: {method}_{type}_{severity}_lr{lr}[_rho{rho}]
+    """
+
+    corruption_type: str   # gaussian_noise, motion_blur, jpeg_compression, brightness
+    severity: int          # 1-5
+    method: str            # source_only, tent, sar
+    lr: float              # from {1e-4, 5e-4, 1e-3, 5e-3}
+    rho: float = 0.0      # SAR only, from {0.001, 0.005, 0.01, 0.05, 0.1}
+    source_run: str = "ucf_gated_fusion_s42"
+
+    @property
+    def run_name(self) -> str:
+        """D-13 deterministic naming: {method}_{type}_{severity}_lr{lr}[_rho{rho}]"""
+        base = f"{self.method}_{self.corruption_type}_{self.severity}_lr{self.lr}"
+        if self.method == "sar" and self.rho > 0:
+            base += f"_rho{self.rho}"
+        return base
+
+
 # ----------------------------------------------------------------------
 # Queue definitions (deterministic, no timestamps). Order matters:
 # rtfm_gate runs first (D-18 harness validation). phase4_seeds covers
@@ -131,6 +162,34 @@ QUEUES = {
         RunSpec("xd", "gated_fusion", 2024, "configs/gated_fusion_xd.yaml"),
         # seed=42 covered by phase4c_main; not duplicated per D-27/D-28.
     ],
+}
+
+
+# ----------------------------------------------------------------------
+# Phase 5 TTA queue definitions (D-09)
+# 4 corruption types x 5 severities = 20 conditions per method
+# source_only: 20 runs, tent: 80 runs (x4 LRs), sar: 400 runs (x4 LRs x5 rhos)
+# Total: 500 runs
+# ----------------------------------------------------------------------
+_CORRUPTION_TYPES = ["gaussian_noise", "jpeg_compression", "brightness", "motion_blur"]
+_SEVERITIES = [1, 2, 3, 4, 5]
+_LR_GRID = [1e-4, 5e-4, 1e-3, 5e-3]
+_RHO_GRID = [0.001, 0.005, 0.01, 0.05, 0.1]
+
+TTA_QUEUES = {
+    "tta_source_only": [
+        TTARunSpec(ct, sev, "source_only", 0.0)
+        for ct in _CORRUPTION_TYPES for sev in _SEVERITIES
+    ],  # 20 runs
+    "tta_tent_grid": [
+        TTARunSpec(ct, sev, "tent", lr)
+        for ct in _CORRUPTION_TYPES for sev in _SEVERITIES for lr in _LR_GRID
+    ],  # 80 runs
+    "tta_sar_grid": [
+        TTARunSpec(ct, sev, "sar", lr, rho)
+        for ct in _CORRUPTION_TYPES for sev in _SEVERITIES
+        for lr in _LR_GRID for rho in _RHO_GRID
+    ],  # 400 runs
 }
 
 
@@ -288,13 +347,120 @@ def run_queue(
     return summary
 
 
+# ----------------------------------------------------------------------
+# Phase 5 TTA run helpers (D-09)
+# ----------------------------------------------------------------------
+def run_one_tta(
+    spec: "TTARunSpec",
+    results_root: Path,
+    err_log: Path,
+    timeout_s: int = 600,
+) -> dict:
+    """Run one TTA evaluation via subprocess to src/tta/evaluate_tta.py."""
+    run_dir = results_root / "tta" / spec.run_name
+    status = {
+        "spec": spec.run_name,
+        "start_time": time.strftime("%Y-%m-%dT%H:%M:%S"),
+    }
+
+    source_dir = results_root / spec.source_run
+    cmd = [
+        sys.executable, "src/tta/evaluate_tta.py",
+        "--source-run", str(source_dir),
+        "--corruption", spec.corruption_type,
+        "--severity", str(spec.severity),
+        "--method", spec.method,
+        "--lr", str(spec.lr),
+        "--rho", str(spec.rho),
+        "--output-dir", str(run_dir),
+    ]
+    try:
+        subprocess.run(cmd, check=True, timeout=timeout_s, cwd=str(PROJECT_ROOT))
+    except subprocess.CalledProcessError as e:
+        status["phase"] = "tta_failed"
+        log_error(err_log, spec, f"CalledProcessError(rc={e.returncode})")
+        return status
+    except subprocess.TimeoutExpired:
+        status["phase"] = "tta_timeout"
+        log_error(err_log, spec, f"TimeoutExpired({timeout_s}s)")
+        return status
+
+    # Append to results-index.csv
+    metrics_path = run_dir / "eval_metrics.json"
+    if not metrics_path.exists():
+        status["phase"] = "tta_missing_metrics"
+        log_error(err_log, spec, "eval_metrics.json not written")
+        return status
+    try:
+        metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        status["phase"] = "tta_bad_json"
+        log_error(err_log, spec, f"json parse failed: {exc}")
+        return status
+
+    row = {
+        "run_name": spec.run_name,
+        "variant": "gated_fusion",
+        "dataset": "ucf",
+        "seed": 42,
+        "cache_variant": f"{spec.corruption_type}_{spec.severity}",
+        "auc": metrics.get("auc", ""),
+        "ap": metrics.get("ap", ""),
+        "n_videos": metrics.get("n_videos", ""),
+        "n_frames": metrics.get("n_frames", ""),
+        "start_time": status["start_time"],
+        "end_time": metrics.get("eval_timestamp", ""),
+        "config_hash": "",
+        # TTA-specific columns
+        "method": spec.method,
+        "corruption_type": spec.corruption_type,
+        "severity": spec.severity,
+        "lr": spec.lr,
+        "rho": spec.rho if spec.method == "sar" else "",
+    }
+    results_index_append(results_root / "results-index.csv", row)
+    status["phase"] = "done"
+    return status
+
+
+def run_queue_tta(
+    specs: List["TTARunSpec"],
+    results_root: Path,
+    err_log: Path,
+    dry_run: bool = False,
+) -> dict:
+    """Run a list of TTA specs; skip completed (.done present); log failures
+    and continue. Returns a summary with succeeded/skipped/failed."""
+    summary = {"succeeded": [], "skipped": [], "failed": []}
+    for spec in specs:
+        run_dir = results_root / "tta" / spec.run_name
+        if is_done(run_dir):
+            summary["skipped"].append(spec.run_name)
+            print(f"[skip] {spec.run_name} (.done present)")
+            continue
+        if dry_run:
+            print(f"[dry-run] would run {spec.run_name}")
+            continue
+        print(f"[start] {spec.run_name}")
+        status = run_one_tta(spec, results_root, err_log)
+        if status.get("phase") == "done":
+            summary["succeeded"].append(spec.run_name)
+        else:
+            summary["failed"].append(
+                {"run": spec.run_name, "phase": status.get("phase", "unknown")}
+            )
+    return summary
+
+
 def main() -> int:
+    all_queue_names = sorted(set(list(QUEUES) + list(TTA_QUEUES)))
     ap = argparse.ArgumentParser(
-        description="Phase 4 ablation orchestrator (D-26)"
+        description="Phase 4 ablation + Phase 5 TTA orchestrator (D-26, D-09)"
     )
     ap.add_argument(
-        "--queue", required=True, choices=sorted(QUEUES),
-        help="Queue to run: rtfm_gate, phase4_main, phase4_pooling, phase4_seeds, phase4c_main, phase4c_pooling, phase4c_seeds",
+        "--queue", required=True, choices=all_queue_names,
+        help="Queue to run (Phase 4: rtfm_gate, phase4_main, etc.; "
+             "Phase 5 TTA: tta_source_only, tta_tent_grid, tta_sar_grid)",
     )
     ap.add_argument(
         "--dry-run", action="store_true",
@@ -313,7 +479,10 @@ def main() -> int:
     results_root = _results_root(args.results_root)
     err_log = _err_log_path(args.results_root)
 
-    if not args.no_preflight and not args.dry_run:
+    # TTA queues skip wandb preflight (evaluation only, no training)
+    is_tta = args.queue in TTA_QUEUES
+
+    if not is_tta and not args.no_preflight and not args.dry_run:
         preflight = subprocess.run(
             [sys.executable, "scripts/wandb_preflight.py"],
             cwd=str(PROJECT_ROOT),
@@ -325,8 +494,16 @@ def main() -> int:
             )
             return 2
 
-    specs = QUEUES[args.queue]
-    summary = run_queue(specs, results_root, err_log, dry_run=args.dry_run)
+    if is_tta:
+        specs = TTA_QUEUES[args.queue]
+        summary = run_queue_tta(
+            specs, results_root, err_log, dry_run=args.dry_run,
+        )
+    else:
+        specs = QUEUES[args.queue]
+        summary = run_queue(
+            specs, results_root, err_log, dry_run=args.dry_run,
+        )
     print(json.dumps(summary, indent=2))
     return 0 if not summary["failed"] else 1
 
