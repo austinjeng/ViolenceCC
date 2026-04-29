@@ -145,11 +145,11 @@ Plans:
   5. A 4x5 results table (corruption type x severity) exists for Source-Only, TENT-style, and SAR-style, and at least one of the TTA methods shows a statistically meaningful improvement over Source-Only on at least one corruption type
 **Plans:** 5 plans
 Plans:
-- [ ] 05-01-PLAN.md — Corruption transform module (scripts/corruption.py) with 4 types x 5 severities using numpy+cv2 (TTA-01, TTA-03)
-- [ ] 05-02-PLAN.md — TENT/SAR/SAM adaptation modules (src/tta/) with LN targeting and binary entropy (TTA-04, TTA-05, TTA-07)
-- [ ] 05-03-PLAN.md — Extraction script corruption flags + human-supervised batch re-extraction ~15h (TTA-02, TTA-03)
-- [ ] 05-04-PLAN.md — TTA evaluation entry point (src/tta/evaluate_tta.py) wiring adaptation + Phase 4 metrics (TTA-06, TTA-07)
-- [ ] 05-05-PLAN.md — Queue orchestrator extension (TTARunSpec + 500-run grid) + empirical execution (TTA-06)
+- [x] 05-01-PLAN.md — Corruption transform module (scripts/corruption.py) with 4 types x 5 severities using numpy+cv2 (TTA-01, TTA-03)
+- [x] 05-02-PLAN.md — TENT/SAR/SAM adaptation modules (src/tta/) with LN targeting and binary entropy (TTA-04, TTA-05, TTA-07)
+- [x] 05-03-PLAN.md — Extraction script corruption flags + human-supervised batch re-extraction ~15h (TTA-02, TTA-03)
+- [x] 05-04-PLAN.md — TTA evaluation entry point (src/tta/evaluate_tta.py) wiring adaptation + Phase 4 metrics (TTA-06, TTA-07)
+- [x] 05-05-PLAN.md — Queue orchestrator extension (TTARunSpec + 500-run grid) + empirical execution (TTA-06)
 
 ### Phase 6: Analysis & Visualization
 **Goal**: Qualitative figures and temporal analysis are complete and polished enough to drop directly into the thesis document
