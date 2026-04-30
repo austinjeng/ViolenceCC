@@ -67,11 +67,27 @@ class RunSpec:
     seed: int
     config: str
     cache_variant: str = ""
+    lr_override: float | None = None
+    k_topk_override: int | None = None
+
+    def _fmt_lr(self) -> str:
+        """Format LR for run_name: 5e-05 -> '5e5', 1e-04 -> '1e4'."""
+        if self.lr_override is None:
+            return ""
+        s = f"{self.lr_override:.0e}"  # "5e-05"
+        coeff, exp = s.split("e")
+        exp_val = abs(int(exp))
+        return f"{coeff}e{exp_val}"
 
     @property
     def run_name(self) -> str:
         cv = f"_{self.cache_variant}" if self.cache_variant else ""
-        return f"{self.dataset}_{self.variant}{cv}_s{self.seed}"
+        hp = ""
+        if self.lr_override is not None:
+            hp += f"_lr{self._fmt_lr()}"
+        if self.k_topk_override is not None:
+            hp += f"_k{self.k_topk_override}"
+        return f"{self.dataset}_{self.variant}{cv}{hp}_s{self.seed}"
 
     def wandb_tags(self) -> List[str]:
         """D-41: [phase4, <dataset>, <variant>, s<seed>] + <cache_variant>."""
@@ -244,6 +260,11 @@ def run_one(
         "--results-dir", str(results_root),
         "--run-name", spec.run_name,
     ]
+    # Phase 7 D-10: forward CLI overrides
+    if spec.lr_override is not None:
+        train_cmd.extend(["--lr", str(spec.lr_override)])
+    if spec.k_topk_override is not None:
+        train_cmd.extend(["--k-topk", str(spec.k_topk_override)])
     try:
         subprocess.run(
             train_cmd, check=True, timeout=timeout_s,

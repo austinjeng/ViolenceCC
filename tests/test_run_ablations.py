@@ -243,6 +243,68 @@ def test_cli_dry_run_no_preflight(tmp_path):
     assert "[dry-run]" in out.stdout
 
 
+def test_phase7_run_name():
+    """D-11: RunSpec.run_name with lr_override and k_topk_override."""
+    spec = RunSpec("xd", "gated_fusion", 42, "configs/gated_fusion_xd.yaml",
+                   lr_override=5e-5, k_topk_override=1)
+    assert spec.run_name == "xd_gated_fusion_lr5e5_k1_s42"
+
+    spec2 = RunSpec("xd", "gated_fusion", 42, "configs/gated_fusion_xd.yaml",
+                    lr_override=1e-4, k_topk_override=3)
+    assert spec2.run_name == "xd_gated_fusion_lr1e4_k3_s42"
+
+    spec3 = RunSpec("xd", "gated_fusion", 42, "configs/gated_fusion_xd.yaml",
+                    lr_override=3e-4, k_topk_override=7)
+    assert spec3.run_name == "xd_gated_fusion_lr3e4_k7_s42"
+
+
+def test_phase7_run_name_no_override():
+    """Existing RunSpec without overrides produces unchanged run_name."""
+    spec = RunSpec("ucf", "gated_fusion", 42, "configs/gated_fusion.yaml")
+    assert spec.run_name == "ucf_gated_fusion_s42"
+    # With cache_variant
+    spec2 = RunSpec("ucf", "gated_fusion", 42, "configs/gated_fusion.yaml", "2person")
+    assert spec2.run_name == "ucf_gated_fusion_2person_s42"
+
+
+def test_phase7_cli_overrides_in_train_cmd(tmp_path, monkeypatch):
+    """D-10: run_one() forwards --lr and --k-topk when overrides are set."""
+    from scripts import run_ablations
+
+    spec = RunSpec("xd", "gated_fusion", 42, "configs/gated_fusion_xd.yaml",
+                   lr_override=2e-4, k_topk_override=5)
+    err_log = tmp_path / "errors.log"
+
+    captured_cmds = []
+
+    def fake_run(cmd, **kwargs):
+        captured_cmds.append(list(str(c) for c in cmd))
+        if any("evaluate.py" in str(c) for c in cmd):
+            run_dir = tmp_path / spec.run_name
+            run_dir.mkdir(parents=True, exist_ok=True)
+            (run_dir / "eval_metrics.json").write_text(
+                json.dumps({
+                    "auc": 0.72, "ap": 0.71,
+                    "n_videos": 800, "n_frames": 100000,
+                    "eval_timestamp": "2026-05-01T00:00:00",
+                    "config_hash": "abc123",
+                }), encoding="utf-8")
+
+        class _R:
+            returncode = 0
+        return _R()
+
+    monkeypatch.setattr(run_ablations.subprocess, "run", fake_run)
+    run_ablations.run_one(spec, tmp_path, err_log)
+
+    # First captured command is train
+    train_cmd = captured_cmds[0]
+    assert "--lr" in train_cmd
+    assert "0.0002" in train_cmd or "2e-04" in train_cmd
+    assert "--k-topk" in train_cmd
+    assert "5" in train_cmd
+
+
 def test_no_shell_true():
     """T-04-05-01: no shell=True in scripts/run_ablations.py."""
     src = (PROJECT_ROOT / "scripts" / "run_ablations.py").read_text(encoding="utf-8")
