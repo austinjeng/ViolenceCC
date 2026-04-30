@@ -18,6 +18,7 @@
 - [x] **Phase 4c: XD-Violence Main Results** - 8-row XD ablation table complete; Gated Fusion AP=71.92% MISS-ACCEPTED per D-06; default pooling outperforms 2-person/clip-mean; per-category reveals Abuse as hardest category (completed 2026-04-28)
 - [ ] **Phase 5: TTA Infrastructure & Corruption Experiments** - UCF-Crime-C generated, TENT-style and SAR-style TTA evaluated across all 20 corruption conditions
 - [ ] **Phase 6: Analysis & Visualization** - Temporal curve plots, skeleton overlays, and per-category breakdowns ready for thesis
+- [ ] **Phase 7: XD-Violence Hyperparameter Sweep** - Targeted lr x k_topk grid on XD Gated Fusion to close AP gap; RTFM repro gap investigation
 
 ---
 
@@ -78,7 +79,7 @@ Plans:
 **Depends on**: Phase 3
 **Requirements**: EVAL-02, EVAL-03, EVAL-04, EVAL-05 (EVAL-01 rescoped to Phase 4b — see Phase 4b block)
 **Success Criteria** (what must be TRUE):
-  1. ~~RTFM on XD-Violence I3D RGB features reports frame-level AP within ±1% of 77.81%~~ — **DEFERRED to Phase 4b** per 2026-04-15 Option B decision (Rule 4 architectural gap: xd_i3d training dispatch missing from Plan 04-03; Phase 4b owns the integration work and the re-run)
+  1. ~~RTFM on XD-Violence I3D RGB features reports frame-level AP within +/-1% of 77.81%~~ — **DEFERRED to Phase 4b** per 2026-04-15 Option B decision (Rule 4 architectural gap: xd_i3d training dispatch missing from Plan 04-03; Phase 4b owns the integration work and the re-run)
   2. Gated Fusion achieves frame-level AUC >= 83% on UCF-Crime official test set, reported by `evaluate.py` with no test set used during training — **MISS (documented, accepted):** observed 0.8227 (0.73 pp below target); 3-seed mean 0.81982 confirms architectural, not seed variance
   3. An ablation table exists with results for all 6 model variants (Skeleton-Only, CLIP-Only, Late Fusion, Gated Fusion) and 2 pooling/aggregation ablations on UCF, all run on the same train/val/test split — **PASS:** 8 UCF rows in results-index.csv
   4. Gated Fusion AUC on UCF is reported as mean +/- std over 3 independent seeds ({42, 123, 2024}), and the standard deviation is below 0.5% — **PASS:** std 0.00291 = 0.29%
@@ -94,14 +95,14 @@ Plans:
 - [x] 04-07-PLAN.md — Close Phase 4 + carve out expanded Phase 4b (XD main results + EVAL-01 RTFM XD-I3D gate + xd_i3d training dispatch implementation)
 
 ### Phase 4b: RTFM XD-I3D Gate
-**Goal**: The xd_i3d training dispatch (`build_dataloaders_i3d`, `train_one_epoch_i3d`, `validate_i3d`, Wu et al. annotation parser) is implemented, and the RTFM XD-I3D-RGB baseline is empirically executed against the ±1% of 77.81% published anchor. (Rescoped from Phase 4 per 2026-04-15 Option B decision; scope narrowed to RTFM gate only per D-01 of 04b-CONTEXT.md, XD main results carved out to new Phase 4c.)
+**Goal**: The xd_i3d training dispatch (`build_dataloaders_i3d`, `train_one_epoch_i3d`, `validate_i3d`, Wu et al. annotation parser) is implemented, and the RTFM XD-I3D-RGB baseline is empirically executed against the +/-1% of 77.81% published anchor. (Rescoped from Phase 4 per 2026-04-15 Option B decision; scope narrowed to RTFM gate only per D-01 of 04b-CONTEXT.md, XD main results carved out to new Phase 4c.)
 **Depends on**: Phase 4 (architectural patterns + code artifacts), E:/i3d-features/i3d-features (RGB + RGBTest I3D features on disk; RGB 3225/3954 partial due to V/W/Y extraction truncation, Flow 3954/3954 complete)
 **Requirements**: EVAL-01
 **Success Criteria** (what must be TRUE):
-  1. RTFM on XD-Violence I3D RGB features reports frame-level AP within ±1% of 77.81% (primary anchor RTFM 77.81%; secondary anchor MGFN I3D-RGB 79.19% per 04b-RESEARCH.md correction — NOT 80.11% VideoSwin) — **MISS-ACCEPTED per D-11 fallback-step-4 / thesis-limitation pattern:** observed AP 0.6570 (11.11 pp below primary, 13.49 pp below secondary); Flow diagnostic rerun with 100% data coverage produced worse AP 0.5916 (−6.54 pp vs RGB), confirming modeling capacity and not data coverage is the bottleneck; mirrors Phase 4 EVAL-02 UCF 0.8227 MISS-accepted pattern
+  1. RTFM on XD-Violence I3D RGB features reports frame-level AP within +/-1% of 77.81% (primary anchor RTFM 77.81%; secondary anchor MGFN I3D-RGB 79.19% per 04b-RESEARCH.md correction — NOT 80.11% VideoSwin) — **MISS-ACCEPTED per D-11 fallback-step-4 / thesis-limitation pattern:** observed AP 0.6570 (11.11 pp below primary, 13.49 pp below secondary); Flow diagnostic rerun with 100% data coverage produced worse AP 0.5916 (-6.54 pp vs RGB), confirming modeling capacity and not data coverage is the bottleneck; mirrors Phase 4 EVAL-02 UCF 0.8227 MISS-accepted pattern
   2. xd_i3d training dispatch (`build_dataloaders_i3d`, `train_one_epoch_i3d`, `validate_i3d`) exists in `src/data/loaders.py` + `src/train.py` with D-04 parallel-functions discipline (no polymorphic dispatch) — **PASS**
   3. Wu et al. XD-Violence annotation parser (`src/eval/xd_annotations.py`) + `data/annotations/xd_temporal.txt` committed; `src/evaluate.py::_build_frame_arrays` xd_i3d path rewritten (replacing the all-zero stub from Phase 4) — **PASS**
-  4. D-12 diagnostic passes: C4 sanity (|auc − snippet_auc| = 0.0024 < 0.02), 5-crop bag-size audit ([i3d_audit] log line with n_normal=15 n_abnormal=15 i3d_shape=(30, 32, 1024)) — **PASS** (bit-identical rerun not performed; gate-miss path triggered D-11 cascade instead)
+  4. D-12 diagnostic passes: C4 sanity (|auc - snippet_auc| = 0.0024 < 0.02), 5-crop bag-size audit ([i3d_audit] log line with n_normal=15 n_abnormal=15 i3d_shape=(30, 32, 1024)) — **PASS** (bit-identical rerun not performed; gate-miss path triggered D-11 cascade instead)
   5. 4 new pytest test files pass: test_xd_annotations.py (8 tests), test_loaders_i3d.py (5 tests), test_train_i3d.py (3 tests), test_evaluate_xd_i3d.py (4 tests) — **PASS**
 **Plans:** 5/5 plans complete (2026-04-16)
 Plans:
@@ -119,7 +120,7 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Gated Fusion achieves frame-level AP >= 80% on XD-Violence official test set, reported by `evaluate.py` with no test set used during training — **MISS-ACCEPTED (D-06 step 2):** AP=71.92% (s42), mean=70.98% (3-seed); 70-79% range, documented as thesis limitation
   2. An ablation table exists with results for all 6 XD model variants (Skeleton-Only, CLIP-Only, Late Fusion, Gated Fusion) and 2 pooling/aggregation ablations, all run on the same XD train/val/test split — **PASS:** 8 XD rows in results-index.csv
-  3. Gated Fusion AP on XD-Violence is reported as mean ± std over 3 independent seeds ({42, 123, 2024}), and the standard deviation is below 0.5% — **PARTIAL:** AP std=1.08% (exceeds gate), AUC std=0.29% (within gate); seed sensitivity documented as thesis finding
+  3. Gated Fusion AP on XD-Violence is reported as mean +/- std over 3 independent seeds ({42, 123, 2024}), and the standard deviation is below 0.5% — **PARTIAL:** AP std=1.08% (exceeds gate), AUC std=0.29% (within gate); seed sensitivity documented as thesis finding
   4. Per-category breakdown (XD-Violence: Fighting+Abuse+Riot) is computed and shows higher AP on violence-specific subsets versus full test set — **PARTIAL:** Fighting (77.76%) and Riot (88.15%) individually exceed full AP (71.92%); Abuse (44.89%) drags subset mean to 70.27% (below full AP)
 **Scope (relocated from former Phase 4b per D-01):**
   - XD skeleton 2-person aggregation re-extraction (`--keep-persons` on XD in extract_ctrgcn.py)
@@ -160,6 +161,22 @@ Plans:
   2. Skeleton overlay visualizations exist for at least 3 video frames showing COCO-17 keypoints and edges drawn on the original image, confirming extraction quality for a thesis figure
 **Plans**: TBD
 
+### Phase 7: XD-Violence Hyperparameter Sweep
+**Goal**: Improve Gated Fusion AP on XD-Violence through targeted hyperparameter optimization; investigate RTFM repro gap (65.70% vs published 77.81%) to determine if systematic evaluation offset affects fusion results
+**Depends on**: Phase 4c (XD ablation table complete, baseline AP=71.92%)
+**Requirements**: None new (extends EVAL-02 XD-side)
+**Success Criteria** (what must be TRUE):
+  1. A sweep grid of at least lr x k_topk combinations (~20 runs) is executed on XD-Violence Gated Fusion, with all results logged to results-index.csv
+  2. The best sweep configuration achieves AP > 71.92% (the Phase 4c s42 baseline), demonstrating hyperparameter sensitivity
+  3. RTFM XD-I3D repro gap is investigated with at least one diagnostic (annotation alignment or temporal interpolation check), and findings are documented
+  4. A summary table comparing sweep results against Phase 4c baselines exists, suitable for thesis inclusion
+**Plans:** 4 plans
+Plans:
+- [ ] 07-01-PLAN.md — CLI overrides (--lr, --k-topk) in train.py + RunSpec extension in run_ablations.py
+- [ ] 07-02-PLAN.md — phase7_sweep queue (20 entries) + RTFM diagnostic script + chart generation script
+- [ ] 07-03-PLAN.md — Empirical execution: 20 sweep runs + RTFM diagnostics + human verification
+- [ ] 07-04-PLAN.md — 3-seed confirmation + heatmap generation + thesis-ready summary document
+
 ---
 
 ## Progress Table
@@ -174,6 +191,7 @@ Plans:
 | 4c. XD-Violence Main Results | 3/3 | Complete (MISS-ACCEPTED) | 2026-04-28 |
 | 5. TTA Infrastructure & Corruption Experiments | 0/5 | Planned | - |
 | 6. Analysis & Visualization | 0/? | Not started | - |
+| 7. XD-Violence Hyperparameter Sweep | 0/4 | Planned | - |
 
 ---
 
@@ -227,4 +245,4 @@ Plans:
 ---
 
 *Roadmap created: 2026-03-31*
-*Last updated: 2026-04-28 after Phase 4c completion: 8-row XD ablation table, Gated Fusion AP=71.92% MISS-ACCEPTED, hyperparameter sweep deferred as Phase 4d candidate*
+*Last updated: 2026-05-01 — Phase 7 planned: 4 plans across 4 waves*
