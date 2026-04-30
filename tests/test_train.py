@@ -40,6 +40,28 @@ def test_cublas_env():
     )
 
 
+def test_cli_lr_override():
+    """Phase 7 D-09: --lr overrides cfg['train']['lr']."""
+    from src.train import parse_args, apply_cli_overrides
+    from src.utils.config import load_config
+    args = parse_args(["--config", "configs/gated_fusion_xd.yaml", "--lr", "3e-4"])
+    assert args.lr == 3e-4
+    cfg = load_config("configs/gated_fusion_xd.yaml")
+    cfg = apply_cli_overrides(cfg, args)
+    assert cfg["train"]["lr"] == 3e-4
+
+
+def test_cli_k_topk_override():
+    """Phase 7 D-09: --k-topk overrides cfg['train']['k_topk']."""
+    from src.train import parse_args, apply_cli_overrides
+    from src.utils.config import load_config
+    args = parse_args(["--config", "configs/gated_fusion_xd.yaml", "--k-topk", "7"])
+    assert args.k_topk == 7
+    cfg = load_config("configs/gated_fusion_xd.yaml")
+    cfg = apply_cli_overrides(cfg, args)
+    assert cfg["train"]["k_topk"] == 7
+
+
 def test_cli_help():
     """Entry point is invokable as a module."""
     r = subprocess.run(

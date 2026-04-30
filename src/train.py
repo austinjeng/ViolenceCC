@@ -43,6 +43,10 @@ def parse_args(argv=None):
     ap.add_argument("--run-name", type=str, default=None,
                     help="Override the default run_name() value "
                          "(Phase 4 D-30: deterministic dirs for run_ablations.py)")
+    ap.add_argument("--lr", type=float, default=None,
+                    help="Override cfg['train']['lr'] (Phase 7 sweep)")
+    ap.add_argument("--k-topk", type=int, default=None,
+                    help="Override cfg['train']['k_topk'] (Phase 7 sweep)")
     return ap.parse_args(argv)
 
 
@@ -53,6 +57,10 @@ def apply_cli_overrides(cfg: dict, args) -> dict:
         cfg["train"]["epochs"] = args.epochs
     if args.results_dir is not None:
         cfg["paths"]["results_dir"] = args.results_dir
+    if args.lr is not None:
+        cfg["train"]["lr"] = args.lr
+    if args.k_topk is not None:
+        cfg["train"]["k_topk"] = args.k_topk
     return cfg
 
 
