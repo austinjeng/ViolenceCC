@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: --phase
-current_plan: 1
-status: ready_to_plan
-stopped_at: Phase 4c complete (MISS-ACCEPTED), advancing to Phase 5
-last_updated: "2026-04-27T20:32:56.086Z"
+current_phase: 6
+current_plan: Not started
+status: planning
+stopped_at: Phase 7 context gathered
+last_updated: "2026-04-30T20:40:22.221Z"
 progress:
-  total_phases: 8
+  total_phases: 9
   completed_phases: 7
   total_plans: 34
-  completed_plans: 29
-  percent: 88
+  completed_plans: 34
+  percent: 100
 ---
 
 # State: ViolenceCC
@@ -121,6 +121,10 @@ No experiments run yet. Targets from PRD v2.3:
 | Abuse (B5) is hardest XD category for skeleton+CLIP fusion | AP=44.89% vs full test-set 71.92%; subtle interpersonal violence lacks distinctive motion/visual signatures |
 | XD AP seed sensitivity higher than UCF | AP std=1.08% (3-seed) vs UCF AUC std=0.29%; precision-recall is more sensitive to score calibration than ROC-AUC |
 
+### Roadmap Evolution
+
+- Phase 7 added: XD-Violence Hyperparameter Sweep (promoted from Phase 4d candidate, 2026-05-01)
+
 ### Critical Pitfalls to Watch
 
 | ID | Risk | Phase | Prevention |
@@ -139,7 +143,7 @@ No experiments run yet. Targets from PRD v2.3:
 - [x] Verify XD-Violence zip access and extraction feasibility before Phase 2 planning — DONE: 3954 training videos extracted flat to E:\XD_Violence\train\ (Plan 02)
 - [x] Confirm CTR-GCN weights (j/b/jm/bm) are available for download from PYSKL repo — DONE: all 4 files downloaded ~6.1MB each (Plan 03)
 - [ ] Scan UCF-Crime and XD-Violence FPS distribution in Phase 2 Week 1 to size snippet window computation
-- [ ] Phase 4d candidate: XD hyperparameter sweep (lr × k_topk grid, ~20 runs) + investigate RTFM repro gap (65.70% vs 77.81%) — deferred from Phase 4c, revisit after Phase 5 if timeline permits
+- [x] Phase 4d candidate: XD hyperparameter sweep — promoted to Phase 7 (2026-05-01)
 
 ### Blockers
 
@@ -155,7 +159,7 @@ None currently.
 
 ## Session Continuity
 
-**Stopped at:** Phase 4c complete (MISS-ACCEPTED), advancing to Phase 5
+**Stopped at:** Phase 7 context gathered
 **To resume:** Phase 4c delivered 8-row XD ablation table (Gated Fusion AP=71.92% MISS-ACCEPTED). Hyperparameter sweep deferred as Phase 4d candidate (see Todos). Next: Phase 5 (TTA Infrastructure & Corruption Experiments) — plans already created (5 plans, 3 waves).
 
 **Files of record:**
