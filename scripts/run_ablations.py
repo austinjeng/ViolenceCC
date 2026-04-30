@@ -182,6 +182,23 @@ QUEUES = {
 
 
 # ----------------------------------------------------------------------
+# Phase 7 hyperparameter sweep queue definitions (D-01, D-02, D-03)
+# 5 lr x 4 k_topk = 20 runs at seed=42
+# ----------------------------------------------------------------------
+_LR_SWEEP = [5e-5, 1e-4, 2e-4, 3e-4, 5e-4]
+_K_SWEEP = [1, 3, 5, 7]
+
+QUEUES["phase7_sweep"] = [
+    RunSpec(
+        "xd", "gated_fusion", 42,
+        "configs/gated_fusion_xd.yaml",
+        lr_override=lr, k_topk_override=k,
+    )
+    for lr in _LR_SWEEP for k in _K_SWEEP
+]  # 20 runs
+
+
+# ----------------------------------------------------------------------
 # Phase 5 TTA queue definitions (D-09)
 # 4 corruption types x 5 severities = 20 conditions per method
 # source_only: 20 runs, tent: 80 runs (x4 LRs), sar: 400 runs (x4 LRs x5 rhos)
@@ -476,7 +493,7 @@ def run_queue_tta(
 def main() -> int:
     all_queue_names = sorted(set(list(QUEUES) + list(TTA_QUEUES)))
     ap = argparse.ArgumentParser(
-        description="Phase 4 ablation + Phase 5 TTA orchestrator (D-26, D-09)"
+        description="Phase 4 ablation + Phase 5 TTA + Phase 7 sweep orchestrator (D-26, D-09)"
     )
     ap.add_argument(
         "--queue", required=True, choices=all_queue_names,

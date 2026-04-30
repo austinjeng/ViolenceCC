@@ -36,7 +36,8 @@ def test_help_has_expected_queues():
     )
     combined = (out.stdout + out.stderr).lower()
     for q in ("rtfm_gate", "phase4_main", "phase4_pooling", "phase4_seeds",
-              "phase4c_main", "phase4c_pooling", "phase4c_seeds"):
+              "phase4c_main", "phase4c_pooling", "phase4c_seeds",
+              "phase7_sweep"):
         assert q in combined, f"missing queue {q!r} in --help: {combined[:300]}"
 
 
@@ -59,11 +60,13 @@ def test_queue_definitions():
     assert QUEUES["phase4c_main"][3].run_name == "xd_gated_fusion_s42"
     assert QUEUES["phase4c_seeds"][0].run_name == "xd_gated_fusion_s123"
     assert QUEUES["phase4c_pooling"][0].run_name == "xd_gated_fusion_2person_s42"
-    # Total unique specs across all queues = 18 (10 Phase 4/4b + 8 Phase 4c).
+    # Phase 7 sweep queue
+    assert len(QUEUES["phase7_sweep"]) == 20
+    # Total unique specs across all queues = 38 (10 Phase 4/4b + 8 Phase 4c + 20 Phase 7).
     all_run_names = {
         s.run_name for q in QUEUES.values() for s in q
     }
-    assert len(all_run_names) == 18, f"expected 18 unique run_names, got {sorted(all_run_names)}"
+    assert len(all_run_names) == 38, f"expected 38 unique run_names, got {sorted(all_run_names)}"
 
 
 def test_run_name_deterministic():
@@ -303,6 +306,26 @@ def test_phase7_cli_overrides_in_train_cmd(tmp_path, monkeypatch):
     assert "0.0002" in train_cmd or "2e-04" in train_cmd
     assert "--k-topk" in train_cmd
     assert "5" in train_cmd
+
+
+def test_phase7_sweep_queue():
+    """D-03: phase7_sweep contains 5 lr x 4 k_topk = 20 RunSpec entries."""
+    assert "phase7_sweep" in QUEUES
+    assert len(QUEUES["phase7_sweep"]) == 20
+    # All are xd gated_fusion seed=42
+    for spec in QUEUES["phase7_sweep"]:
+        assert spec.dataset == "xd"
+        assert spec.variant == "gated_fusion"
+        assert spec.seed == 42
+        assert spec.config == "configs/gated_fusion_xd.yaml"
+        assert spec.lr_override is not None
+        assert spec.k_topk_override is not None
+    # Spot check first and last
+    assert QUEUES["phase7_sweep"][0].run_name == "xd_gated_fusion_lr5e5_k1_s42"
+    assert QUEUES["phase7_sweep"][-1].run_name == "xd_gated_fusion_lr5e4_k7_s42"
+    # All run_names unique
+    names = [s.run_name for s in QUEUES["phase7_sweep"]]
+    assert len(names) == len(set(names)), f"duplicate run_names: {names}"
 
 
 def test_no_shell_true():
