@@ -173,7 +173,7 @@ Plans:
 **Plans:** 4 plans
 Plans:
 - [x] 07-01-PLAN.md — CLI overrides (--lr, --k-topk) in train.py + RunSpec extension in run_ablations.py
-- [ ] 07-02-PLAN.md — phase7_sweep queue (20 entries) + RTFM diagnostic script + chart generation script
+- [x] 07-02-PLAN.md — phase7_sweep queue (20 entries) + RTFM diagnostic script + chart generation script
 - [ ] 07-03-PLAN.md — Empirical execution: 20 sweep runs + RTFM diagnostics + human verification
 - [ ] 07-04-PLAN.md — 3-seed confirmation + heatmap generation + thesis-ready summary document
 
@@ -191,7 +191,7 @@ Plans:
 | 4c. XD-Violence Main Results | 3/3 | Complete (MISS-ACCEPTED) | 2026-04-28 |
 | 5. TTA Infrastructure & Corruption Experiments | 0/5 | Planned | - |
 | 6. Analysis & Visualization | 0/? | Not started | - |
-| 7. XD-Violence Hyperparameter Sweep | 1/4 | In Progress | - |
+| 7. XD-Violence Hyperparameter Sweep | 2/4 | In Progress | - |
 
 ---
 
@@ -245,4 +245,4 @@ Plans:
 ---
 
 *Roadmap created: 2026-03-31*
-*Last updated: 2026-05-01 — Phase 7 Plan 01 complete: CLI override infrastructure*
+*Last updated: 2026-05-01 — Phase 7 Plan 02 complete: sweep queue + RTFM diagnostic + chart script*

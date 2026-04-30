@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 current_phase: 7
-current_plan: 2 of 4
+current_plan: 3 of 4
 status: executing
-stopped_at: Completed 07-01-PLAN.md (CLI overrides)
-last_updated: "2026-05-01T06:56:00.000Z"
+stopped_at: Completed 07-02-PLAN.md (sweep queue + RTFM diagnostic + charts)
+last_updated: "2026-04-30T23:08:00.000Z"
 progress:
   total_phases: 9
   completed_phases: 7
   total_plans: 38
-  completed_plans: 35
-  percent: 92
+  completed_plans: 36
+  percent: 95
 ---
 
 # State: ViolenceCC
@@ -36,13 +36,13 @@ progress:
 Phase: --phase (05) — EXECUTING
 Plan: 1 of --name
 **Current phase:** 7
-**Current plan:** 2 of 4
+**Current plan:** 3 of 4
 **Status:** Executing
 
 **Progress:**
 
-[█████████░] 92%
-Phase 7 [██░░░░░░░░] 25%   XD-Violence Hyperparameter Sweep (1/4 plans done)
+[█████████░] 95%
+Phase 7 [█████░░░░░] 50%   XD-Violence Hyperparameter Sweep (2/4 plans done)
 
 ```
 
@@ -72,6 +72,7 @@ No experiments run yet. Targets from PRD v2.3:
 | Phase 04C P02 | 16min | 1 tasks | 6 files |
 | Phase 04C P03 | 10min | 2 tasks | 4 files |
 | Phase 07 P01 | 4min | 2 tasks | 4 files |
+| Phase 07 P02 | 7min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -118,6 +119,7 @@ No experiments run yet. Targets from PRD v2.3:
 | Abuse (B5) is hardest XD category for skeleton+CLIP fusion | AP=44.89% vs full test-set 71.92%; subtle interpersonal violence lacks distinctive motion/visual signatures |
 | XD AP seed sensitivity higher than UCF | AP std=1.08% (3-seed) vs UCF AUC std=0.29%; precision-recall is more sensitive to score calibration than ROC-AUC |
 | LR format uses split/abs instead of lstrip | _fmt_lr() uses split('e') + abs(int(exp)) to avoid lstrip("0") leading-zero bugs in exponent portion |
+| RTFM 12.11pp AP gap is training regime not eval bug | 3 HIGH-impact differences (10x LR, 2x features, 100x margin scaling) explain gap; confirmed by 4 diagnostics |
 
 ### Roadmap Evolution
 
@@ -157,8 +159,8 @@ None currently.
 
 ## Session Continuity
 
-**Stopped at:** Completed 07-01-PLAN.md (CLI overrides)
-**To resume:** Plan 07-01 complete. train.py has --lr/--k-topk overrides, RunSpec has lr_override/k_topk_override fields, run_one() forwards overrides. Next: 07-02-PLAN.md (phase7_sweep queue definition + RTFM diagnostic script + chart generation script).
+**Stopped at:** Completed 07-02-PLAN.md (sweep queue + RTFM diagnostic + charts)
+**To resume:** Plan 07-02 complete. phase7_sweep queue has 20 runs, RTFM gap diagnostic at scripts/rtfm_gap_diagnostic.py, chart generator at scripts/generate_phase7_charts.py. Next: 07-03-PLAN.md (empirical sweep execution: run 20 training jobs).
 
 **Files of record:**
 
