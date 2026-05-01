@@ -17,8 +17,8 @@ progress:
 
 # State: ViolenceCC
 
-**Last updated:** 2026-04-08
-**Session:** Phase 02 UAT in progress (8/12 pass, 4 blocked on XD-Violence extraction). UCF-Crime fully verified (1728/1900 extractable, 172 sub-64-frame). XD-Violence skeleton extraction running (~20% done, ~5-8 days remaining). Profiling shows 99.3% inference bottleneck at 21.6 FPS — no optimization available without replacing rtmlib. Ready to begin Phase 3 with UCF-Crime data while XD extraction continues.
+**Last updated:** 2026-05-02
+**Session:** Phase 7 complete. 198-config hyperparameter sweep across XD-Violence (99) and UCF-Crime (99). XD winner: lr=1e-3/k=2, 3-seed mean AP=74.69% (+3.72pp over baseline). UCF hyperparameter-insensitive (+0.14pp). RTFM gap diagnosed as training regime difference. Next: Phase 5 (TTA) or Phase 6 (Analysis).
 
 ---
 
@@ -46,7 +46,7 @@ Phase 7 [██████████] 100%  XD-Violence Hyperparameter Sweep 
 
 ## Performance Metrics
 
-No experiments run yet. Targets from PRD v2.3:
+Targets from PRD v2.3:
 
 | Metric | Minimum Gate | Target Range |
 |--------|-------------|--------------|
