@@ -18,7 +18,7 @@
 - [x] **Phase 4c: XD-Violence Main Results** - 8-row XD ablation table complete; Gated Fusion AP=71.92% MISS-ACCEPTED per D-06; default pooling outperforms 2-person/clip-mean; per-category reveals Abuse as hardest category (completed 2026-04-28)
 - [ ] **Phase 5: TTA Infrastructure & Corruption Experiments** - UCF-Crime-C generated, TENT-style and SAR-style TTA evaluated across all 20 corruption conditions
 - [ ] **Phase 6: Analysis & Visualization** - Temporal curve plots, skeleton overlays, and per-category breakdowns ready for thesis
-- [ ] **Phase 7: XD-Violence Hyperparameter Sweep** - Targeted lr x k_topk grid on XD Gated Fusion to close AP gap; RTFM repro gap investigation
+- [x] **Phase 7: XD-Violence Hyperparameter Sweep** - 198-config sweep across XD + UCF; XD winner lr=1e-3/k=2 (AP=74.69%, +3.72pp); UCF hyperparameter-insensitive; RTFM gap = training regime (completed 2026-05-02)
 
 ---
 
@@ -174,8 +174,8 @@ Plans:
 Plans:
 - [x] 07-01-PLAN.md — CLI overrides (--lr, --k-topk) in train.py + RunSpec extension in run_ablations.py
 - [x] 07-02-PLAN.md — phase7_sweep queue (20 entries) + RTFM diagnostic script + chart generation script
-- [ ] 07-03-PLAN.md — Empirical execution: 20 sweep runs + RTFM diagnostics + human verification
-- [ ] 07-04-PLAN.md — 3-seed confirmation + heatmap generation + thesis-ready summary document
+- [x] 07-03-PLAN.md — Empirical execution: 198 sweep configs (99 XD + 99 UCF) + RTFM diagnostics + checkpoint approval
+- [x] 07-04-PLAN.md — 3-seed confirmation + heatmap generation + thesis-ready summary document
 
 ---
 
@@ -191,7 +191,7 @@ Plans:
 | 4c. XD-Violence Main Results | 3/3 | Complete (MISS-ACCEPTED) | 2026-04-28 |
 | 5. TTA Infrastructure & Corruption Experiments | 0/5 | Planned | - |
 | 6. Analysis & Visualization | 0/? | Not started | - |
-| 7. XD-Violence Hyperparameter Sweep | 2/4 | In Progress | - |
+| 7. XD-Violence Hyperparameter Sweep | 4/4 | Complete | 2026-05-02 |
 
 ---
 
@@ -245,4 +245,4 @@ Plans:
 ---
 
 *Roadmap created: 2026-03-31*
-*Last updated: 2026-05-01 — Phase 7 Plan 02 complete: sweep queue + RTFM diagnostic + chart script*
+*Last updated: 2026-05-02 — Phase 7 complete: 198-config sweep, XD winner lr=1e-3/k=2 (+3.72pp), UCF insensitive*

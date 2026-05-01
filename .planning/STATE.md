@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 current_phase: 7
-current_plan: 3 of 4
-status: executing
-stopped_at: Completed 07-02-PLAN.md (sweep queue + RTFM diagnostic + charts)
-last_updated: "2026-04-30T23:08:00.000Z"
+current_plan: 4 of 4
+status: complete
+stopped_at: Completed 07-04-PLAN.md (confirmation + charts + thesis summary)
+last_updated: "2026-05-01T23:42:00.000Z"
 progress:
   total_phases: 9
-  completed_phases: 7
+  completed_phases: 8
   total_plans: 38
-  completed_plans: 36
-  percent: 95
+  completed_plans: 38
+  percent: 100
 ---
 
 # State: ViolenceCC
@@ -33,18 +33,14 @@ progress:
 
 ## Current Position
 
-Phase: --phase (05) — EXECUTING
-Plan: 1 of --name
-**Current phase:** 7
-**Current plan:** 3 of 4
-**Status:** Executing
+**Current phase:** 7 (complete)
+**Current plan:** 4 of 4
+**Status:** Complete
 
 **Progress:**
 
-[█████████░] 95%
-Phase 7 [█████░░░░░] 50%   XD-Violence Hyperparameter Sweep (2/4 plans done)
-
-```
+[██████████] 100%
+Phase 7 [██████████] 100%  XD-Violence Hyperparameter Sweep (4/4 plans done)
 
 ---
 
@@ -73,6 +69,8 @@ No experiments run yet. Targets from PRD v2.3:
 | Phase 04C P03 | 10min | 2 tasks | 4 files |
 | Phase 07 P01 | 4min | 2 tasks | 4 files |
 | Phase 07 P02 | 7min | 2 tasks | 4 files |
+| Phase 07 P03 | 240min | 1 tasks | 4 files |
+| Phase 07 P04 | 8min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -120,6 +118,9 @@ No experiments run yet. Targets from PRD v2.3:
 | XD AP seed sensitivity higher than UCF | AP std=1.08% (3-seed) vs UCF AUC std=0.29%; precision-recall is more sensitive to score calibration than ROC-AUC |
 | LR format uses split/abs instead of lstrip | _fmt_lr() uses split('e') + abs(int(exp)) to avoid lstrip("0") leading-zero bugs in exponent portion |
 | RTFM 12.11pp AP gap is training regime not eval bug | 3 HIGH-impact differences (10x LR, 2x features, 100x margin scaling) explain gap; confirmed by 4 diagnostics |
+| XD-Violence benefits from tuning (+3.72pp), UCF does not (+0.14pp) | 198-config sweep across both datasets; XD winner lr=1e-3/k=2 (AP=74.69%); UCF hyperparameter-insensitive |
+| Decimal LR encoding uses 'p' separator | 6.5e-4 encoded as '6p5e4' in run_name via _fmt_lr(); avoids dots in filesystem paths |
+| Sweep grid expanded from 20 to 99 configs | 3 progressive extension rounds: base 20, +18, +28, +33 chasing peak at grid edges |
 
 ### Roadmap Evolution
 
@@ -159,8 +160,8 @@ None currently.
 
 ## Session Continuity
 
-**Stopped at:** Completed 07-02-PLAN.md (sweep queue + RTFM diagnostic + charts)
-**To resume:** Plan 07-02 complete. phase7_sweep queue has 20 runs, RTFM gap diagnostic at scripts/rtfm_gap_diagnostic.py, chart generator at scripts/generate_phase7_charts.py. Next: 07-03-PLAN.md (empirical sweep execution: run 20 training jobs).
+**Stopped at:** Completed 07-04-PLAN.md (confirmation + charts + thesis summary)
+**To resume:** Phase 7 complete. All 4 plans executed. XD winner lr=1e-3/k=2 (AP=74.69%). UCF hyperparameter-insensitive. Charts and thesis summary at results/phase7_summary.md. Next: Phase 6 (Analysis & Visualization) or thesis writing.
 
 **Files of record:**
 
