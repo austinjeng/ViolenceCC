@@ -71,12 +71,16 @@ class RunSpec:
     k_topk_override: int | None = None
 
     def _fmt_lr(self) -> str:
-        """Format LR for run_name: 5e-05 -> '5e5', 1e-04 -> '1e4'."""
+        """Format LR for run_name: 5e-04 -> '5e4', 6.5e-04 -> '6p5e4'."""
         if self.lr_override is None:
             return ""
-        s = f"{self.lr_override:.0e}"  # "5e-05"
+        s = f"{self.lr_override:.1e}"  # "5.0e-04" or "6.5e-04"
         coeff, exp = s.split("e")
         exp_val = abs(int(exp))
+        if coeff.endswith(".0"):
+            coeff = coeff[:-2]
+        else:
+            coeff = coeff.replace(".", "p")
         return f"{coeff}e{exp_val}"
 
     @property
@@ -196,6 +200,149 @@ QUEUES["phase7_sweep"] = [
     )
     for lr in _LR_SWEEP for k in _K_SWEEP
 ]  # 20 runs
+
+# Phase 7 extension: explore beyond original grid edges
+_LR_SWEEP_EXT = [7e-4, 1e-3]
+_K_SWEEP_EXT = [2, 9]
+
+QUEUES["phase7_sweep_ext"] = [
+    RunSpec(
+        "xd", "gated_fusion", 42,
+        "configs/gated_fusion_xd.yaml",
+        lr_override=lr, k_topk_override=k,
+    )
+    for lr in _LR_SWEEP_EXT for k in _K_SWEEP
+] + [
+    RunSpec(
+        "xd", "gated_fusion", 42,
+        "configs/gated_fusion_xd.yaml",
+        lr_override=lr, k_topk_override=k,
+    )
+    for lr in _LR_SWEEP for k in _K_SWEEP_EXT
+]  # 8 + 10 = 18 runs
+
+# Phase 7 extension 2: fine-grain the peak LR zone + fill missing cells
+_LR_SWEEP_EXT2 = [4e-4, 6e-4, 8e-4, 9e-4]
+_K_ALL = [1, 2, 3, 5, 7, 9]
+
+QUEUES["phase7_sweep_ext2"] = [
+    RunSpec(
+        "xd", "gated_fusion", 42,
+        "configs/gated_fusion_xd.yaml",
+        lr_override=lr, k_topk_override=k,
+    )
+    for lr in _LR_SWEEP_EXT2 for k in _K_ALL
+] + [
+    RunSpec(
+        "xd", "gated_fusion", 42,
+        "configs/gated_fusion_xd.yaml",
+        lr_override=lr, k_topk_override=k,
+    )
+    for lr in _LR_SWEEP_EXT for k in _K_SWEEP_EXT
+]  # 24 + 4 = 28 runs
+
+# Phase 7 extension 3: explore above 1e-3 + fine-grain both k=2 peaks
+_LR_ABOVE = [1.2e-3, 1.5e-3, 2e-3]
+_LR_FINEGRAIN = [6.5e-4, 7.5e-4, 8.5e-4, 1.1e-3, 1.3e-3]
+_K_TOP3 = [1, 2, 3]
+
+QUEUES["phase7_sweep_ext3"] = [
+    RunSpec(
+        "xd", "gated_fusion", 42,
+        "configs/gated_fusion_xd.yaml",
+        lr_override=lr, k_topk_override=k,
+    )
+    for lr in _LR_ABOVE for k in _K_ALL
+] + [
+    RunSpec(
+        "xd", "gated_fusion", 42,
+        "configs/gated_fusion_xd.yaml",
+        lr_override=lr, k_topk_override=k,
+    )
+    for lr in _LR_FINEGRAIN for k in _K_TOP3
+]  # 18 + 15 = 33 runs
+
+
+# Phase 7 confirmation: 3-seed on top 2 sweep winners
+QUEUES["phase7_confirm"] = [
+    RunSpec("xd", "gated_fusion", s, "configs/gated_fusion_xd.yaml",
+            lr_override=1e-3, k_topk_override=2)
+    for s in [42, 123, 2024]
+] + [
+    RunSpec("xd", "gated_fusion", s, "configs/gated_fusion_xd.yaml",
+            lr_override=7e-4, k_topk_override=2)
+    for s in [42, 123, 2024]
+]  # 6 runs (s42 for both will be skipped via .done)
+
+# Phase 7 UCF-Crime sweep: same grid as XD, 3 batches
+# Batch 1: original 5x4 grid (20 runs)
+QUEUES["phase7_ucf_sweep"] = [
+    RunSpec(
+        "ucf", "gated_fusion", 42,
+        "configs/gated_fusion.yaml",
+        lr_override=lr, k_topk_override=k,
+    )
+    for lr in _LR_SWEEP for k in _K_SWEEP
+]  # 20 runs
+
+# Batch 2: edge exploration + fill gaps (18 + 28 = 46 runs)
+QUEUES["phase7_ucf_sweep_ext"] = [
+    RunSpec(
+        "ucf", "gated_fusion", 42,
+        "configs/gated_fusion.yaml",
+        lr_override=lr, k_topk_override=k,
+    )
+    for lr in _LR_SWEEP_EXT for k in _K_SWEEP
+] + [
+    RunSpec(
+        "ucf", "gated_fusion", 42,
+        "configs/gated_fusion.yaml",
+        lr_override=lr, k_topk_override=k,
+    )
+    for lr in _LR_SWEEP for k in _K_SWEEP_EXT
+] + [
+    RunSpec(
+        "ucf", "gated_fusion", 42,
+        "configs/gated_fusion.yaml",
+        lr_override=lr, k_topk_override=k,
+    )
+    for lr in _LR_SWEEP_EXT2 for k in _K_ALL
+] + [
+    RunSpec(
+        "ucf", "gated_fusion", 42,
+        "configs/gated_fusion.yaml",
+        lr_override=lr, k_topk_override=k,
+    )
+    for lr in _LR_SWEEP_EXT for k in _K_SWEEP_EXT
+]  # 8+10+24+4 = 46 runs
+
+# Batch 3: fine-grain peaks + above 1e-3 (33 runs)
+QUEUES["phase7_ucf_sweep_ext2"] = [
+    RunSpec(
+        "ucf", "gated_fusion", 42,
+        "configs/gated_fusion.yaml",
+        lr_override=lr, k_topk_override=k,
+    )
+    for lr in _LR_ABOVE for k in _K_ALL
+] + [
+    RunSpec(
+        "ucf", "gated_fusion", 42,
+        "configs/gated_fusion.yaml",
+        lr_override=lr, k_topk_override=k,
+    )
+    for lr in _LR_FINEGRAIN for k in _K_TOP3
+]  # 18+15 = 33 runs
+
+# Phase 7 UCF confirmation: 3-seed on top 2 sweep winners
+QUEUES["phase7_ucf_confirm"] = [
+    RunSpec("ucf", "gated_fusion", s, "configs/gated_fusion.yaml",
+            lr_override=1.5e-3, k_topk_override=9)
+    for s in [42, 123, 2024]
+] + [
+    RunSpec("ucf", "gated_fusion", s, "configs/gated_fusion.yaml",
+            lr_override=1e-3, k_topk_override=1)
+    for s in [42, 123, 2024]
+]  # 6 runs (s42 for both will be skipped via .done)
 
 
 # ----------------------------------------------------------------------

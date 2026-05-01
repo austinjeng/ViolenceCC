@@ -37,14 +37,19 @@ def test_help_has_expected_queues():
     combined = (out.stdout + out.stderr).lower()
     for q in ("rtfm_gate", "phase4_main", "phase4_pooling", "phase4_seeds",
               "phase4c_main", "phase4c_pooling", "phase4c_seeds",
-              "phase7_sweep"):
+              "phase7_sweep", "phase7_sweep_ext", "phase7_sweep_ext2",
+              "phase7_sweep_ext3", "phase7_confirm",
+              "phase7_ucf_sweep", "phase7_ucf_sweep_ext",
+              "phase7_ucf_sweep_ext2", "phase7_ucf_confirm"):
         assert q in combined, f"missing queue {q!r} in --help: {combined[:300]}"
 
 
 def test_queue_definitions():
     """D-26/D-27/D-28: rtfm_gate=1, phase4_main=4, phase4_pooling=2,
     phase4_seeds=2 (seed=42 covered by phase4_main, not duplicated).
-    Plan 04b-05 Rule 1 scope expansion: rtfm_gate_flow=1 (Flow diagnostic)."""
+    Plan 04b-05 Rule 1 scope expansion: rtfm_gate_flow=1 (Flow diagnostic).
+    Phase 7 extended sweep: 20+18+28+33=99 XD configs, 20+46+33=99 UCF configs,
+    plus 6 XD confirm and 6 UCF confirm."""
     assert len(QUEUES["rtfm_gate"]) == 1
     assert QUEUES["rtfm_gate"][0].run_name == "xd_i3d_rtfm_i3d_s42"
     assert len(QUEUES["rtfm_gate_flow"]) == 1
@@ -60,13 +65,22 @@ def test_queue_definitions():
     assert QUEUES["phase4c_main"][3].run_name == "xd_gated_fusion_s42"
     assert QUEUES["phase4c_seeds"][0].run_name == "xd_gated_fusion_s123"
     assert QUEUES["phase4c_pooling"][0].run_name == "xd_gated_fusion_2person_s42"
-    # Phase 7 sweep queue
+    # Phase 7 XD sweep queues (3 expansion rounds)
     assert len(QUEUES["phase7_sweep"]) == 20
-    # Total unique specs across all queues = 38 (10 Phase 4/4b + 8 Phase 4c + 20 Phase 7).
+    assert len(QUEUES["phase7_sweep_ext"]) == 18
+    assert len(QUEUES["phase7_sweep_ext2"]) == 28
+    assert len(QUEUES["phase7_sweep_ext3"]) == 33
+    assert len(QUEUES["phase7_confirm"]) == 6
+    # Phase 7 UCF sweep queues
+    assert len(QUEUES["phase7_ucf_sweep"]) == 20
+    assert len(QUEUES["phase7_ucf_sweep_ext"]) == 46
+    assert len(QUEUES["phase7_ucf_sweep_ext2"]) == 33
+    assert len(QUEUES["phase7_ucf_confirm"]) == 6
+    # Total unique specs across all queues = 224.
     all_run_names = {
         s.run_name for q in QUEUES.values() for s in q
     }
-    assert len(all_run_names) == 38, f"expected 38 unique run_names, got {sorted(all_run_names)}"
+    assert len(all_run_names) == 224, f"expected 224 unique run_names, got {len(all_run_names)}"
 
 
 def test_run_name_deterministic():
@@ -259,6 +273,21 @@ def test_phase7_run_name():
     spec3 = RunSpec("xd", "gated_fusion", 42, "configs/gated_fusion_xd.yaml",
                     lr_override=3e-4, k_topk_override=7)
     assert spec3.run_name == "xd_gated_fusion_lr3e4_k7_s42"
+
+
+def test_phase7_decimal_lr_format():
+    """_fmt_lr handles decimal coefficients: 6.5e-4 -> '6p5e4'."""
+    spec = RunSpec("xd", "gated_fusion", 42, "configs/gated_fusion_xd.yaml",
+                   lr_override=6.5e-4, k_topk_override=2)
+    assert spec.run_name == "xd_gated_fusion_lr6p5e4_k2_s42"
+
+    spec2 = RunSpec("xd", "gated_fusion", 42, "configs/gated_fusion_xd.yaml",
+                    lr_override=1.5e-3, k_topk_override=9)
+    assert spec2.run_name == "xd_gated_fusion_lr1p5e3_k9_s42"
+
+    spec3 = RunSpec("ucf", "gated_fusion", 42, "configs/gated_fusion.yaml",
+                    lr_override=7.5e-4, k_topk_override=1)
+    assert spec3.run_name == "ucf_gated_fusion_lr7p5e4_k1_s42"
 
 
 def test_phase7_run_name_no_override():
