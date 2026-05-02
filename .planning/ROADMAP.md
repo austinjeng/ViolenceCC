@@ -159,9 +159,9 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Anomaly score temporal curve plots exist for at least 2 UCF-Crime and 1 XD-Violence representative video, with ground-truth anomaly intervals shaded and scores correctly expanded from snippet level to frame level
   2. Skeleton overlay visualizations exist for at least 3 video frames showing COCO-17 keypoints and edges drawn on the original image, confirming extraction quality for a thesis figure
-**Plans:** 2 plans
+**Plans:** 1/2 plans complete
 Plans:
-- [ ] 06-01-PLAN.md -- Temporal curves (Section A), corruption heatmaps (Section C), additional thesis figures (Section F)
+- [x] 06-01-PLAN.md -- Temporal curves (Section A), corruption heatmaps (Section C), additional thesis figures (Section F)
 - [ ] 06-02-PLAN.md -- Skeleton overlays (Section B), gate distributions (Section D), t-SNE projections (Section E)
 
 ### Phase 7: XD-Violence Hyperparameter Sweep
@@ -193,7 +193,7 @@ Plans:
 | 4b. RTFM XD-I3D Gate | 5/5 | Complete (MISS-ACCEPTED) | 2026-04-16 |
 | 4c. XD-Violence Main Results | 3/3 | Complete (MISS-ACCEPTED) | 2026-04-28 |
 | 5. TTA Infrastructure & Corruption Experiments | 0/5 | Planned | - |
-| 6. Analysis & Visualization | 0/2 | Planned | - |
+| 6. Analysis & Visualization | 1/2 | In Progress | - |
 | 7. XD-Violence Hyperparameter Sweep | 4/4 | Complete | 2026-05-02 |
 
 ---
