@@ -14,11 +14,16 @@ Output: results/phase6_charts/
 from __future__ import annotations
 
 import json
+import pickle
 import sys
 from pathlib import Path
 
+import cv2
 import numpy as np
 import pandas as pd
+import torch
+from sklearn.manifold import TSNE
+from torch.utils.data import DataLoader
 
 import matplotlib
 matplotlib.use("Agg")
@@ -32,6 +37,9 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.eval.ucf_annotations import parse_annotations, frame_labels
 from src.eval.xd_annotations import parse_xd_annotations, xd_frame_labels
+from src.models.registry import build_model
+from src.utils.checkpoint import load_checkpoint
+from src.data.dataset import MILFeatureDataset
 
 # --- Style -------------------------------------------------------------------
 DPI = 150
@@ -83,6 +91,23 @@ XD_RUNS = {
 
 RESULTS_DIR = PROJECT_ROOT / "results"
 OUT_DIR = RESULTS_DIR / "phase6_charts"
+
+# --- COCO-17 Skeleton Constants (VIS-02) ------------------------------------
+COCO_EDGES = [
+    (0, 1), (0, 2), (1, 3), (2, 4),          # face
+    (5, 6),                                     # shoulders
+    (5, 7), (7, 9),                            # left arm
+    (6, 8), (8, 10),                           # right arm
+    (5, 11), (6, 12), (11, 12),               # torso
+    (11, 13), (13, 15),                        # left leg
+    (12, 14), (14, 16),                        # right leg
+]
+
+# XD category code to readable name mapping
+XD_CAT_NAMES = {
+    "B1": "Fighting", "B2": "Shooting", "B4": "Riot",
+    "B5": "Abuse", "B6": "Car Accident", "G": "Explosion",
+}
 
 
 # --- Helpers -----------------------------------------------------------------
@@ -247,7 +272,7 @@ def chart_A_temporal(
 
 def run_section_A(ucf_annos, xd_annos, all_scores):
     """Generate Section A: Temporal Curves for 3 UCF + 2 XD videos."""
-    print("\n[2/4] Section A: Temporal Curves")
+    print("\n[2/6] Section A: Temporal Curves")
 
     # Select 3 UCF videos (D-02)
     ucf_selected = select_best_detection_videos(
@@ -307,6 +332,154 @@ def run_section_A(ucf_annos, xd_annos, all_scores):
         idx += 1
 
     return ucf_selected, xd_selected
+
+
+# --- Section B: Skeleton Overlays (VIS-02, D-07/08/09) ----------------------
+
+def draw_skeleton(frame, keypoints, scores, conf_threshold=0.3):
+    """Draw COCO-17 skeleton on a video frame.
+
+    keypoints: [17, 2] float32 pixel coordinates
+    scores: [17] float32 confidence scores
+    """
+    # Draw edges first (behind keypoints)
+    for (i, j) in COCO_EDGES:
+        if scores[i] > conf_threshold and scores[j] > conf_threshold:
+            pt1 = (int(keypoints[i, 0]), int(keypoints[i, 1]))
+            pt2 = (int(keypoints[j, 0]), int(keypoints[j, 1]))
+            cv2.line(frame, pt1, pt2, (0, 255, 0), 2, cv2.LINE_AA)
+
+    # Draw keypoints
+    for k in range(17):
+        if scores[k] > conf_threshold:
+            pt = (int(keypoints[k, 0]), int(keypoints[k, 1]))
+            cv2.circle(frame, pt, 4, (0, 0, 255), -1, cv2.LINE_AA)
+
+    return frame
+
+
+def create_skeleton_overlay(video_path, skeleton_pkl_path, frame_idx):
+    """Extract a frame from video and overlay skeleton keypoints+edges.
+
+    Draws both persons (person_idx=0 and 1) if both have reasonable confidence.
+    Returns RGB frame array.
+    """
+    with open(skeleton_pkl_path, "rb") as f:
+        skel = pickle.load(f)
+
+    cap = cv2.VideoCapture(str(video_path))
+    cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
+    ret, frame = cap.read()
+    cap.release()
+
+    if not ret:
+        print(f"    [WARN] Failed to read frame {frame_idx} from {video_path}")
+        return None
+
+    n_persons = skel["keypoint"].shape[0]
+    total_frames = skel["keypoint"].shape[1]
+
+    # Clamp frame_idx to skeleton data range
+    skel_frame = min(frame_idx, total_frames - 1)
+
+    for person_idx in range(min(n_persons, 2)):
+        kps = skel["keypoint"][person_idx, skel_frame]       # [17, 2]
+        sc = skel["keypoint_score"][person_idx, skel_frame]  # [17]
+        # Only draw if person has at least 5 confident keypoints
+        if (sc > 0.3).sum() >= 5:
+            draw_skeleton(frame, kps, sc)
+
+    # BGR -> RGB for matplotlib display
+    return cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+
+def run_section_B(xd_selected, xd_annos):
+    """Generate Section B: Skeleton Overlays on XD-Violence video frames.
+
+    Uses XD-Violence videos (346x640+ MP4s) per D-07/D-08.
+    UCF-Crime only has 64x64 PNGs -- not suitable for overlays (Pitfall 3).
+    Minimum 3 frames total across selected videos (D-09).
+    """
+    print("\n[3/6] Section B: Skeleton Overlays")
+
+    xd_video_dir = Path("E:/XD_Violence/test/videos")
+    xd_skel_dir = Path("E:/skeletons/xd")
+
+    frame_count = 0
+    for vid in xd_selected:
+        video_path = xd_video_dir / f"{vid}.mp4"
+        skel_path = xd_skel_dir / f"{vid}.pkl"
+
+        if not video_path.exists():
+            print(f"    [WARN] Video not found: {video_path}, skipping")
+            continue
+        if not skel_path.exists():
+            print(f"    [WARN] Skeleton not found: {skel_path}, skipping")
+            continue
+
+        # Get anomalous frame indices from GT annotations
+        if vid not in xd_annos:
+            print(f"    [WARN] {vid} not in annotations, skipping")
+            continue
+
+        anno = xd_annos[vid]
+        gt_intervals = get_gt_intervals(anno)
+        if not gt_intervals:
+            print(f"    [WARN] {vid} has no anomaly intervals, skipping")
+            continue
+
+        # Pick midpoint of each anomaly interval
+        for interval_idx, (start, end) in enumerate(gt_intervals):
+            midpoint = (start + end) // 2
+            frame_rgb = create_skeleton_overlay(video_path, skel_path, midpoint)
+            if frame_rgb is None:
+                continue
+
+            frame_count += 1
+            cat_code = anno.category
+            cat_name = XD_CAT_NAMES.get(cat_code, cat_code)
+            fig, ax = plt.subplots(figsize=(10, 7))
+            ax.imshow(frame_rgb)
+            ax.set_title(
+                f"{vid}\nFrame {midpoint} ({cat_name})",
+                fontsize=TITLE_SZ - 2,
+            )
+            ax.axis("off")
+            _save(fig, "B_skeleton", f"B{frame_count:02d}_{vid}_f{midpoint}.png")
+
+            # Stop if we have enough from this video (max 2 per video)
+            if interval_idx >= 1:
+                break
+
+    # If we still need more frames, try additional intervals from the first video
+    if frame_count < 3 and xd_selected:
+        vid = xd_selected[0]
+        video_path = xd_video_dir / f"{vid}.mp4"
+        skel_path = xd_skel_dir / f"{vid}.pkl"
+        if video_path.exists() and skel_path.exists() and vid in xd_annos:
+            anno = xd_annos[vid]
+            gt_intervals = get_gt_intervals(anno)
+            for start, end in gt_intervals:
+                if frame_count >= 3:
+                    break
+                # Use a different position -- quarter point
+                quarter = start + (end - start) // 4
+                frame_rgb = create_skeleton_overlay(video_path, skel_path, quarter)
+                if frame_rgb is None:
+                    continue
+                frame_count += 1
+                cat_name = XD_CAT_NAMES.get(anno.category, anno.category)
+                fig, ax = plt.subplots(figsize=(10, 7))
+                ax.imshow(frame_rgb)
+                ax.set_title(
+                    f"{vid}\nFrame {quarter} ({cat_name})",
+                    fontsize=TITLE_SZ - 2,
+                )
+                ax.axis("off")
+                _save(fig, "B_skeleton", f"B{frame_count:02d}_{vid}_f{quarter}.png")
+
+    print(f"  Generated {frame_count} skeleton overlay(s)")
+    return frame_count
 
 
 # --- Section C: Corruption Heatmaps ------------------------------------------
@@ -422,7 +595,7 @@ def chart_C_method_comparison(source_pivot, tent_pivot, sar_pivot):
 
 def run_section_C():
     """Generate Section C: Corruption Severity Heatmaps."""
-    print("\n[3/4] Section C: Corruption Heatmaps")
+    print("\n[4/6] Section C: Corruption Heatmaps")
     df = load_tta_results()
     if df.empty:
         print("  [WARN] No TTA data -- skipping Section C")
@@ -748,7 +921,7 @@ def chart_F05_ablation_bars(results_df: pd.DataFrame):
 
 def run_section_F(ucf_annos, xd_annos, all_scores):
     """Generate Section F: Additional Thesis Figures."""
-    print("\n[4/4] Section F: Additional Figures")
+    print("\n[5/6] Section F: Additional Figures")
 
     results_df = _load_results_index()
     if results_df.empty:
@@ -768,6 +941,317 @@ def run_section_F(ucf_annos, xd_annos, all_scores):
         chart_F03_per_category_xd(xd_annos, xd_gated)
 
 
+# --- Section D: Gate Activation Distributions (D-12) -------------------------
+
+def collect_gate_and_features(dataset_name, config_path, checkpoint_path):
+    """Load GatedFusion checkpoint and collect gate activations + fused features.
+
+    Uses forward hooks on model.gate (pre-sigmoid nn.Linear) and model.ln_fused.
+    CRITICAL (Pitfall 5): model.gate is nn.Linear -- hook output is pre-sigmoid.
+    Must apply torch.sigmoid() manually to get gate values in [0, 1].
+
+    Returns (gate_outputs, fused_features) -- both {video_id: ndarray[T, 256]}.
+    """
+    # Load config snapshot -- note: wrapped in "config" key
+    with open(config_path) as f:
+        snapshot = json.load(f)
+    cfg = snapshot["config"] if "config" in snapshot else snapshot
+
+    # Build model
+    model = build_model(**cfg["model"])
+
+    # Load checkpoint with strict=True (CLAUDE.md convention)
+    state_dict = load_checkpoint(checkpoint_path, device="cpu")
+    model.load_state_dict(state_dict, strict=True)
+
+    # Move to device
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model.to(device).eval()
+    print(f"  Model loaded on {device} from {checkpoint_path}")
+
+    # Build test dataset
+    splits_dir = cfg["paths"]["splits_dir"]
+    # Resolve splits_dir relative to PROJECT_ROOT if not absolute
+    splits_path = Path(splits_dir)
+    if not splits_path.is_absolute():
+        splits_path = PROJECT_ROOT / splits_path
+
+    dataset = MILFeatureDataset(
+        skel_dir=cfg["paths"]["skeleton_features"],
+        clip_dir=cfg["paths"]["clip_features"],
+        split_file=str(splits_path / f"{dataset_name}_test.txt"),
+        dataset=dataset_name,
+        mode="test",
+    )
+    print(f"  Test dataset: {len(dataset)} videos")
+
+    # Register forward hooks
+    gate_outputs = {}
+    fused_features = {}
+
+    def gate_hook(module, input, output):
+        # CRITICAL: apply sigmoid manually -- model.gate is nn.Linear (Pitfall 5)
+        gate_hook._last = torch.sigmoid(output).detach().cpu()
+
+    def fused_hook(module, input, output):
+        fused_hook._last = output.detach().cpu()
+
+    h1 = model.gate.register_forward_hook(gate_hook)
+    h2 = model.ln_fused.register_forward_hook(fused_hook)
+
+    # Run inference
+    with torch.no_grad():
+        loader = DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
+        for batch in loader:
+            vid = batch["video_id"]
+            if isinstance(vid, (list, tuple)):
+                vid = vid[0]
+
+            kwargs = {}
+            for k in ("skel", "clip"):
+                if k in batch:
+                    t = batch[k]
+                    if t.dim() == 2:
+                        t = t.unsqueeze(0)
+                    kwargs[k] = t.to(device)
+            model(**kwargs)
+
+            gate_outputs[vid] = gate_hook._last.squeeze(0).numpy()
+            fused_features[vid] = fused_hook._last.squeeze(0).numpy()
+
+    h1.remove()
+    h2.remove()
+
+    # Validate gate values are in [0, 1] (confirms sigmoid was applied)
+    all_gate_vals = np.concatenate([g.ravel() for g in gate_outputs.values()])
+    g_min, g_max = all_gate_vals.min(), all_gate_vals.max()
+    print(f"  Gate value range: [{g_min:.4f}, {g_max:.4f}]")
+    assert g_min >= 0.0 and g_max <= 1.0, (
+        f"Gate values outside [0,1]: min={g_min}, max={g_max}. "
+        "Did you forget torch.sigmoid() on hook output?"
+    )
+
+    return gate_outputs, fused_features
+
+
+def chart_D_gate_by_category(gate_outputs, annos, label_fn, dataset_label):
+    """D01: Box plot of mean gate value per video, grouped by category.
+
+    Color-coded by normal vs abnormal.
+    """
+    rows = []
+    for vid, gates in gate_outputs.items():
+        mean_gate = float(np.mean(gates))
+        if vid in annos:
+            cat = annos[vid].category
+            if dataset_label.startswith("XD"):
+                cat = XD_CAT_NAMES.get(cat, cat)
+            is_anom = True
+        else:
+            cat = "Normal"
+            is_anom = False
+        rows.append({
+            "category": cat,
+            "mean_gate": mean_gate,
+            "type": "Anomalous" if is_anom else "Normal",
+        })
+
+    df = pd.DataFrame(rows)
+    if df.empty:
+        return
+
+    # Sort categories: Normal first, then alphabetical
+    cats = sorted(df["category"].unique(), key=lambda c: (0 if c == "Normal" else 1, c))
+    fig, ax = plt.subplots(figsize=(max(12, len(cats) * 1.2), 7))
+    sns.boxplot(
+        data=df, x="category", y="mean_gate", hue="type",
+        palette={"Normal": "#64748B", "Anomalous": "#EF4444"},
+        ax=ax, fliersize=2, order=cats,
+    )
+    ax.set_xlabel("Category", fontsize=LABEL_SZ)
+    ax.set_ylabel("Mean Gate Value (sigmoid)", fontsize=LABEL_SZ)
+    ax.set_ylim(0, 1)
+    ax.set_title(
+        f"Gate Activation Distribution ({dataset_label})",
+        fontsize=TITLE_SZ, fontweight="bold",
+    )
+    ax.tick_params(labelsize=TICK_SZ, axis="x", rotation=30)
+    ax.legend(fontsize=11, loc="upper right")
+
+    tag = "ucf" if "UCF" in dataset_label else "xd"
+    _save(fig, "D_gating", f"D01_gate_by_category_{tag}.png")
+
+
+def chart_D_gate_histogram(gate_outputs, annos, dataset_label):
+    """D02: Overlaid histograms of gate values for normal vs anomalous videos.
+
+    X-axis: gate sigmoid value [0, 1]. Y-axis: density.
+    """
+    normal_gates = []
+    abnormal_gates = []
+
+    for vid, gates in gate_outputs.items():
+        flat = gates.ravel()
+        if vid in annos:
+            abnormal_gates.append(flat)
+        else:
+            normal_gates.append(flat)
+
+    fig, ax = plt.subplots(figsize=FIG_STD)
+
+    if normal_gates:
+        all_normal = np.concatenate(normal_gates)
+        ax.hist(
+            all_normal, bins=50, range=(0, 1), density=True,
+            alpha=0.5, color="#3B82F6", label="Normal", edgecolor="white",
+        )
+    if abnormal_gates:
+        all_abnormal = np.concatenate(abnormal_gates)
+        ax.hist(
+            all_abnormal, bins=50, range=(0, 1), density=True,
+            alpha=0.5, color="#EF4444", label="Anomalous", edgecolor="white",
+        )
+
+    ax.set_xlabel("Gate Value (sigmoid)", fontsize=LABEL_SZ)
+    ax.set_ylabel("Density", fontsize=LABEL_SZ)
+    ax.set_xlim(0, 1)
+    ax.set_title(
+        f"Gate Value Distribution: Normal vs Anomalous ({dataset_label})",
+        fontsize=TITLE_SZ, fontweight="bold",
+    )
+    ax.legend(fontsize=12)
+    ax.tick_params(labelsize=TICK_SZ)
+
+    tag = "ucf" if "UCF" in dataset_label else "xd"
+    _save(fig, "D_gating", f"D02_gate_histogram_{tag}.png")
+
+
+# --- Section E: t-SNE Feature Projection (D-13) -----------------------------
+
+def chart_E_tsne(fused_features, annos, dataset_label):
+    """t-SNE 2D projection of fused features, colored by category.
+
+    Per D-13: pool per-video features (mean over T) to [256] per video,
+    then TSNE(perplexity=30, random_state=42, init='pca') to 2D.
+    Normal = grey circles. Abnormal = colored by category.
+    """
+    vids = list(fused_features.keys())
+    X = np.stack([fused_features[v].mean(axis=0) for v in vids])  # [N, 256]
+
+    labels = []
+    categories = []
+    for vid in vids:
+        if vid in annos:
+            cat = annos[vid].category
+            if "xd" in dataset_label.lower():
+                cat = XD_CAT_NAMES.get(cat, cat)
+            labels.append(1)
+            categories.append(cat)
+        else:
+            labels.append(0)
+            categories.append("Normal")
+    labels = np.array(labels)
+
+    # Adjust perplexity if dataset is small
+    n_samples = len(vids)
+    perplexity = min(30, max(5, n_samples // 4))
+
+    print(f"  t-SNE: {n_samples} videos, perplexity={perplexity}")
+    tsne = TSNE(
+        n_components=2, perplexity=perplexity, random_state=42,
+        init="pca", method="barnes_hut",
+    )
+    X_2d = tsne.fit_transform(X)
+
+    # Build color map for categories
+    unique_cats = sorted(set(c for c in categories if c != "Normal"))
+    cmap = matplotlib.colormaps.get_cmap("tab10").resampled(max(len(unique_cats), 1))
+    cat_colors = {cat: cmap(i) for i, cat in enumerate(unique_cats)}
+
+    fig, ax = plt.subplots(figsize=FIG_STD)
+
+    # Plot normal points first (background)
+    normal_mask = labels == 0
+    if normal_mask.sum() > 0:
+        ax.scatter(
+            X_2d[normal_mask, 0], X_2d[normal_mask, 1],
+            c="grey", alpha=0.4, s=20, label="Normal", edgecolors="none",
+        )
+
+    # Plot abnormal points by category
+    for cat in unique_cats:
+        cat_mask = np.array([c == cat for c in categories])
+        if cat_mask.sum() > 0:
+            ax.scatter(
+                X_2d[cat_mask, 0], X_2d[cat_mask, 1],
+                c=[cat_colors[cat]], alpha=0.7, s=35, label=cat,
+                edgecolors="white", linewidths=0.3,
+            )
+
+    ax.set_title(
+        f"t-SNE of Fused Features ({dataset_label})",
+        fontsize=TITLE_SZ, fontweight="bold",
+    )
+    ax.set_xlabel("t-SNE 1", fontsize=LABEL_SZ)
+    ax.set_ylabel("t-SNE 2", fontsize=LABEL_SZ)
+    ax.tick_params(labelsize=TICK_SZ)
+
+    # Place legend outside plot if many categories
+    if len(unique_cats) > 5:
+        ax.legend(fontsize=9, loc="center left", bbox_to_anchor=(1.02, 0.5),
+                  borderaxespad=0)
+    else:
+        ax.legend(fontsize=10, loc="best")
+
+    tag = "ucf" if "UCF" in dataset_label else "xd"
+    _save(fig, "E_projection", f"E01_tsne_{tag}.png")
+
+
+def run_section_DE(ucf_annos, xd_annos):
+    """Generate Sections D+E: Gate distributions and t-SNE projections.
+
+    For each dataset (UCF, XD), call collect_gate_and_features() once,
+    then generate both D and E charts from the collected data (D-10).
+    """
+    print("\n[6/6] Sections D+E: Gate Distributions & t-SNE")
+
+    configs = [
+        (
+            "ucf", "UCF-Crime",
+            RESULTS_DIR / "ucf_gated_fusion_s42" / "config_snapshot.json",
+            RESULTS_DIR / "ucf_gated_fusion_s42" / "best_model.pth",
+            ucf_annos,
+        ),
+        (
+            "xd", "XD-Violence",
+            RESULTS_DIR / "xd_gated_fusion_s42" / "config_snapshot.json",
+            RESULTS_DIR / "xd_gated_fusion_s42" / "best_model.pth",
+            xd_annos,
+        ),
+    ]
+
+    for dataset_name, dataset_label, config_path, ckpt_path, annos in configs:
+        if not config_path.exists():
+            print(f"  [WARN] Config not found: {config_path}, skipping {dataset_label}")
+            continue
+        if not ckpt_path.exists():
+            print(f"  [WARN] Checkpoint not found: {ckpt_path}, skipping {dataset_label}")
+            continue
+
+        print(f"\n  --- {dataset_label} ---")
+        gate_outputs, fused_features = collect_gate_and_features(
+            dataset_name, config_path, ckpt_path
+        )
+
+        # Section D: Gate distributions
+        label_fn = frame_labels if dataset_name == "ucf" else xd_frame_labels
+        chart_D_gate_by_category(gate_outputs, annos, label_fn, dataset_label)
+        chart_D_gate_histogram(gate_outputs, annos, dataset_label)
+
+        # Section E: t-SNE
+        chart_E_tsne(fused_features, annos, dataset_label)
+
+
 # --- Main --------------------------------------------------------------------
 
 def main():
@@ -776,7 +1260,7 @@ def main():
     print(f"Output: {OUT_DIR}")
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    print("\n[1/4] Loading annotations and scores...")
+    print("\n[1/6] Loading annotations and scores...")
     ucf_annos = parse_annotations(
         PROJECT_ROOT / "data" / "annotations" / "ucf_temporal.txt"
     )
@@ -788,11 +1272,17 @@ def main():
     # Section A: Temporal Curves
     ucf_selected, xd_selected = run_section_A(ucf_annos, xd_annos, all_scores)
 
+    # Section B: Skeleton Overlays (uses XD selected videos from Section A)
+    run_section_B(xd_selected, xd_annos)
+
     # Section C: Corruption Heatmaps
     run_section_C()
 
     # Section F: Additional Figures
     run_section_F(ucf_annos, xd_annos, all_scores)
+
+    # Sections D+E: Gate Distributions & t-SNE (GPU-dependent)
+    run_section_DE(ucf_annos, xd_annos)
 
     pngs = list(OUT_DIR.rglob("*.png"))
     print(f"\nDone! Generated {len(pngs)} PNG files in {OUT_DIR}")
