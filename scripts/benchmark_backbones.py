@@ -400,8 +400,8 @@ def _bench_ctrgcn(args: argparse.Namespace) -> None:
     stream_flops = {}
     total_flops_g = 0.0
     flops_failed = False
-    # Input shape: [N=1, M=2, T=64, V=17, C=2]
-    dummy_input = torch.randn(1, 2, 64, 17, 2, device=device)
+    # Input shape: [N=1, M=2, T=64, V=17, C=3] — C=3 is (x, y, confidence)
+    dummy_input = torch.randn(1, 2, 64, 17, 3, device=device)
 
     for name, model in models.items():
         try:
@@ -450,7 +450,7 @@ def _bench_ctrgcn(args: argparse.Namespace) -> None:
     with torch.no_grad():
         for _ in range(args.num_warmup):
             for name, model in models.items():
-                x = torch.randn(1, 2, 64, 17, 2, device=device)
+                x = torch.randn(1, 2, 64, 17, 3, device=device)
                 out = model.backbone(x)
                 feat = out.mean(dim=[1, 3, 4])
 
@@ -468,7 +468,7 @@ def _bench_ctrgcn(args: argparse.Namespace) -> None:
 
             t_total_start = time.perf_counter()
             for name, model in models.items():
-                x = torch.randn(1, 2, 64, 17, 2, device=device)
+                x = torch.randn(1, 2, 64, 17, 3, device=device)
                 if device.type == "cuda":
                     torch.cuda.synchronize(device)
                 t0 = time.perf_counter()
