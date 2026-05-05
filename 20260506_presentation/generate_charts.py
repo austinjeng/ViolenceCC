@@ -97,7 +97,7 @@ def chart_01_model_comparison():
 # Chart 02: Per-Category AP Heatmap (all models)
 # =============================================================================
 def chart_02_category_heatmap():
-    categories = ["B1\nFighting", "B2\nMob", "B4\nRiot", "B5\nGathering", "B6\nTraffic", "G\nGeneral"]
+    categories = ["B1\nFighting", "B2\nShooting", "B4\nRiot", "B5\nAbuse", "B6\nCar Acc.", "G\nExplosion"]
     models = ["Skeleton Only", "CLIP Only", "Late Fusion", "Gated Fusion"]
 
     ap_data = np.array([
@@ -260,15 +260,15 @@ def chart_05_pipeline():
 
     # CLIP branch
     box(4.5, 5.5, 2.8, 0.8, "CLIP ViT-B/16\n(1024-d)", "#3B82F6", 9)
-    box(8, 5.5, 2.5, 0.8, "Proj Layer\n(512-d)", "#2563EB", 9)
+    box(8, 5.5, 2.5, 0.8, "Proj Layer\n(256-d)", "#2563EB", 9)
     arrow(3.0, 6.8, 4.5, 5.9)
-    arrow(7.3, 5.9, 8.0, 5.9, "512-d")
+    arrow(7.3, 5.9, 8.0, 5.9, "256-d")
     ax.text(6, 5.2, "CLIP Branch", fontsize=11, fontweight="bold", ha="center", color="#3B82F6")
 
     # Fusion
     box(11.2, 6.0, 2.0, 1.5, "Gated\nFusion\n+ LayerNorm", "#EF4444", 10, True)
     arrow(10.5, 7.5, 11.2, 7.0, "256-d")
-    arrow(10.5, 6.1, 11.2, 6.5, "512-d")
+    arrow(10.5, 6.1, 11.2, 6.5, "256-d")
 
     # MIL Head
     box(11.2, 3.8, 2.0, 1.2, "MIL Head\n[128→32→1]", "#7C3AED", 10, True)
@@ -307,8 +307,8 @@ def chart_06_dataset():
     fig, axes = plt.subplots(1, 3, figsize=(16, 5.5))
 
     # Split distribution
-    splits = ["Train\n(2,766)", "Validation\n(594)", "Test\n(800)"]
-    counts = [2766, 594, 800]
+    splits = ["Train\n(3,360)", "Validation\n(594)", "Test\n(800)"]
+    counts = [3360, 594, 800]
     colors_split = ["#3B82F6", "#F59E0B", "#EF4444"]
     axes[0].bar(splits, counts, color=colors_split, edgecolor="white", linewidth=1.5, width=0.6)
     axes[0].set_ylabel("Number of Videos", fontsize=12)
@@ -317,7 +317,7 @@ def chart_06_dataset():
         axes[0].text(i, v + 30, str(v), ha="center", fontsize=11, fontweight="bold")
 
     # Category distribution (test set)
-    cats = ["B1\nFight", "B2\nMob", "B4\nRiot", "B5\nGather", "B6\nTraffic", "G\nGeneral"]
+    cats = ["B1\nFight", "B2\nShoot", "B4\nRiot", "B5\nAbuse", "B6\nCar Acc", "G\nExplosion"]
     # Approximate counts from the dataset (these are relative proportions)
     cat_colors = ["#EF4444", "#F59E0B", "#F97316", "#8B5CF6", "#3B82F6", "#64748B"]
     pos_frac = [0.23]  # overall positive fraction
@@ -332,8 +332,8 @@ def chart_06_dataset():
     axes[1].yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{x/1e6:.1f}M"))
 
     # Violence sub-categories
-    cat_labels = ["B1: Fighting", "B2: Mob/Crowd", "B4: Riot", "B5: Gathering",
-                  "B6: Traffic/Acc", "G: General"]
+    cat_labels = ["B1: Fighting", "B2: Shooting", "B4: Riot", "B5: Abuse",
+                  "B6: Car Accident", "G: Explosion"]
     cat_ap = [77.76, 51.35, 88.15, 44.89, 41.54, 54.02]
     bars = axes[2].barh(cat_labels, cat_ap, color=cat_colors, edgecolor="white", linewidth=1.5, height=0.6)
     axes[2].set_xlabel("Gated Fusion AP (%)", fontsize=12)
@@ -387,14 +387,18 @@ def chart_07_sweep_heatmap():
             ax.text(j, i, f"{val:.1f}", ha="center", va="center",
                     fontsize=11, fontweight=weight, color=color)
 
-    # Mark baseline (lr=1e-4, k=3 → row=1, col=2) and best (lr=7e-4, k=2 → row=5, col=1)
+    # Mark baseline (lr=1e-4, k=3 → row=1, col=2)
     ax.add_patch(plt.Rectangle((1.5, 0.5), 1, 1, fill=False,
                                 edgecolor="#3B82F6", linewidth=3, linestyle="--"))
     ax.text(2, 0.5, "baseline", fontsize=8, color="#3B82F6", ha="center", va="top")
 
+    # Mark tied top: lr=7e-4/k=2 (77.67) and lr=1e-3/k=7,k=9 (77.68)
     ax.add_patch(plt.Rectangle((0.5, 4.5), 1, 1, fill=False,
                                 edgecolor="#10B981", linewidth=3))
-    ax.text(1, 5.5, "best", fontsize=8, color="#10B981", ha="center", va="top")
+    ax.add_patch(plt.Rectangle((3.5, 5.5), 2, 1, fill=False,
+                                edgecolor="#10B981", linewidth=3))
+    ax.text(1, 5.5, "top", fontsize=8, color="#10B981", ha="center", va="top")
+    ax.text(4.5, 6.5, "top", fontsize=8, color="#10B981", ha="center", va="top")
 
     cbar = fig.colorbar(im, ax=ax, shrink=0.8, label="AP (%)")
 
@@ -410,9 +414,9 @@ def chart_07_sweep_heatmap():
 def chart_08_fusion_gain():
     fig, ax = plt.subplots(figsize=(10, 6))
 
-    steps = ["Skeleton\nOnly", "→ Add CLIP\n(Late Fusion)", "→ Gated\nFusion", "→ Optimized\n(Sweep Best)"]
-    ap = [41.32, 65.48, 71.92, 77.67]
-    gains = [0, 24.16, 6.44, 5.75]
+    steps = ["Skeleton\nOnly", "→ Score Avg\n(Late Fusion)", "→ Gated\nFusion", "→ Sweep Best\n(single seed)"]
+    ap = [41.32, 65.48, 71.92, 77.68]
+    gains = [0, 24.16, 6.44, 5.76]
     colors = [COLORS["skeleton"], COLORS["late"], COLORS["gated"], "#10B981"]
 
     bars = ax.bar(steps, ap, 0.55, color=colors, edgecolor="white", linewidth=1.5)
@@ -481,8 +485,8 @@ def chart_09_ablation():
 def chart_10_rtfm_comparison():
     fig, ax = plt.subplots(figsize=(10, 6))
 
-    methods = ["RTFM\n(Published)", "MGFN\n(Published)", "Our RTFM\n(I3D-RGB)", "Our Gated\nFusion", "Our Gated\n(Sweep Best)"]
-    ap = [77.81, 79.19, 65.70, 71.92, 77.67]
+    methods = ["RTFM\n(Published)", "MGFN\n(Published)", "Our RTFM\n(I3D-RGB)", "Our Gated\nFusion", "Our Gated\n(Sweep, 1 seed)"]
+    ap = [77.81, 79.19, 65.70, 71.92, 77.68]
     colors_m = ["#94A3B8", "#94A3B8", COLORS["rtfm"], COLORS["gated"], "#10B981"]
     hatches = ["//", "//", "", "", ""]
 
@@ -536,43 +540,47 @@ def chart_11_gating_detail():
 
     # Inputs
     box(0.3, 5.2, 1.8, 0.7, "Skel (256-d)", COLORS["skeleton"], 9)
-    box(0.3, 3.2, 1.8, 0.7, "CLIP (512-d)", COLORS["clip"], 9)
+    box(0.3, 3.2, 1.8, 0.7, "CLIP (1024-d)", COLORS["clip"], 9)
 
     # Project to shared dim
-    box(3, 5.2, 2.0, 0.7, "Linear → 256-d", "#475569", 9)
-    box(3, 3.2, 2.0, 0.7, "Linear → 256-d", "#2563EB", 9)
-    arrow(2.1, 5.55, 3.0, 5.55)
-    arrow(2.1, 3.55, 3.0, 3.55)
+    box(2.8, 5.2, 2.2, 0.7, "Linear(256,256)\n+ LN", "#475569", 8)
+    box(2.8, 3.2, 2.2, 0.7, "Linear(1024,256)\n+ LN", "#2563EB", 8)
+    arrow(2.1, 5.55, 2.8, 5.55)
+    arrow(2.1, 3.55, 2.8, 3.55)
+    ax.text(3.9, 5.05, "p_skel", fontsize=8, color="#475569", ha="center", style="italic")
+    ax.text(3.9, 3.05, "p_clip", fontsize=8, color="#2563EB", ha="center", style="italic")
 
-    # LayerNorm
-    box(3, 4.2, 2.0, 0.6, "LayerNorm", "#EDE9FE", 9)
-    arrow(4.0, 5.2, 4.0, 4.8)
-    arrow(4.0, 3.9, 4.0, 4.2)
+    # Single gate: concat [p_skel; p_clip] -> sigmoid
+    box(5.8, 4.2, 2.2, 0.7, "concat -> Linear\n-> sigmoid", "#FEF3C7", 8)
+    arrow(5.0, 5.35, 5.8, 4.7)
+    arrow(5.0, 3.75, 5.8, 4.4)
+    ax.text(6.9, 5.1, "g = sigma(W[p_s;p_c]+b)", fontsize=8, color="#92400E", ha="center", style="italic")
 
-    # Gate
-    box(6, 4.8, 1.8, 0.7, "σ(W·x + b)", "#FEF3C7", 9)
-    box(6, 3.5, 1.8, 0.7, "σ(W·x + b)", "#FEF3C7", 9)
-    arrow(5.0, 5.55, 6.0, 5.15)
-    arrow(5.0, 3.55, 6.0, 3.85)
+    # Weighted combination
+    box(8.8, 5.2, 2.0, 0.55, "g * p_skel", "#475569", 9)
+    box(8.8, 3.4, 2.0, 0.55, "(1-g) * p_clip", "#2563EB", 9)
+    arrow(8.0, 4.55, 8.8, 5.35)
+    arrow(8.0, 4.55, 8.8, 3.8)
 
-    ax.text(6.9, 5.7, "α_skel", fontsize=9, color=COLORS["skeleton"], fontweight="bold", ha="center")
-    ax.text(6.9, 3.3, "α_clip", fontsize=9, color=COLORS["clip"], fontweight="bold", ha="center")
+    # Sum + residual
+    box(8.8, 4.2, 2.0, 0.6, "+ residual", "#1E293B", 9)
+    arrow(10.8, 5.45, 10.3, 4.8)
+    arrow(10.8, 3.65, 10.3, 4.2)
 
-    # Element-wise multiply
-    box(8.5, 4.2, 1.0, 0.6, "⊙", "#1E293B", 14)
-    arrow(7.8, 5.1, 8.5, 4.7)
-    arrow(7.8, 3.9, 8.5, 4.3)
+    # Residual = fused + p_skel + p_clip
+    ax.text(11.2, 4.5, "fused + p_skel + p_clip", fontsize=7, color="#64748B",
+            ha="left", style="italic")
 
     # Output
-    box(10, 4.2, 1.5, 0.6, "Fused\n(256-d)", COLORS["gated"], 9)
-    arrow(9.5, 4.5, 10.0, 4.5)
+    box(8.8, 2.2, 2.0, 0.6, "LN -> Dropout\n-> MIL Head", COLORS["gated"], 8)
+    arrow(9.8, 4.2, 9.8, 2.8)
 
     # Annotations
-    ax.text(6, 2.2, "Gate outputs α ∈ [0, 1] via sigmoid\n"
-                     "→ Learns to weight each modality\n"
-                     "→ Per-element attention on shared 256-d space\n"
-                     "→ LayerNorm enables TTA adaptation",
-            fontsize=10, color="#475569", family="monospace",
+    ax.text(1, 1.2, "Single gate g in [0,1] per element (256-d)\n"
+                     "fused = g*p_skel + (1-g)*p_clip\n"
+                     "residual = fused + p_skel + p_clip\n"
+                     "3 LayerNorms: ln_skel, ln_clip, ln_fused",
+            fontsize=9, color="#475569", family="monospace",
             bbox=dict(boxstyle="round,pad=0.4", facecolor="#F8FAFC", edgecolor="#CBD5E1"))
 
     fig.savefig(OUT / "11_gating_detail.png", dpi=DPI, bbox_inches="tight")

@@ -27,17 +27,18 @@
 
 - **XD-Violence** (Wu et al., 2020) — large-scale multi-scene violence detection benchmark
 - **4,754 videos** total from movies, surveillance, and online sources
-  - Train: 2,766 videos (after 15% stratified val split)
+  - Train: 3,360 videos (official 3,954 after 15% stratified val split)
   - Validation: 594 videos (stratified, seed=42)
   - Test: 800 videos
 - **Binary labels** at the video level (weakly supervised — no frame-level annotation during training)
 - **6 violence sub-categories** defined by Wu et al.:
-  - B1: Fighting/Brawl
-  - B2: Mob/Crowd violence
+  - B1: Fighting
+  - B2: Shooting
   - B4: Riot
-  - B5: Abnormal Gathering
-  - B6: Traffic Accident
-  - G: General violence
+  - B5: Abuse
+  - B6: Car Accident
+  - G: Explosion
+- Note: multi-label filenames (e.g. `B2-G-0`) use the first label code for per-category AP
 - Test set: **2.31M frames** total, ~23.1% positive (anomalous)
 - This is a challenging benchmark — real-world scenes with high visual diversity
 
@@ -60,7 +61,7 @@
 - **CLIP ViT-B/16** (OpenAI pretrained, frozen) → **1,024-d** per frame
 - Mean pooling at 1 FPS across snippet window
 - Captures visual semantics — scene context, objects, actions
-- Learned projection: 1,024 → 512-d before fusion
+- Learned projection: 1,024 → 256-d into shared space (gated fusion projects directly to 256-d)
 
 ### Why Dual-Modal?
 - Skeleton alone misses scene context (AP = 41.3% on XD)
@@ -76,11 +77,12 @@
 - **Core idea:** let the model learn *how much* to trust each modality per snippet
 
 ### Gated Fusion Mechanism
-- Both streams projected to shared 256-d space
-- **LayerNorm** applied post-projection (important for TTA later)
-- Learned sigmoid gates: alpha_skel, alpha_clip in [0, 1]
-- Element-wise multiplication: fused = alpha_skel * skel + alpha_clip * clip
-- The gate learns to weight modalities adaptively per input
+- Skeleton: Linear(256→256) + LayerNorm → p_skel
+- CLIP: Linear(1024→256) + LayerNorm → p_clip
+- **Single gate**: g = sigmoid(Linear([p_skel; p_clip])), g in [0, 1]
+- Weighted fusion: fused = g * p_skel + (1-g) * p_clip
+- **Residual connection**: residual = fused + p_skel + p_clip (gradient highway)
+- 3rd LayerNorm (ln_fused) on residual output (provides TTA adaptation surface)
 
 ### MIL Head
 - Fused 256-d → Linear(128) → ReLU → Linear(32) → ReLU → Linear(1)
@@ -88,8 +90,9 @@
 - Outputs per-snippet anomaly score
 
 ### Why Not Late Fusion?
-- Late fusion (simple concatenation) degrades performance vs CLIP-only
-- Gated fusion gives the model flexibility to suppress noisy modality signals
+- Late fusion is score-level weighted average (alpha * s_skel + (1-alpha) * s_clip), not concatenation
+- Late fusion AP = 65.5%, actually worse than CLIP-only (70.5%) by -5.05pp
+- Gated fusion operates at the feature level with adaptive gating, can suppress noisy modality signals
 - +6.44pp AP improvement over late fusion on XD-Violence
 
 ---
@@ -143,7 +146,7 @@
 ### Key Observations
 - **Skeleton alone is weak** — 41.3% AP, body motion alone isn't enough
 - **CLIP is strong** — 70.5% AP as a single modality, visual semantics carry heavy weight
-- **Late fusion hurts** — 65.5% AP, naive concatenation degrades vs CLIP-only (-5.05pp)
+- **Late fusion hurts** — 65.5% AP, score averaging degrades vs CLIP-only (-5.05pp)
 - **Gated fusion wins** — 71.9% AP, the gate mechanism resolves what late fusion breaks
 - Fusion gain over CLIP-only: **+1.39pp AP**, **+0.87pp AUC**
 
@@ -157,15 +160,15 @@
 |----------|--------|-----------|
 | B4: Riot | **88.15** | Easiest |
 | B1: Fighting | 77.76 | Easy |
-| G: General Violence | 54.02 | Medium |
-| B2: Mob/Crowd | 51.35 | Medium |
-| B5: Abnormal Gathering | 44.89 | Hard |
-| B6: Traffic/Accident | **41.54** | Hardest |
+| G: Explosion | 54.02 | Medium |
+| B2: Shooting | 51.35 | Medium |
+| B5: Abuse | 44.89 | Hard |
+| B6: Car Accident | **41.54** | Hardest |
 
 ### Why the Spread?
 - **Riot (B4)** is visually distinctive — crowds, fire, destruction. Both CLIP and skeleton pick it up
-- **Traffic/Accident (B6)** is the hardest — fast events, ambiguous visuals, skeleton signal is weak for vehicle crashes
-- **Gathering (B5)** is subtle — hard to distinguish abnormal gathering from normal crowd
+- **Car Accident (B6)** is the hardest — fast events, ambiguous visuals, skeleton signal is weak for vehicle crashes
+- **Abuse (B5)** is subtle — small motions, unremarkable scenes, hard to distinguish from normal interaction
 
 > **INSERT:** `charts/existing_D01_gate_by_category_xd.png` (gate activation patterns by category)
 
@@ -185,12 +188,14 @@
 | Configuration | AP (%) | vs Baseline |
 |---------------|--------|-------------|
 | Baseline (lr=1e-4, k=3) | 71.92 | — |
-| **Best: lr=7e-4, k=2** | **77.67** | **+5.75pp** |
-| Runner-up: lr=1e-3, k=7 | 77.68 | +5.76pp |
+| Tied top: lr=1e-3, k=7 | **77.68** | **+5.76pp** |
+| Tied top: lr=7e-4, k=2 | 77.67 | +5.75pp |
 | lr=5e-4, k=2 | 76.80 | +4.88pp |
 
+- All sweep results are **single-seed (seed=42)** — multi-seed validation pending
+
 ### Key Findings
-- The sweep found a **+5.75pp AP improvement** — substantial for a hyperparameter-only change
+- The sweep found a **+5.76pp AP improvement** — substantial for a hyperparameter-only change (single-seed)
 - **Higher learning rates help** on XD-Violence (7e-4 to 1e-3 range)
 - **Lower k_topk helps** (k=2 or k=1) — XD violence events are temporally concentrated
 - The sweep surface is irregular — no smooth gradient, many local optima
@@ -231,13 +236,13 @@
 |---------|---------|--------|-------|
 | Default (seed=42) | **92.00** | **71.92** | Top-2 person, per-snippet CLIP |
 | 2-Person Pooling | 91.64 | 71.02 | Mean over person dimension |
-| CLIP Mean Pooling | 91.45 | 69.60 | Mean over 5-crop spatial dims |
+| CLIP Mean Pooling | 91.45 | 69.60 | Mean-only pooling (no mean+max concat) |
 | 3-Seed Mean | 91.72 | 70.97 | Average across seeds |
 
 ### Takeaways
 - Default configuration is the best single-seed result
 - 2-person pooling variant is competitive (-0.90pp AP)
-- CLIP mean pooling hurts more (-2.32pp AP) — spatial detail matters
+- CLIP mean pooling hurts more (-2.32pp AP) — mean+max concat outperforms mean-only
 - All variants maintain AUC > 91%, showing the architecture is robust
 
 > **INSERT:** `charts/existing_E01_tsne_xd.png` (t-SNE of CLIP projections)
@@ -253,17 +258,17 @@
 | RTFM (published) | I3D-RGB | 77.81 | Tian et al., ICCV 2021 |
 | MGFN (published) | I3D-RGB | 79.19 | Chen et al., AAAI 2023 |
 | Our RTFM reproduction | I3D-RGB | 65.70 | Our implementation |
-| Our Gated Fusion (baseline) | Skeleton + CLIP | 71.92 | Our implementation |
-| **Our Gated Fusion (sweep)** | **Skeleton + CLIP** | **77.67** | **Our implementation** |
+| Our Gated Fusion (baseline) | Skeleton + CLIP | 71.92 | 3-seed stable |
+| **Our Gated Fusion (sweep, 1 seed)** | **Skeleton + CLIP** | **77.68** | **seed=42 only** |
 
 ### Analysis
 - Our RTFM reproduction falls short of published numbers (-12.11pp)
   - Likely due to training regime differences (documented, not a bug)
   - This is a known challenge in VAD reproducibility
-- **With hyperparameter optimization, our gated fusion nearly matches RTFM published** (77.67% vs 77.81%)
-  - Only 0.14pp gap — within seed variance
+- **With hyperparameter optimization, our gated fusion nearly matches RTFM published** (77.68% vs 77.81%)
+  - Only 0.13pp gap — but note sweep-best is single-seed, needs multi-seed validation
   - Achieved with a different feature backbone (Skeleton+CLIP vs I3D)
-- Gap to MGFN remains: -1.52pp (79.19% vs 77.67%)
+- Gap to MGFN remains: -1.51pp (79.19% vs 77.68%)
 
 ### Significance
 - Demonstrates that skeleton+CLIP features are competitive with I3D-based methods
@@ -272,10 +277,11 @@
 
 ---
 
-## Slide 12: TTA Experiments (Brief)
+## Slide 12: TTA Experiments (Backup Slide)
 
 > **INSERT:** `charts/existing_C06_tta_method_comparison.png`
 
+- **Note: this is a backup slide** — TTA experiments were on UCF-Crime (not XD-Violence), so it's tangential to the XD-focused narrative. Skip unless your supervisor specifically expects Phase 5 coverage.
 - **Test-Time Adaptation** (TENT/SAR) on corrupted UCF-Crime test set
 - Adapts LayerNorm parameters (gamma, beta) at test time
 - Results: modest +0.5 to +2pp improvement under corruption
@@ -287,15 +293,15 @@
 ## Slide 13: Summary & Key Contributions
 
 ### Numbers to Remember
-- **Gated Fusion AP: 71.92%** (baseline) → **77.67%** (optimized)
+- **Gated Fusion AP: 71.92%** (3-seed baseline) → **77.68%** (single-seed sweep best)
 - **AUC: 92.00%** | **Video-AUC: 98.07%**
-- **+5.75pp improvement** from hyperparameter optimization alone
+- **+5.76pp improvement** from hyperparameter optimization alone (needs multi-seed validation)
 - Nearly matches RTFM published benchmark (77.81%)
 
 ### Contributions
-1. **Gated fusion architecture** that adaptively weights skeleton and CLIP modalities
+1. **Gated fusion architecture** with single gate, residual connection, and 3 LayerNorms
 2. **Comprehensive XD-Violence evaluation** with per-category analysis
-3. **198-config hyperparameter sweep** revealing dataset-specific sensitivity
+3. **42-config hyperparameter sweep** revealing dataset-specific sensitivity
 4. **TTA adaptation** via LayerNorm entropy minimization (exploratory)
 5. **Reproducibility framework** — fixed seeds, stratified splits, diagnostic checks
 
