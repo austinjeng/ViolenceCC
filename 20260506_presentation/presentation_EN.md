@@ -58,10 +58,10 @@
 - Captures body dynamics — posture, movement patterns, physical interactions
 
 ### CLIP Branch
-- **CLIP ViT-B/16** (OpenAI pretrained, frozen) → **1,024-d** per frame
-- Mean pooling at 1 FPS across snippet window
+- **CLIP ViT-B/16** (OpenAI pretrained, frozen) → **512-d** per sampled frame
+- Snippet-level mean+max pooling → **1,024-d** snippet feature
 - Captures visual semantics — scene context, objects, actions
-- Learned projection: 1,024 → 256-d into shared space (gated fusion projects directly to 256-d)
+- Gated fusion learned projection: 1,024 → 256-d into shared space
 
 ### Why Dual-Modal?
 - Skeleton alone misses scene context (AP = 41.3% on XD)
@@ -173,7 +173,7 @@
 > **INSERT:** `charts/existing_D01_gate_by_category_xd.png` (gate activation patterns by category)
 
 - Gate activations show the model relies more on CLIP for subtle categories (B5, B6)
-- Skeleton gate activates more for physical violence (B1, B2)
+- Skeleton gate activates more for Fighting (B1) and other categories with clear body motion
 
 ---
 
@@ -293,7 +293,7 @@
 ## Slide 13: Summary & Key Contributions
 
 ### Numbers to Remember
-- **Gated Fusion AP: 71.92%** (3-seed baseline) → **77.68%** (single-seed sweep best)
+- **Gated Fusion AP: 71.92%** (seed=42 baseline; 3-seed mean = 70.97%) → **77.68%** (single-seed sweep best)
 - **AUC: 92.00%** | **Video-AUC: 98.07%**
 - **+5.76pp improvement** from hyperparameter optimization alone (needs multi-seed validation)
 - Nearly matches RTFM published benchmark (77.81%)
