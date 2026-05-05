@@ -20,7 +20,7 @@ progress:
 **Last updated:** 2026-05-03
 **Session:** Phase 7 complete. 198-config hyperparameter sweep across XD-Violence (99) and UCF-Crime (99). XD winner: lr=1e-3/k=2, 3-seed mean AP=74.69% (+3.72pp over baseline). UCF hyperparameter-insensitive (+0.14pp). RTFM gap diagnosed as training regime difference. Next: Phase 5 (TTA) or Phase 6 (Analysis).
 
-Last activity: 2026-05-03 - Completed quick task 260503-ow4: Backbone extraction benchmark (CLIP, RTMPose, CTR-GCN, I3D)
+Last activity: 2026-05-06 - Completed quick task 260506-3uu: XD-Violence presentation materials (EN + ZH-TW, 20 charts)
 
 ---
 
@@ -161,6 +161,7 @@ None currently.
 | 260419-079 | Fix 5 REAL code review findings from ML expert review | 2026-04-19 | 0999033 | [260419-079-fix-code-review-findings](./quick/260419-079-fix-code-review-findings/) |
 | 260503-nl6 | Performance benchmark for all 5 model variants (params, FLOPs, latency, memory) | 2026-05-03 | caaad02 | [260503-nl6-create-comprehensive-performance-benchma](./quick/260503-nl6-create-comprehensive-performance-benchma/) |
 | 260503-ow4 | Backbone extraction benchmark — CLIP, RTMPose, CTR-GCN, I3D cross-env pipeline cost | 2026-05-03 | 83883b2 | [260503-ow4-backbone-extraction-benchmark-clip-vit-b](./quick/260503-ow4-backbone-extraction-benchmark-clip-vit-b/) |
+| 260506-3uu | XD-Violence presentation materials — markdown reports (EN + ZH-TW) with 20 charts | 2026-05-06 | pending | [260506-3uu-xd-violence-presentation-materials-markd](./quick/260506-3uu-xd-violence-presentation-materials-markd/) |
 
 ---
 
