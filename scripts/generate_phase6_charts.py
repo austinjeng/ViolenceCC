@@ -898,7 +898,7 @@ def chart_F05_ablation_bars(results_df: pd.DataFrame):
         sub["display"] = sub.apply(_display, axis=1)
         sub = sub.sort_values(metric, ascending=True)
 
-        fig, ax = plt.subplots(figsize=(12, max(5, len(sub) * 0.6 + 1)))
+        fig, ax = plt.subplots(figsize=(10, max(6, len(sub) * 1.0 + 1.5)))
         colors = [VCOLORS.get(v, "#888888") for v in sub["variant"]]
         bars = ax.barh(sub["display"], sub[metric], color=colors, edgecolor="white")
 
