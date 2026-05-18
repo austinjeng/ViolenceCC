@@ -19,6 +19,7 @@
 - [ ] **Phase 5: TTA Infrastructure & Corruption Experiments** - UCF-Crime-C generated, TENT-style and SAR-style TTA evaluated across all 20 corruption conditions
 - [ ] **Phase 6: Analysis & Visualization** - Temporal curve plots, skeleton overlays, and per-category breakdowns ready for thesis
 - [x] **Phase 7: XD-Violence Hyperparameter Sweep** - 198-config sweep across XD + UCF; XD winner lr=1e-3/k=2 (AP=74.69%, +3.72pp); UCF hyperparameter-insensitive; RTFM gap = training regime (completed 2026-05-02)
+- [ ] **Phase 8: SigLIP2 Backbone Comparison** - Swap CLIP ViT-B/16 with SigLIP2 Giant (google/siglip2-giant-opt-patch16-384) as visual-language backbone; re-extract features, run identical ablations on UCF-Crime and XD-Violence, compare against CLIP results for thesis
 
 ---
 
@@ -180,6 +181,22 @@ Plans:
 - [x] 07-03-PLAN.md — Empirical execution: 198 sweep configs (99 XD + 99 UCF) + RTFM diagnostics + checkpoint approval
 - [x] 07-04-PLAN.md — 3-seed confirmation + heatmap generation + thesis-ready summary document
 
+### Phase 8: SigLIP2 Backbone Comparison
+**Goal**: Replace CLIP ViT-B/16 with SigLIP2 Giant (google/siglip2-giant-opt-patch16-384) as the visual-language feature backbone, re-extract features for both datasets, and run the identical ablation matrix (model variants, pooling, seeds) under controlled conditions to produce a direct backbone comparison for the thesis
+**Depends on**: Phase 4 (UCF ablation table + evaluation harness), Phase 4c (XD ablation table), Phase 2 (extraction pipeline patterns)
+**Requirements**: None new (extends EVAL-02, EVAL-03, EVAL-04 with alternative backbone)
+**Success Criteria** (what must be TRUE):
+  1. SigLIP2 Giant features are extracted for all UCF-Crime and XD-Violence videos using the same snippet boundaries and temporal alignment as the original CLIP extraction
+  2. All model variants (Skeleton-Only baseline unchanged, SigLIP2-Only, Late Fusion, Gated Fusion) and pooling ablations are trained and evaluated on both datasets with identical configs (only the visual feature path changes)
+  3. 3-seed stability runs ({42, 123, 2024}) are completed for Gated Fusion on both datasets with SigLIP2 features
+  4. A side-by-side comparison table (CLIP vs SigLIP2) exists for all ablation rows on both datasets, suitable for thesis inclusion
+**Plans:** 4 plans
+Plans:
+- [ ] 08-01-PLAN.md -- Extraction script backbone parameterization (--backbone flag + BACKBONE_CONFIGS + tests)
+- [ ] 08-02-PLAN.md -- 10 SigLIP2 YAML configs + 6 Phase 8 queues in run_ablations.py + model dim tests
+- [ ] 08-03-PLAN.md -- SigLIP2 feature extraction for UCF-Crime and XD-Violence (~5 hours GPU)
+- [ ] 08-04-PLAN.md -- Execute 14 ablation runs + 3-seed stability + CLIP vs SigLIP2 comparison table
+
 ---
 
 ## Progress Table
@@ -195,6 +212,7 @@ Plans:
 | 5. TTA Infrastructure & Corruption Experiments | 0/5 | Planned | - |
 | 6. Analysis & Visualization | 2/2 | In Progress | - |
 | 7. XD-Violence Hyperparameter Sweep | 4/4 | Complete | 2026-05-02 |
+| 8. SigLIP2 Backbone Comparison | 0/4 | Planned | - |
 
 ---
 
