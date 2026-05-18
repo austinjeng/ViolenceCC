@@ -452,22 +452,25 @@ Disk space available: 1,520 GB free on E: drive. Storage is negligible.
 | A2 | Average ~30 frames/video (UCF) and ~75 frames/video (XD) for 1-FPS sampling | Extraction Time Estimates | Extraction time proportional to actual frame count; could vary +/-50% |
 | A3 | SigLIP2 features will produce meaningfully different results from CLIP (thesis-worthy comparison) | Summary | If results are identical, the comparison is still valuable as a negative result |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Should mean+max pooling (3072-d) be the primary, or should we switch to mean-only (1536-d)?**
    - What we know: The CLIP pipeline uses mean+max (1024-d) as default, mean-only (512-d) as ablation. Phase 4c showed default pooling outperforms mean-only by 2.32% AP on XD.
    - What's unclear: Whether SigLIP2's MAP attention pooling (which already aggregates spatial info) makes the max-pool component redundant.
    - Recommendation: Keep mean+max as primary (3072-d) for controlled comparison with CLIP; include mean-only (1536-d) as a pooling ablation row, same as the CLIP setup.
+   - **RESOLVED:** Mean+max (3072-d) is the primary pooling. Mean-only (1536-d) included as ablation row via gated_fusion_siglip2_clip_mean.yaml configs. Matches CLIP pooling ablation structure.
 
 2. **Should `proj_dim` in CLIPProj change for SigLIP2?**
    - What we know: CLIP uses `clip_dim=1024 -> proj_dim=512`. SigLIP2 would use `clip_dim=3072 -> proj_dim=512`.
    - What's unclear: Whether the 6:1 compression ratio (3072->512) is too aggressive vs CLIP's 2:1 (1024->512).
    - Recommendation: Keep `proj_dim=512` and `shared_dim=256` identical to CLIP configs for controlled comparison. The learned projection should adapt. If results are anomalously poor, test `proj_dim=768` as a follow-up.
+   - **RESOLVED:** Keep proj_dim=512 and shared_dim=256 unchanged for controlled comparison. All SigLIP2 configs mirror CLIP projection dimensions exactly.
 
 3. **Should the Phase 7 sweep winner (lr=1e-3, k=2) be used for SigLIP2 runs?**
    - What we know: Phase 7 found XD benefits from lr=1e-3/k=2 (+3.72pp AP). UCF is hyperparameter-insensitive.
    - What's unclear: Whether SigLIP2's different feature distribution changes optimal hyperparameters.
    - Recommendation: Run the primary comparison with default hyperparameters (lr=1e-4, k=3) for controlled comparison. Optionally add one sweep winner config as a bonus comparison row.
+   - **RESOLVED:** Primary comparison uses default hyperparameters (lr=1e-4, k=3). Phase 7 sweep winners not included in Phase 8 scope to keep the backbone comparison clean.
 
 ## Environment Availability
 
