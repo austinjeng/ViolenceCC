@@ -6,13 +6,14 @@ current_phase: 06
 current_plan: 1
 status: executing
 stopped_at: Phase 6 context gathered
-last_updated: "2026-05-02T13:55:53.095Z"
+last_updated: "2026-05-18T18:25:07.318Z"
+last_activity: 2026-05-18
 progress:
-  total_phases: 9
-  completed_phases: 8
-  total_plans: 40
-  completed_plans: 38
-  percent: 95
+  total_phases: 10
+  completed_phases: 9
+  total_plans: 44
+  completed_plans: 40
+  percent: 90
 ---
 
 # State: ViolenceCC
@@ -20,7 +21,7 @@ progress:
 **Last updated:** 2026-05-03
 **Session:** Phase 7 complete. 198-config hyperparameter sweep across XD-Violence (99) and UCF-Crime (99). XD winner: lr=1e-3/k=2, 3-seed mean AP=74.69% (+3.72pp over baseline). UCF hyperparameter-insensitive (+0.14pp). RTFM gap diagnosed as training regime difference. Next: Phase 5 (TTA) or Phase 6 (Analysis).
 
-Last activity: 2026-05-06 - Completed quick task 260506-3uu: XD-Violence presentation materials (EN + ZH-TW, 20 charts)
+Last activity: 2026-05-18
 
 ---
 
@@ -39,7 +40,7 @@ Phase: 06 (analysis-visualization) — EXECUTING
 Plan: 1 of 2
 **Current phase:** 06
 **Current plan:** 1
-**Status:** Executing Phase 06
+**Status:** Ready to execute
 
 **Progress:**
 
@@ -125,6 +126,10 @@ Targets from PRD v2.3:
 | XD-Violence benefits from tuning (+3.72pp), UCF does not (+0.14pp) | 198-config sweep across both datasets; XD winner lr=1e-3/k=2 (AP=74.69%); UCF hyperparameter-insensitive |
 | Decimal LR encoding uses 'p' separator | 6.5e-4 encoded as '6p5e4' in run_name via _fmt_lr(); avoids dots in filesystem paths |
 | Sweep grid expanded from 20 to 99 configs | 3 progressive extension rounds: base 20, +18, +28, +33 chasing peak at grid edges |
+
+### Roadmap Evolution
+
+- Phase 8 added: SigLIP2 Backbone Comparison — swap CLIP ViT-B/16 with SigLIP2 Giant (google/siglip2-giant-opt-patch16-384), re-extract features, run identical ablations for thesis comparison
 
 ### Roadmap Evolution
 
