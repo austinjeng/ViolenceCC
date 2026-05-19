@@ -1,5 +1,11 @@
 """
-extract_clip.py — CLIP ViT-B/16 feature extraction from video frames.
+extract_clip.py — Vision backbone feature extraction from video frames.
+
+Supports multiple vision backbones via the ``--backbone`` flag:
+
+- **clip-vit-b-16** (default): CLIP ViT-B/16, 512-d per frame, 1024-d mean+max pooled.
+- **siglip2-giant**: SigLIP2 Giant (ViT-gopt-16-SigLIP2-384), 1536-d per frame,
+  3072-d mean+max pooled.
 
 Runs in the ``vcc-main`` conda environment (PyTorch 2.6.0 + open-clip-torch 3.3.0).
 
@@ -7,6 +13,7 @@ Usage:
     conda run -n vcc-main python scripts/extract_clip.py --dataset ucf --split train
     conda run -n vcc-main python scripts/extract_clip.py --dataset ucf --split train --limit 3
     conda run -n vcc-main python scripts/extract_clip.py --dataset xd --split train --batch-size 64
+    conda run -n vcc-main python scripts/extract_clip.py --dataset ucf --split train --backbone siglip2-giant --batch-size 16
 
 Reads:
     E:/snippets/{dataset}/{video_id}_boundaries.json  — snippet boundaries from Plan 01
@@ -14,17 +21,23 @@ Reads:
     XD-Violence: E:/XD_Violence/train/{video_id}.mp4 or E:/XD_Violence/test/videos/{video_id}.mp4
 
 Outputs:
-    E:/features/{dataset}/clip/{video_id}.npy  — float32 [N_snippets, 1024]
+    E:/features/{dataset}/{subdir}/{video_id}.npy  — float32 [N_snippets, D]
+    subdir and D depend on --backbone and --pool:
+      clip-vit-b-16 + mean_max -> clip/, D=1024
+      clip-vit-b-16 + mean     -> clip_mean/, D=512
+      siglip2-giant + mean_max -> siglip2/, D=3072
+      siglip2-giant + mean     -> siglip2_mean/, D=1536
 
 Pipeline:
-    1. Load CLIP ViT-B/16 model (open-clip-torch, pretrained='openai') once at startup.
+    1. Load vision model (selected via --backbone) once at startup.
     2. Read snippet boundaries from the SAME JSON as CTR-GCN script (alignment by construction).
-    3. For each snippet [start, end): sample frames at ~1 FPS, extract CLIP embeddings.
-    4. Apply mean+max pooling: concatenate mean[512] and max[512] -> [1024] per snippet.
-    5. Stack snippets -> [N_snippets, 1024] and save as float32 .npy.
+    3. For each snippet [start, end): sample frames at ~1 FPS, extract embeddings.
+    4. Apply mean+max pooling: concatenate mean and max -> [embed_dim*2] per snippet.
+    5. Stack snippets -> [N_snippets, D] and save as float32 .npy.
 
-NOTE: Output is 1024-d (not 512-d). The 512-d projection is a LEARNED component in
-      Phase 3's CLIP branch. Caching at 1024-d avoids double-projection pitfall (Pitfall 5).
+NOTE: Output dimension depends on backbone. The projection to shared_dim is a LEARNED
+      component in Phase 3's CLIP branch. Caching at full dimension avoids double-projection
+      pitfall (Pitfall 5).
 
 CLIP 1-FPS sampling within each snippet:
     UCF-Crime PNGs: every 10th original video frame -> ~3 FPS equivalent.
@@ -100,27 +113,54 @@ logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
-# CLIP model loading
+# Backbone configuration registry
 # ---------------------------------------------------------------------------
 
-def load_clip_model(device: str = "cuda"):
-    """
-    Load CLIP ViT-B/16 with openai pretrained weights using open-clip-torch.
+BACKBONE_CONFIGS = {
+    "clip-vit-b-16": {
+        "model_name": "ViT-B-16",
+        "pretrained": "openai",
+        "embed_dim": 512,       # encode_image output dim
+        "output_subdir": "clip",
+        "mean_subdir": "clip_mean",
+    },
+    "siglip2-giant": {
+        "model_name": "ViT-gopt-16-SigLIP2-384",
+        "pretrained": "webli",
+        "embed_dim": 1536,      # encode_image output dim
+        "output_subdir": "siglip2",
+        "mean_subdir": "siglip2_mean",
+    },
+}
 
-    Returns (model, preprocess) where preprocess is the image transform pipeline:
-        Resize(224, bicubic) -> CenterCrop(224, 224) -> ToTensor ->
-        Normalize(mean=(0.48145466, 0.4578275, 0.40821073),
-                  std=(0.26862954, 0.26130258, 0.27577711))
+
+# ---------------------------------------------------------------------------
+# Vision model loading
+# ---------------------------------------------------------------------------
+
+def load_vision_model(backbone: str, device: str = "cuda"):
+    """
+    Load a vision backbone model using open-clip-torch.
+
+    Args:
+        backbone: Key into BACKBONE_CONFIGS (e.g. 'clip-vit-b-16', 'siglip2-giant').
+        device:   Torch device ('cuda' or 'cpu').
+
+    Returns:
+        (model, preprocess, cfg) where cfg is the BACKBONE_CONFIGS entry.
     """
     import open_clip
-    logger.info("Loading CLIP ViT-B/16 (pretrained='openai')...")
+    cfg = BACKBONE_CONFIGS[backbone]
+    logger.info(
+        f"Loading {backbone} ({cfg['model_name']}, pretrained='{cfg['pretrained']}')..."
+    )
     model, _, preprocess = open_clip.create_model_and_transforms(
-        "ViT-B-16", pretrained="openai"
+        cfg["model_name"], pretrained=cfg["pretrained"]
     )
     model.eval()
     model.to(device)
-    logger.info(f"CLIP model loaded on {device}.")
-    return model, preprocess
+    logger.info(f"{backbone} model loaded on {device}.")
+    return model, preprocess, cfg
 
 
 # ---------------------------------------------------------------------------
@@ -293,48 +333,50 @@ def extract_clip_snippet(
     batch_size: int = 64,
     device: str = "cuda",
     pool: str = "mean_max",
+    embed_dim: int = 512,
 ) -> np.ndarray:
     """
-    Extract CLIP features for a list of frames and apply pooling.
+    Extract vision features for a list of frames and apply pooling.
 
     Args:
         frames:     List of PIL Images sampled from one snippet.
-        model:      CLIP model in eval mode.
+        model:      Vision model in eval mode.
         preprocess: open_clip preprocessing transform.
         batch_size: Number of frames per GPU batch.
         device:     'cuda' or 'cpu'.
-        pool:       D-23 — "mean_max" (default, [1024]) or "mean" ([512]).
+        pool:       D-23 — "mean_max" (default) or "mean".
+        embed_dim:  Per-frame embedding dimension from BACKBONE_CONFIGS (512 for CLIP, 1536 for SigLIP2).
 
     Returns:
-        [1024] float32 numpy array (mean[512] + max[512] concatenated) when
-        pool='mean_max' (default), or [512] when pool='mean'.
+        [embed_dim*2] float32 numpy array (mean + max concatenated) when
+        pool='mean_max' (default), or [embed_dim] when pool='mean'.
         Returns zeros of the correct dimension if no frames are available.
     """
-    expected_dim = 512 if pool == "mean" else 1024
+    expected_dim = embed_dim if pool == "mean" else embed_dim * 2
     if len(frames) == 0:
         # Edge case: no frames sampled in this snippet range
         logger.warning("No frames for snippet — returning zero feature vector.")
         return np.zeros(expected_dim, dtype=np.float32)
 
     # Preprocess all frames into a tensor stack
-    tensors = torch.stack([preprocess(f) for f in frames])  # [N, 3, 224, 224]
+    tensors = torch.stack([preprocess(f) for f in frames])
 
     all_feats = []
     for i in range(0, len(tensors), batch_size):
         batch = tensors[i : i + batch_size].to(device)
         with torch.no_grad():
-            feats = model.encode_image(batch)        # [B, 512]
+            feats = model.encode_image(batch)        # [B, embed_dim]
             feats = feats / feats.norm(dim=-1, keepdim=True)  # L2 normalize per frame
         all_feats.append(feats.cpu().float())
 
-    embeddings = torch.cat(all_feats, dim=0)   # [N_frames_in_snippet, 512]
+    embeddings = torch.cat(all_feats, dim=0)   # [N_frames_in_snippet, embed_dim]
 
-    mean_feat = embeddings.mean(dim=0)          # [512]
+    mean_feat = embeddings.mean(dim=0)          # [embed_dim]
     if pool == "mean":
-        feat_vec = mean_feat                     # [512]
+        feat_vec = mean_feat                     # [embed_dim]
     else:
-        max_feat = embeddings.max(dim=0).values  # [512]
-        feat_vec = torch.cat([mean_feat, max_feat], dim=0)  # [1024]
+        max_feat = embeddings.max(dim=0).values  # [embed_dim]
+        feat_vec = torch.cat([mean_feat, max_feat], dim=0)  # [embed_dim * 2]
 
     return feat_vec.numpy().astype(np.float32)
 
@@ -354,17 +396,18 @@ def extract_video_clip_features(
     device: str = "cuda",
     ucf_video_map: dict = None,
     pool: str = "mean_max",
+    embed_dim: int = 512,
     corruption_type: str = None,
     corruption_severity: int = None,
     corruption_rng: np.random.Generator = None,
 ) -> np.ndarray:
     """
-    Extract CLIP [N_snippets, D] features for one video.
+    Extract vision [N_snippets, D] features for one video.
 
-    D = 1024 when pool='mean_max' (legacy default); D = 512 when pool='mean'
-    (D-23 ablation).
+    D = embed_dim * 2 when pool='mean_max'; D = embed_dim when pool='mean'.
 
     Args:
+        embed_dim:           Per-frame embedding dimension from BACKBONE_CONFIGS.
         corruption_type:     Phase 5 TTA: corruption type (None = clean).
         corruption_severity: Phase 5 TTA: severity 1-5 (None = clean).
         corruption_rng:      Numpy RNG for reproducible corruption.
@@ -399,7 +442,7 @@ def extract_video_clip_features(
                 corruption_severity=corruption_severity,
                 corruption_rng=corruption_rng,
             )
-            feat = extract_clip_snippet(frames, model, preprocess, batch_size, device, pool=pool)
+            feat = extract_clip_snippet(frames, model, preprocess, batch_size, device, pool=pool, embed_dim=embed_dim)
             snippet_feats.append(feat)
 
     else:
@@ -423,7 +466,7 @@ def extract_video_clip_features(
                 corruption_severity=corruption_severity,
                 corruption_rng=corruption_rng,
             )
-            feat = extract_clip_snippet(frames, model, preprocess, batch_size, device, pool=pool)
+            feat = extract_clip_snippet(frames, model, preprocess, batch_size, device, pool=pool, embed_dim=embed_dim)
             snippet_feats.append(feat)
 
     zero_count = sum(1 for f in snippet_feats if not np.any(f))
@@ -437,11 +480,11 @@ def extract_video_clip_features(
     all_feats = np.stack(snippet_feats, axis=0)
 
     # Assertion: verify output dimension matches the requested pool mode
-    # (Pitfall 5 guard — default 1024-d is mean+max concat; 512-d is mean-only).
-    expected_dim = 512 if pool == "mean" else 1024
+    # (Pitfall 5 guard — dimension depends on backbone embed_dim and pool mode).
+    expected_dim = embed_dim if pool == "mean" else embed_dim * 2
     assert all_feats.shape[1] == expected_dim, (
-        f"Expected {expected_dim}-d CLIP features (pool={pool}), got {all_feats.shape[1]}. "
-        f"Cache stores pre-Phase-3-projection features."
+        f"Expected {expected_dim}-d features (embed_dim={embed_dim}, pool={pool}), got {all_feats.shape[1]}. "
+        f"Cache stores pre-projection features."
     )
 
     return all_feats.astype(np.float32)
@@ -458,16 +501,17 @@ def run_extraction(
     batch_size: int = 64,
     device: str = "cuda",
     pool: str = "mean_max",
+    backbone: str = "clip-vit-b-16",
     corruption_type: str = None,
     corruption_severity: int = None,
 ) -> None:
     """
-    Main loop: extract CLIP features for all videos in a dataset split.
+    Main loop: extract vision features for all videos in a dataset split.
 
     Args:
         dataset, split, limit, batch_size, device: see argparse below.
-        pool: D-23 — "mean_max" (default, writes to clip/) or "mean"
-              (writes to clip_mean/, [N, 512] shape).
+        pool: D-23 — "mean_max" (default) or "mean".
+        backbone: Key into BACKBONE_CONFIGS for model selection.
         corruption_type:     Phase 5 TTA: corruption type (None = clean).
         corruption_severity: Phase 5 TTA: severity 1-5 (None = clean).
     """
@@ -496,27 +540,31 @@ def run_extraction(
             f"severity={corruption_severity}, rng_seed=42"
         )
 
-    # Setup output directory
-    # Phase 5 TTA: override to corruption-specific subdir (D-04 layout)
+    # Load vision model (backbone-parameterized)
+    cfg = BACKBONE_CONFIGS[backbone]
+    embed_dim = cfg["embed_dim"]
+
+    # Setup output directory (backbone-aware routing)
     if corruption_type is not None:
-        out_subdir = f"clip_{corruption_type}_{corruption_severity}"
+        out_subdir = f"{cfg['output_subdir']}_{corruption_type}_{corruption_severity}"
     elif pool == "mean":
-        out_subdir = "clip_mean"  # D-24 sibling dir
+        out_subdir = cfg["mean_subdir"]
     else:
-        out_subdir = "clip"
+        out_subdir = cfg["output_subdir"]
     output_dir = FEATURE_ROOT / dataset / out_subdir
     output_dir.mkdir(parents=True, exist_ok=True)
     logger.info(f"Output directory: {output_dir}")
     if corruption_type is not None:
         logger.info(f"Phase 5 TTA: writing corrupted features to {out_subdir}/")
     elif pool == "mean":
-        logger.info("D-23 mode: emitting [N, 512] mean-only features to clip_mean/.")
+        expected_dim = embed_dim
+        logger.info(f"Mean-only mode: emitting [N, {expected_dim}] features to {out_subdir}/.")
 
     # Error log
     error_log_path = output_dir / "errors.log"
 
-    # Load CLIP model once at startup
-    model, preprocess = load_clip_model(device=device)
+    # Load vision model once at startup
+    model, preprocess, _ = load_vision_model(backbone, device=device)
 
     # Build UCF-Crime video map once at startup (if needed)
     ucf_video_map = None
@@ -565,6 +613,7 @@ def run_extraction(
                     device=device,
                     ucf_video_map=ucf_video_map,
                     pool=pool,
+                    embed_dim=embed_dim,
                     corruption_type=corruption_type,
                     corruption_severity=corruption_severity,
                     corruption_rng=corruption_rng,
@@ -577,11 +626,11 @@ def run_extraction(
                 np.save(str(tmp_path), feats)
                 tmp_path.replace(output_path)
 
-                # Runtime shape/dtype validation — branches on pool mode.
-                expected_dim = 512 if pool == "mean" else 1024
+                # Runtime shape/dtype validation — branches on pool mode and backbone embed_dim.
+                expected_dim = embed_dim if pool == "mean" else embed_dim * 2
                 assert feats.ndim == 2, f"Expected 2D array, got {feats.ndim}D"
                 assert feats.shape[1] == expected_dim, (
-                    f"Expected {expected_dim}-d (pool={pool}), got {feats.shape[1]}"
+                    f"Expected {expected_dim}-d (embed_dim={embed_dim}, pool={pool}), got {feats.shape[1]}"
                 )
                 assert feats.dtype == np.float32, f"Expected float32, got {feats.dtype}"
                 assert not np.any(np.isnan(feats)), "NaN in CLIP features"
@@ -609,25 +658,29 @@ def run_extraction(
 # Post-run validation
 # ---------------------------------------------------------------------------
 
-def validate_sample_outputs(dataset: str, video_ids: list, pool: str = "mean_max") -> None:
+def validate_sample_outputs(
+    dataset: str, video_ids: list, pool: str = "mean_max",
+    backbone: str = "clip-vit-b-16",
+) -> None:
     """
-    Validate CLIP .npy outputs for a small set of videos.
+    Validate vision backbone .npy outputs for a small set of videos.
 
     Checks:
         - .npy file exists
-        - Shape [N_snippets, expected_dim] with N > 0; expected_dim = 512 when
-          pool='mean', else 1024.
+        - Shape [N_snippets, expected_dim] with N > 0; expected_dim depends on backbone and pool.
         - dtype float32
         - No NaN or Inf values
         - N_snippets matches skeleton .npy (alignment cross-check)
         - N_snippets matches boundary JSON
     """
-    logger.info("Validating CLIP sample outputs...")
+    cfg = BACKBONE_CONFIGS[backbone]
+    embed_dim = cfg["embed_dim"]
+    logger.info(f"Validating {backbone} sample outputs...")
     all_ok = True
-    clip_subdir = "clip_mean" if pool == "mean" else "clip"
+    clip_subdir = cfg["mean_subdir"] if pool == "mean" else cfg["output_subdir"]
     clip_dir = FEATURE_ROOT / dataset / clip_subdir
     skel_dir = FEATURE_ROOT / dataset / "skeleton"
-    expected_dim = 512 if pool == "mean" else 1024
+    expected_dim = embed_dim if pool == "mean" else embed_dim * 2
 
     for video_id in video_ids:
         clip_path = clip_dir / f"{video_id}.npy"
@@ -705,7 +758,7 @@ def validate_sample_outputs(dataset: str, video_ids: list, pool: str = "mean_max
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="CLIP ViT-B/16 feature extraction with mean+max pooling."
+        description="Vision backbone feature extraction with pooling (CLIP or SigLIP2)."
     )
     parser.add_argument(
         "--dataset",
@@ -740,9 +793,16 @@ def main() -> None:
         "--pool",
         choices=["mean", "mean_max"],
         default="mean_max",
+        help="Pooling mode: 'mean_max' (default, mean+max concat) or 'mean' (mean-only).",
+    )
+    parser.add_argument(
+        "--backbone",
+        choices=list(BACKBONE_CONFIGS.keys()),
+        default="clip-vit-b-16",
         help=(
-            "D-23 pooling mode: 'mean_max' (default, emits [N,1024] to clip/) "
-            "or 'mean' (emits [N,512] to clip_mean/ sibling dir)."
+            "Vision backbone: 'clip-vit-b-16' (default, 512-d embed, 1024-d mean+max) "
+            "or 'siglip2-giant' (1536-d embed, 3072-d mean+max). "
+            "Output subdir is backbone-specific (clip/ vs siglip2/)."
         ),
     )
     parser.add_argument(
@@ -772,6 +832,7 @@ def main() -> None:
         batch_size=args.batch_size,
         device=args.device,
         pool=args.pool,
+        backbone=args.backbone,
         corruption_type=args.corruption,
         corruption_severity=args.severity,
     )
@@ -783,7 +844,7 @@ def main() -> None:
         with open(split_file) as f:
             all_ids = [line.strip() for line in f if line.strip()]
         sample_ids = all_ids[: min(args.limit, len(all_ids))]
-        validate_sample_outputs(args.dataset, sample_ids, pool=args.pool)
+        validate_sample_outputs(args.dataset, sample_ids, pool=args.pool, backbone=args.backbone)
 
 
 if __name__ == "__main__":
