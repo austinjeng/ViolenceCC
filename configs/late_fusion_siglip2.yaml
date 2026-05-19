@@ -12,7 +12,7 @@ paths:
 model:
   variant: late_fusion
   skel_dim: 256
-  clip_dim: 3072
+  clip_dim: 1536
   proj_dim: 512
   head_hidden: [128, 32]
   dropout: 0.3

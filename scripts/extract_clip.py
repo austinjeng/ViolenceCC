@@ -4,8 +4,8 @@ extract_clip.py — Vision backbone feature extraction from video frames.
 Supports multiple vision backbones via the ``--backbone`` flag:
 
 - **clip-vit-b-16** (default): CLIP ViT-B/16, 512-d per frame, 1024-d mean+max pooled.
-- **siglip2-giant**: SigLIP2 Giant (ViT-gopt-16-SigLIP2-384), 1536-d per frame,
-  3072-d mean+max pooled.
+- **siglip2-base**: SigLIP2 ViT-B/16-256, 768-d per frame,
+  1536-d mean+max pooled.
 
 Runs in the ``vcc-main`` conda environment (PyTorch 2.6.0 + open-clip-torch 3.3.0).
 
@@ -13,7 +13,7 @@ Usage:
     conda run -n vcc-main python scripts/extract_clip.py --dataset ucf --split train
     conda run -n vcc-main python scripts/extract_clip.py --dataset ucf --split train --limit 3
     conda run -n vcc-main python scripts/extract_clip.py --dataset xd --split train --batch-size 64
-    conda run -n vcc-main python scripts/extract_clip.py --dataset ucf --split train --backbone siglip2-giant --batch-size 16
+    conda run -n vcc-main python scripts/extract_clip.py --dataset ucf --split train --backbone siglip2-base --batch-size 16
 
 Reads:
     E:/snippets/{dataset}/{video_id}_boundaries.json  — snippet boundaries from Plan 01
@@ -25,8 +25,8 @@ Outputs:
     subdir and D depend on --backbone and --pool:
       clip-vit-b-16 + mean_max -> clip/, D=1024
       clip-vit-b-16 + mean     -> clip_mean/, D=512
-      siglip2-giant + mean_max -> siglip2/, D=3072
-      siglip2-giant + mean     -> siglip2_mean/, D=1536
+      siglip2-base + mean_max -> siglip2/, D=1536
+      siglip2-base + mean     -> siglip2_mean/, D=768
 
 Pipeline:
     1. Load vision model (selected via --backbone) once at startup.
@@ -124,10 +124,10 @@ BACKBONE_CONFIGS = {
         "output_subdir": "clip",
         "mean_subdir": "clip_mean",
     },
-    "siglip2-giant": {
-        "model_name": "ViT-gopt-16-SigLIP2-384",
+    "siglip2-base": {
+        "model_name": "ViT-B-16-SigLIP2-256",
         "pretrained": "webli",
-        "embed_dim": 1536,      # encode_image output dim
+        "embed_dim": 768,       # encode_image output dim
         "output_subdir": "siglip2",
         "mean_subdir": "siglip2_mean",
     },
@@ -801,7 +801,7 @@ def main() -> None:
         default="clip-vit-b-16",
         help=(
             "Vision backbone: 'clip-vit-b-16' (default, 512-d embed, 1024-d mean+max) "
-            "or 'siglip2-giant' (1536-d embed, 3072-d mean+max). "
+            "or 'siglip2-base' (768-d embed, 1536-d mean+max). "
             "Output subdir is backbone-specific (clip/ vs siglip2/)."
         ),
     )

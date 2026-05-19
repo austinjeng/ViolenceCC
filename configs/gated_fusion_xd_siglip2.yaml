@@ -12,7 +12,7 @@ paths:
 model:
   variant: gated_fusion
   skel_dim: 256
-  clip_dim: 3072
+  clip_dim: 1536
   shared_dim: 256          # PRD 9.2 shared projection space
   head_hidden: [128, 32]
   dropout: 0.3

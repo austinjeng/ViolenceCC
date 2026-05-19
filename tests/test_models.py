@@ -69,22 +69,22 @@ def test_clip_only_raises_without_clip():
         model(skel=torch.randn(2, 32, 256))
 
 
-def test_clip_dim_3072():
-    """Phase 8: CLIPProj with SigLIP2 3072-d input."""
+def test_clip_dim_1536():
+    """Phase 8: CLIPProj with SigLIP2 1536-d input."""
     torch.manual_seed(0)
-    model = CLIPProj(clip_dim=3072)
-    clip = torch.randn(2, 32, 3072)
+    model = CLIPProj(clip_dim=1536)
+    clip = torch.randn(2, 32, 1536)
     out = model(clip=clip)
     assert out.shape == (2, 32)
     assert torch.isfinite(out).all()
     assert (out >= 0).all() and (out <= 1).all()
 
 
-def test_clip_dim_3072_projection_layer():
-    """Phase 8: CLIPProj(clip_dim=3072) projection maps 3072->512."""
-    model = CLIPProj(clip_dim=3072)
+def test_clip_dim_1536_projection_layer():
+    """Phase 8: CLIPProj(clip_dim=1536) projection maps 1536->512."""
+    model = CLIPProj(clip_dim=1536)
     assert isinstance(model.clip_proj, nn.Linear)
-    assert model.clip_proj.in_features == 3072
+    assert model.clip_proj.in_features == 1536
     assert model.clip_proj.out_features == 512
 
 
@@ -159,12 +159,12 @@ def test_late_fusion_invalid_alpha_raises():
         LateFusion(alpha="garbage")
 
 
-def test_late_fusion_clip_dim_3072():
-    """Phase 8: LateFusion with SigLIP2 3072-d clip input."""
+def test_late_fusion_clip_dim_1536():
+    """Phase 8: LateFusion with SigLIP2 1536-d clip input."""
     torch.manual_seed(0)
-    model = LateFusion(skel_dim=256, clip_dim=3072, proj_dim=512, alpha="equal")
+    model = LateFusion(skel_dim=256, clip_dim=1536, proj_dim=512, alpha="equal")
     skel = torch.randn(2, 32, 256)
-    clip = torch.randn(2, 32, 3072)
+    clip = torch.randn(2, 32, 1536)
     out = model(skel=skel, clip=clip)
     assert out.shape == (2, 32)
     assert torch.isfinite(out).all()
@@ -213,12 +213,12 @@ def test_gated_fusion_shapes():
     assert (out >= 0).all() and (out <= 1).all()
 
 
-def test_gated_fusion_clip_dim_3072():
-    """Phase 8: GatedFusion with SigLIP2 3072-d clip input."""
+def test_gated_fusion_clip_dim_1536():
+    """Phase 8: GatedFusion with SigLIP2 1536-d clip input."""
     torch.manual_seed(0)
-    model = GatedFusion(skel_dim=256, clip_dim=3072, shared_dim=256)
+    model = GatedFusion(skel_dim=256, clip_dim=1536, shared_dim=256)
     skel = torch.randn(2, 32, 256)
-    clip = torch.randn(2, 32, 3072)
+    clip = torch.randn(2, 32, 1536)
     out = model(skel=skel, clip=clip)
     assert out.shape == (2, 32)
     assert torch.isfinite(out).all()

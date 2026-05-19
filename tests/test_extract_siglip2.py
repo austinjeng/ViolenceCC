@@ -1,7 +1,7 @@
 """Phase 8: SigLIP2 backbone config validation and dimension assertions.
 
 Tests BACKBONE_CONFIGS registry in scripts/extract_clip.py for both
-CLIP ViT-B/16 (backward compatibility) and SigLIP2 Giant config correctness.
+CLIP ViT-B/16 (backward compatibility) and SigLIP2 ViT-B/16-256 config correctness.
 No GPU required -- pure dict/config validation.
 """
 from __future__ import annotations
@@ -17,7 +17,7 @@ from scripts.extract_clip import BACKBONE_CONFIGS
 
 def test_backbone_configs_keys():
     """BACKBONE_CONFIGS has exactly the expected backbone keys."""
-    assert set(BACKBONE_CONFIGS.keys()) == {"clip-vit-b-16", "siglip2-giant"}
+    assert set(BACKBONE_CONFIGS.keys()) == {"clip-vit-b-16", "siglip2-base"}
 
 
 def test_clip_config_values():
@@ -31,11 +31,11 @@ def test_clip_config_values():
 
 
 def test_siglip2_config_values():
-    """siglip2-giant entry has correct model_name, pretrained, embed_dim, and subdirs."""
-    cfg = BACKBONE_CONFIGS["siglip2-giant"]
-    assert cfg["model_name"] == "ViT-gopt-16-SigLIP2-384"
+    """siglip2-base entry has correct model_name, pretrained, embed_dim, and subdirs."""
+    cfg = BACKBONE_CONFIGS["siglip2-base"]
+    assert cfg["model_name"] == "ViT-B-16-SigLIP2-256"
     assert cfg["pretrained"] == "webli"
-    assert cfg["embed_dim"] == 1536
+    assert cfg["embed_dim"] == 768
     assert cfg["output_subdir"] == "siglip2"
     assert cfg["mean_subdir"] == "siglip2_mean"
 
@@ -47,8 +47,8 @@ def test_expected_dim_mean_pool():
         expected_dim = embed_dim  # mean-only: no concatenation
         if backbone_key == "clip-vit-b-16":
             assert expected_dim == 512
-        elif backbone_key == "siglip2-giant":
-            assert expected_dim == 1536
+        elif backbone_key == "siglip2-base":
+            assert expected_dim == 768
 
 
 def test_expected_dim_meanmax_pool():
@@ -58,13 +58,13 @@ def test_expected_dim_meanmax_pool():
         expected_dim = embed_dim * 2  # mean+max concatenation
         if backbone_key == "clip-vit-b-16":
             assert expected_dim == 1024
-        elif backbone_key == "siglip2-giant":
-            assert expected_dim == 3072
+        elif backbone_key == "siglip2-base":
+            assert expected_dim == 1536
 
 
 def test_siglip2_output_subdir():
     """SigLIP2 output subdirectories are 'siglip2' and 'siglip2_mean'."""
-    cfg = BACKBONE_CONFIGS["siglip2-giant"]
+    cfg = BACKBONE_CONFIGS["siglip2-base"]
     assert cfg["output_subdir"] == "siglip2"
     assert cfg["mean_subdir"] == "siglip2_mean"
 
