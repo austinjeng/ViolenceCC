@@ -182,6 +182,34 @@ QUEUES = {
         RunSpec("xd", "gated_fusion", 2024, "configs/gated_fusion_xd.yaml"),
         # seed=42 covered by phase4c_main; not duplicated per D-27/D-28.
     ],
+    # Phase 8 SigLIP2 backbone comparison queues
+    # NOTE: skeleton_only is NOT re-run -- it uses no visual features
+    "phase8_ucf_main": [
+        RunSpec("ucf", "clip_only",    42, "configs/clip_only_siglip2.yaml",    "siglip2"),
+        RunSpec("ucf", "late_fusion",  42, "configs/late_fusion_siglip2.yaml",  "siglip2"),
+        RunSpec("ucf", "gated_fusion", 42, "configs/gated_fusion_siglip2.yaml", "siglip2"),
+    ],
+    "phase8_xd_main": [
+        RunSpec("xd", "clip_only",    42, "configs/clip_only_xd_siglip2.yaml",    "siglip2"),
+        RunSpec("xd", "late_fusion",  42, "configs/late_fusion_xd_siglip2.yaml",  "siglip2"),
+        RunSpec("xd", "gated_fusion", 42, "configs/gated_fusion_xd_siglip2.yaml", "siglip2"),
+    ],
+    "phase8_ucf_pooling": [
+        RunSpec("ucf", "gated_fusion", 42, "configs/gated_fusion_siglip2_2person.yaml",   "siglip2_2person"),
+        RunSpec("ucf", "gated_fusion", 42, "configs/gated_fusion_siglip2_clip_mean.yaml", "siglip2_clip_mean"),
+    ],
+    "phase8_xd_pooling": [
+        RunSpec("xd", "gated_fusion", 42, "configs/gated_fusion_xd_siglip2_2person.yaml",   "siglip2_2person"),
+        RunSpec("xd", "gated_fusion", 42, "configs/gated_fusion_xd_siglip2_clip_mean.yaml", "siglip2_clip_mean"),
+    ],
+    "phase8_ucf_seeds": [
+        RunSpec("ucf", "gated_fusion", 123,  "configs/gated_fusion_siglip2.yaml", "siglip2"),
+        RunSpec("ucf", "gated_fusion", 2024, "configs/gated_fusion_siglip2.yaml", "siglip2"),
+    ],
+    "phase8_xd_seeds": [
+        RunSpec("xd", "gated_fusion", 123,  "configs/gated_fusion_xd_siglip2.yaml", "siglip2"),
+        RunSpec("xd", "gated_fusion", 2024, "configs/gated_fusion_xd_siglip2.yaml", "siglip2"),
+    ],
 }
 
 

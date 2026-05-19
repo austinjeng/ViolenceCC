@@ -40,7 +40,10 @@ def test_help_has_expected_queues():
               "phase7_sweep", "phase7_sweep_ext", "phase7_sweep_ext2",
               "phase7_sweep_ext3", "phase7_confirm",
               "phase7_ucf_sweep", "phase7_ucf_sweep_ext",
-              "phase7_ucf_sweep_ext2", "phase7_ucf_confirm"):
+              "phase7_ucf_sweep_ext2", "phase7_ucf_confirm",
+              "phase8_ucf_main", "phase8_xd_main",
+              "phase8_ucf_pooling", "phase8_xd_pooling",
+              "phase8_ucf_seeds", "phase8_xd_seeds"):
         assert q in combined, f"missing queue {q!r} in --help: {combined[:300]}"
 
 
@@ -76,11 +79,21 @@ def test_queue_definitions():
     assert len(QUEUES["phase7_ucf_sweep_ext"]) == 46
     assert len(QUEUES["phase7_ucf_sweep_ext2"]) == 33
     assert len(QUEUES["phase7_ucf_confirm"]) == 6
-    # Total unique specs across all queues = 224.
+    # Phase 8 SigLIP2 backbone comparison queues
+    assert len(QUEUES["phase8_ucf_main"]) == 3       # clip_only, late, gated (no skeleton_only)
+    assert len(QUEUES["phase8_xd_main"]) == 3
+    assert len(QUEUES["phase8_ucf_pooling"]) == 2     # 2person, clip_mean
+    assert len(QUEUES["phase8_xd_pooling"]) == 2
+    assert len(QUEUES["phase8_ucf_seeds"]) == 2       # seeds 123, 2024
+    assert len(QUEUES["phase8_xd_seeds"]) == 2
+    # Phase 8 run_name spot checks
+    assert QUEUES["phase8_ucf_main"][2].run_name == "ucf_gated_fusion_siglip2_s42"
+    assert QUEUES["phase8_xd_seeds"][0].run_name == "xd_gated_fusion_siglip2_s123"
+    # Total unique specs across all queues = 238 (224 + 14 Phase 8).
     all_run_names = {
         s.run_name for q in QUEUES.values() for s in q
     }
-    assert len(all_run_names) == 224, f"expected 224 unique run_names, got {len(all_run_names)}"
+    assert len(all_run_names) == 238, f"expected 238 unique run_names, got {len(all_run_names)}"
 
 
 def test_run_name_deterministic():
