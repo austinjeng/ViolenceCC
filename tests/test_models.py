@@ -88,6 +88,25 @@ def test_clip_dim_1536_projection_layer():
     assert model.clip_proj.out_features == 512
 
 
+def test_clip_dim_2304():
+    """Phase 9: CLIPProj with SO400M 2304-d input."""
+    torch.manual_seed(0)
+    model = CLIPProj(clip_dim=2304)
+    clip = torch.randn(2, 32, 2304)
+    out = model(clip=clip)
+    assert out.shape == (2, 32)
+    assert torch.isfinite(out).all()
+    assert (out >= 0).all() and (out <= 1).all()
+
+
+def test_clip_dim_2304_projection_layer():
+    """Phase 9: CLIPProj(clip_dim=2304) projection maps 2304->512."""
+    model = CLIPProj(clip_dim=2304)
+    assert isinstance(model.clip_proj, nn.Linear)
+    assert model.clip_proj.in_features == 2304
+    assert model.clip_proj.out_features == 512
+
+
 # ---- MOD-07 LayerNorm discoverability (variant-wide) ----
 
 def test_layernorm_attribute_access():
@@ -171,6 +190,18 @@ def test_late_fusion_clip_dim_1536():
     assert (out >= 0).all() and (out <= 1).all()
 
 
+def test_late_fusion_clip_dim_2304():
+    """Phase 9: LateFusion with SO400M 2304-d clip input."""
+    torch.manual_seed(0)
+    model = LateFusion(skel_dim=256, clip_dim=2304, proj_dim=512, alpha="equal")
+    skel = torch.randn(2, 32, 256)
+    clip = torch.randn(2, 32, 2304)
+    out = model(skel=skel, clip=clip)
+    assert out.shape == (2, 32)
+    assert torch.isfinite(out).all()
+    assert (out >= 0).all() and (out <= 1).all()
+
+
 # ---- MODEL_REGISTRY round-trip ----
 
 from src.models.registry import build_model
@@ -219,6 +250,18 @@ def test_gated_fusion_clip_dim_1536():
     model = GatedFusion(skel_dim=256, clip_dim=1536, shared_dim=256)
     skel = torch.randn(2, 32, 256)
     clip = torch.randn(2, 32, 1536)
+    out = model(skel=skel, clip=clip)
+    assert out.shape == (2, 32)
+    assert torch.isfinite(out).all()
+    assert (out >= 0).all() and (out <= 1).all()
+
+
+def test_gated_fusion_clip_dim_2304():
+    """Phase 9: GatedFusion with SO400M 2304-d clip input."""
+    torch.manual_seed(0)
+    model = GatedFusion(skel_dim=256, clip_dim=2304, shared_dim=256)
+    skel = torch.randn(2, 32, 256)
+    clip = torch.randn(2, 32, 2304)
     out = model(skel=skel, clip=clip)
     assert out.shape == (2, 32)
     assert torch.isfinite(out).all()
