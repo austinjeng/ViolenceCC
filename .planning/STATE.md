@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 08
 current_plan: 4
-status: verifying
-stopped_at: Phase 8 all plans complete (4/4), running verification
+status: complete
+stopped_at: Phase 8 complete — verified 4/4 must-haves
 last_updated: "2026-05-20T02:30:00.000Z"
 last_activity: 2026-05-20
 progress:
@@ -19,7 +19,7 @@ progress:
 # State: ViolenceCC
 
 **Last updated:** 2026-05-20
-**Session:** Phase 8 complete. All 4 plans done: backbone parameterization, 10 configs + 6 queues, SigLIP2 extraction (1728 UCF + 4752 XD), 14 ablation runs + comparison table. UCF: SigLIP2 ~2pp below CLIP. XD: roughly competitive. Verifying phase goal.
+**Session:** Phase 8 complete and verified. SigLIP2 ViT-B/16-256 backbone comparison: 14 ablation runs, CLIP vs SigLIP2 comparison table + 3 charts. UCF: SigLIP2 ~2pp below CLIP AUC. XD: roughly competitive, +2-3pp AP on pooling ablations.
 
 Last activity: 2026-05-20
 
@@ -36,11 +36,11 @@ Last activity: 2026-05-20
 
 ## Current Position
 
-Phase: 08 (siglip2-backbone-comparison) — VERIFYING
-Plan: 4 of 4 (all complete)
+Phase: 08 (siglip2-backbone-comparison) — COMPLETE
+Plan: 4 of 4 (all complete, verified)
 **Current phase:** 08
 **Current plan:** 4
-**Status:** All plans complete, verification pending
+**Status:** Complete (verified 2026-05-20)
 
 **Progress:**
 

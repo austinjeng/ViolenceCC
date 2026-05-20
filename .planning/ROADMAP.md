@@ -19,7 +19,7 @@
 - [ ] **Phase 5: TTA Infrastructure & Corruption Experiments** - UCF-Crime-C generated, TENT-style and SAR-style TTA evaluated across all 20 corruption conditions
 - [ ] **Phase 6: Analysis & Visualization** - Temporal curve plots, skeleton overlays, and per-category breakdowns ready for thesis
 - [x] **Phase 7: XD-Violence Hyperparameter Sweep** - 198-config sweep across XD + UCF; XD winner lr=1e-3/k=2 (AP=74.69%, +3.72pp); UCF hyperparameter-insensitive; RTFM gap = training regime (completed 2026-05-02)
-- [ ] **Phase 8: SigLIP2 Backbone Comparison** - Swap CLIP ViT-B/16 with SigLIP2 Giant (google/siglip2-giant-opt-patch16-384) as visual-language backbone; re-extract features, run identical ablations on UCF-Crime and XD-Violence, compare against CLIP results for thesis
+- [x] **Phase 8: SigLIP2 Backbone Comparison** - Swap CLIP ViT-B/16 with SigLIP2 ViT-B/16-256 as visual-language backbone; re-extract features, run identical ablations on UCF-Crime and XD-Violence, compare against CLIP results for thesis (completed 2026-05-20; UCF: SigLIP2 ~2pp below CLIP AUC; XD: roughly competitive, slight AP gains on pooling ablations)
 
 ---
 
