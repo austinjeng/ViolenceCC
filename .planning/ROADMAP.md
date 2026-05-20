@@ -20,6 +20,7 @@
 - [ ] **Phase 6: Analysis & Visualization** - Temporal curve plots, skeleton overlays, and per-category breakdowns ready for thesis
 - [x] **Phase 7: XD-Violence Hyperparameter Sweep** - 198-config sweep across XD + UCF; XD winner lr=1e-3/k=2 (AP=74.69%, +3.72pp); UCF hyperparameter-insensitive; RTFM gap = training regime (completed 2026-05-02)
 - [x] **Phase 8: SigLIP2 Backbone Comparison** - Swap CLIP ViT-B/16 with SigLIP2 ViT-B/16-256 as visual-language backbone; re-extract features, run identical ablations on UCF-Crime and XD-Violence, compare against CLIP results for thesis (completed 2026-05-20; UCF: SigLIP2 ~2pp below CLIP AUC; XD: roughly competitive, slight AP gains on pooling ablations)
+- [ ] **Phase 9: SigLIP2-SO400M Backbone Comparison** - Swap CLIP ViT-B/16 with SigLIP2 SO400M (google/siglip2-so400m-patch16-256) as visual-language backbone; re-extract features, run identical ablation matrix, compare against CLIP and SigLIP2 ViT-B/16-256 for thesis
 
 ---
 
@@ -246,6 +247,27 @@ Plans:
 
 - [x] 08-04-PLAN.md -- Execute 14 ablation runs + 3-seed stability + CLIP vs SigLIP2 comparison table
 
+### Phase 9: SigLIP2-SO400M Backbone Comparison
+
+**Goal**: Swap CLIP ViT-B/16 with SigLIP2 SO400M (google/siglip2-so400m-patch16-256) as the visual-language feature backbone, re-extract features for both datasets, and run the identical ablation matrix (model variants, pooling, seeds) under controlled conditions to produce a direct backbone comparison against CLIP and SigLIP2 ViT-B/16-256 for the thesis
+**Depends on**: Phase 4 (UCF ablation table + evaluation harness), Phase 4c (XD ablation table), Phase 2 (extraction pipeline patterns), Phase 8 (SigLIP2 ViT-B/16-256 results + backbone parameterization infrastructure)
+**Requirements**: None new (extends EVAL-02, EVAL-03, EVAL-04 with alternative backbone)
+**Success Criteria** (what must be TRUE):
+
+  1. SigLIP2 SO400M features are extracted for all UCF-Crime and XD-Violence videos using the same snippet boundaries and temporal alignment as the original CLIP and SigLIP2 ViT-B/16-256 extraction
+  2. All model variants (Skeleton-Only baseline unchanged, SigLIP2-SO400M-Only, Late Fusion, Gated Fusion) and pooling ablations are trained and evaluated on both datasets with identical configs (only the visual feature path changes)
+  3. 3-seed stability runs ({42, 123, 2024}) are completed for Gated Fusion on both datasets with SigLIP2 SO400M features
+  4. A three-way comparison table (CLIP vs SigLIP2 ViT-B/16-256 vs SigLIP2 SO400M) exists for all ablation rows on both datasets, suitable for thesis inclusion
+
+
+**Plans:** 4 plans
+
+Plans:
+- [ ] 09-01-PLAN.md -- SO400M backbone config, 10 YAML configs, 6 ablation queues, test updates
+- [ ] 09-02-PLAN.md -- SO400M feature extraction for UCF-Crime and XD-Violence
+- [ ] 09-03-PLAN.md -- Run 14 SO400M ablation experiments (8 main + 6 seed stability)
+- [ ] 09-04-PLAN.md -- Three-way comparison analysis script, tables, and charts
+
 ---
 
 ## Progress Table
@@ -262,6 +284,7 @@ Plans:
 | 6. Analysis & Visualization | 2/2 | In Progress | - |
 | 7. XD-Violence Hyperparameter Sweep | 4/4 | Complete | 2026-05-02 |
 | 8. SigLIP2 Backbone Comparison | 4/4 | Complete | 2026-05-20 |
+| 9. SigLIP2-SO400M Backbone Comparison | 0/4 | Planned | - |
 
 ---
 
