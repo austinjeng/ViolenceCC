@@ -210,6 +210,33 @@ QUEUES = {
         RunSpec("xd", "gated_fusion", 123,  "configs/gated_fusion_xd_siglip2.yaml", "siglip2"),
         RunSpec("xd", "gated_fusion", 2024, "configs/gated_fusion_xd_siglip2.yaml", "siglip2"),
     ],
+    # Phase 9 SigLIP2 SO400M backbone comparison queues
+    "phase9_ucf_main": [
+        RunSpec("ucf", "clip_only",    42, "configs/clip_only_so400m.yaml",    "so400m"),
+        RunSpec("ucf", "late_fusion",  42, "configs/late_fusion_so400m.yaml",  "so400m"),
+        RunSpec("ucf", "gated_fusion", 42, "configs/gated_fusion_so400m.yaml", "so400m"),
+    ],
+    "phase9_xd_main": [
+        RunSpec("xd", "clip_only",    42, "configs/clip_only_xd_so400m.yaml",    "so400m"),
+        RunSpec("xd", "late_fusion",  42, "configs/late_fusion_xd_so400m.yaml",  "so400m"),
+        RunSpec("xd", "gated_fusion", 42, "configs/gated_fusion_xd_so400m.yaml", "so400m"),
+    ],
+    "phase9_ucf_pooling": [
+        RunSpec("ucf", "gated_fusion", 42, "configs/gated_fusion_so400m_2person.yaml",   "so400m_2person"),
+        RunSpec("ucf", "gated_fusion", 42, "configs/gated_fusion_so400m_clip_mean.yaml", "so400m_clip_mean"),
+    ],
+    "phase9_xd_pooling": [
+        RunSpec("xd", "gated_fusion", 42, "configs/gated_fusion_xd_so400m_2person.yaml",   "so400m_2person"),
+        RunSpec("xd", "gated_fusion", 42, "configs/gated_fusion_xd_so400m_clip_mean.yaml", "so400m_clip_mean"),
+    ],
+    "phase9_ucf_seeds": [
+        RunSpec("ucf", "gated_fusion", 123,  "configs/gated_fusion_so400m.yaml", "so400m"),
+        RunSpec("ucf", "gated_fusion", 2024, "configs/gated_fusion_so400m.yaml", "so400m"),
+    ],
+    "phase9_xd_seeds": [
+        RunSpec("xd", "gated_fusion", 123,  "configs/gated_fusion_xd_so400m.yaml", "so400m"),
+        RunSpec("xd", "gated_fusion", 2024, "configs/gated_fusion_xd_so400m.yaml", "so400m"),
+    ],
 }
 
 
