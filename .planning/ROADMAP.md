@@ -244,7 +244,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 08-04-PLAN.md -- Execute 14 ablation runs + 3-seed stability + CLIP vs SigLIP2 comparison table
+- [x] 08-04-PLAN.md -- Execute 14 ablation runs + 3-seed stability + CLIP vs SigLIP2 comparison table
 
 ---
 
@@ -261,7 +261,7 @@ Plans:
 | 5. TTA Infrastructure & Corruption Experiments | 0/5 | Planned | - |
 | 6. Analysis & Visualization | 2/2 | In Progress | - |
 | 7. XD-Violence Hyperparameter Sweep | 4/4 | Complete | 2026-05-02 |
-| 8. SigLIP2 Backbone Comparison | 3/4 | In Progress | - |
+| 8. SigLIP2 Backbone Comparison | 4/4 | Complete | 2026-05-20 |
 
 ---
 

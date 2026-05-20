@@ -4,22 +4,22 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 08
 current_plan: 4
-status: executing
-stopped_at: Phase 8 Wave 2 complete (Plan 03 extraction verified), Wave 3 next
-last_updated: "2026-05-20T02:13:00.000Z"
+status: verifying
+stopped_at: Phase 8 all plans complete (4/4), running verification
+last_updated: "2026-05-20T02:30:00.000Z"
 last_activity: 2026-05-20
 progress:
   total_phases: 10
-  completed_phases: 9
+  completed_phases: 10
   total_plans: 44
-  completed_plans: 43
-  percent: 97
+  completed_plans: 44
+  percent: 100
 ---
 
 # State: ViolenceCC
 
 **Last updated:** 2026-05-20
-**Session:** Phase 8 executing. Wave 2 complete: SigLIP2 ViT-B/16-256 features extracted for UCF (1728) + XD (4752) in both mean+max (1536-d) and mean-only (768-d). All snippet counts align with CLIP baseline. Wave 3 next: 14 ablation runs + 3-seed stability + comparison table.
+**Session:** Phase 8 complete. All 4 plans done: backbone parameterization, 10 configs + 6 queues, SigLIP2 extraction (1728 UCF + 4752 XD), 14 ablation runs + comparison table. UCF: SigLIP2 ~2pp below CLIP. XD: roughly competitive. Verifying phase goal.
 
 Last activity: 2026-05-20
 
@@ -36,16 +36,16 @@ Last activity: 2026-05-20
 
 ## Current Position
 
-Phase: 08 (siglip2-backbone-comparison) — EXECUTING
-Plan: 4 of 4 (Wave 3 next)
+Phase: 08 (siglip2-backbone-comparison) — VERIFYING
+Plan: 4 of 4 (all complete)
 **Current phase:** 08
 **Current plan:** 4
-**Status:** Wave 2 complete, Wave 3 pending
+**Status:** All plans complete, verification pending
 
 **Progress:**
 
-[███████░░░] 75%
-Phase 8 [███████░░░] 75%  SigLIP2 Backbone Comparison (3/4 plans done)
+[██████████] 100%
+Phase 8 [██████████] 100%  SigLIP2 Backbone Comparison (4/4 plans done)
 
 ---
 
