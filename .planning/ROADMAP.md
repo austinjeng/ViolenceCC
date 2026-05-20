@@ -260,11 +260,11 @@ Plans:
   4. A three-way comparison table (CLIP vs SigLIP2 ViT-B/16-256 vs SigLIP2 SO400M) exists for all ablation rows on both datasets, suitable for thesis inclusion
 
 
-**Plans:** 4 plans
+**Plans:** 1/4 plans executed
 Plans:
 **Wave 1**
 
-- [ ] 09-01-PLAN.md -- SO400M backbone config, 10 YAML configs, 6 ablation queues, test updates
+- [x] 09-01-PLAN.md -- SO400M backbone config, 10 YAML configs, 6 ablation queues, test updates
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -294,7 +294,7 @@ Plans:
 | 6. Analysis & Visualization | 2/2 | In Progress | - |
 | 7. XD-Violence Hyperparameter Sweep | 4/4 | Complete | 2026-05-02 |
 | 8. SigLIP2 Backbone Comparison | 4/4 | Complete | 2026-05-20 |
-| 9. SigLIP2-SO400M Backbone Comparison | 0/4 | Planned | - |
+| 9. SigLIP2-SO400M Backbone Comparison | 1/4 | In Progress|  |
 
 ---
 
