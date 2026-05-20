@@ -2,26 +2,26 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 06
-current_plan: 1
+current_phase: 08
+current_plan: 4
 status: executing
-stopped_at: Phase 6 context gathered
-last_updated: "2026-05-18T18:25:07.318Z"
-last_activity: 2026-05-18
+stopped_at: Phase 8 Wave 2 complete (Plan 03 extraction verified), Wave 3 next
+last_updated: "2026-05-20T02:13:00.000Z"
+last_activity: 2026-05-20
 progress:
   total_phases: 10
   completed_phases: 9
   total_plans: 44
-  completed_plans: 40
-  percent: 90
+  completed_plans: 43
+  percent: 97
 ---
 
 # State: ViolenceCC
 
-**Last updated:** 2026-05-03
-**Session:** Phase 7 complete. 198-config hyperparameter sweep across XD-Violence (99) and UCF-Crime (99). XD winner: lr=1e-3/k=2, 3-seed mean AP=74.69% (+3.72pp over baseline). UCF hyperparameter-insensitive (+0.14pp). RTFM gap diagnosed as training regime difference. Next: Phase 5 (TTA) or Phase 6 (Analysis).
+**Last updated:** 2026-05-20
+**Session:** Phase 8 executing. Wave 2 complete: SigLIP2 ViT-B/16-256 features extracted for UCF (1728) + XD (4752) in both mean+max (1536-d) and mean-only (768-d). All snippet counts align with CLIP baseline. Wave 3 next: 14 ablation runs + 3-seed stability + comparison table.
 
-Last activity: 2026-05-18
+Last activity: 2026-05-20
 
 ---
 
@@ -36,16 +36,16 @@ Last activity: 2026-05-18
 
 ## Current Position
 
-Phase: 06 (analysis-visualization) — EXECUTING
-Plan: 1 of 2
-**Current phase:** 06
-**Current plan:** 1
-**Status:** Ready to execute
+Phase: 08 (siglip2-backbone-comparison) — EXECUTING
+Plan: 4 of 4 (Wave 3 next)
+**Current phase:** 08
+**Current plan:** 4
+**Status:** Wave 2 complete, Wave 3 pending
 
 **Progress:**
 
-[██████████] 100%
-Phase 7 [██████████] 100%  XD-Violence Hyperparameter Sweep (4/4 plans done)
+[███████░░░] 75%
+Phase 8 [███████░░░] 75%  SigLIP2 Backbone Comparison (3/4 plans done)
 
 ---
 

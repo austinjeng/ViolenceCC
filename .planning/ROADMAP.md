@@ -235,12 +235,12 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 08-01-PLAN.md -- Extraction script backbone parameterization (--backbone flag + BACKBONE_CONFIGS + tests)
-- [ ] 08-02-PLAN.md -- 10 SigLIP2 YAML configs + 6 Phase 8 queues in run_ablations.py + model dim tests
+- [x] 08-01-PLAN.md -- Extraction script backbone parameterization (--backbone flag + BACKBONE_CONFIGS + tests)
+- [x] 08-02-PLAN.md -- 10 SigLIP2 YAML configs + 6 Phase 8 queues in run_ablations.py + model dim tests
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 08-03-PLAN.md -- SigLIP2 feature extraction for UCF-Crime and XD-Violence (~5 hours GPU)
+- [x] 08-03-PLAN.md -- SigLIP2 feature extraction for UCF-Crime and XD-Violence (~5 hours GPU)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -261,7 +261,7 @@ Plans:
 | 5. TTA Infrastructure & Corruption Experiments | 0/5 | Planned | - |
 | 6. Analysis & Visualization | 2/2 | In Progress | - |
 | 7. XD-Violence Hyperparameter Sweep | 4/4 | Complete | 2026-05-02 |
-| 8. SigLIP2 Backbone Comparison | 0/4 | Planned | - |
+| 8. SigLIP2 Backbone Comparison | 3/4 | In Progress | - |
 
 ---
 
