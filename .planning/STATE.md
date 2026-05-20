@@ -2,24 +2,24 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 08
-current_plan: 4
-status: complete
-stopped_at: Phase 8 complete — verified 4/4 must-haves
-last_updated: "2026-05-20T02:30:00.000Z"
+current_phase: 09
+current_plan: 0
+status: Ready to execute
+stopped_at: Phase 9 planned — 4 plans in 4 waves
+last_updated: "2026-05-20T11:46:00.000Z"
 last_activity: 2026-05-20
 progress:
-  total_phases: 10
+  total_phases: 11
   completed_phases: 10
-  total_plans: 44
+  total_plans: 48
   completed_plans: 44
-  percent: 100
+  percent: 92
 ---
 
 # State: ViolenceCC
 
 **Last updated:** 2026-05-20
-**Session:** Phase 8 complete and verified. SigLIP2 ViT-B/16-256 backbone comparison: 14 ablation runs, CLIP vs SigLIP2 comparison table + 3 charts. UCF: SigLIP2 ~2pp below CLIP AUC. XD: roughly competitive, +2-3pp AP on pooling ablations.
+**Session:** Phase 9 planned. SigLIP2 SO400M backbone comparison: 4 plans in 4 waves. SO400M is 1152-d (2304-d pooled), ~152 img/s extraction, ~1.1 hrs total. Phase 8 infrastructure fully reusable.
 
 Last activity: 2026-05-20
 
@@ -36,16 +36,16 @@ Last activity: 2026-05-20
 
 ## Current Position
 
-Phase: 08 (siglip2-backbone-comparison) — COMPLETE
-Plan: 4 of 4 (all complete, verified)
-**Current phase:** 08
-**Current plan:** 4
-**Status:** Complete (verified 2026-05-20)
+Phase: 09 (siglip2-so400m-backbone-comparison) — PLANNED
+Plan: 0 of 4
+**Current phase:** 09
+**Current plan:** 0
+**Status:** Ready to execute
 
 **Progress:**
 
-[██████████] 100%
-Phase 8 [██████████] 100%  SigLIP2 Backbone Comparison (4/4 plans done)
+[░░░░░░░░░░] 0%
+Phase 9 [░░░░░░░░░░] 0%  SigLIP2-SO400M Backbone Comparison (0/4 plans done)
 
 ---
 
@@ -130,6 +130,7 @@ Targets from PRD v2.3:
 ### Roadmap Evolution
 
 - Phase 8 added: SigLIP2 Backbone Comparison — swap CLIP ViT-B/16 with SigLIP2 Giant (google/siglip2-giant-opt-patch16-384), re-extract features, run identical ablations for thesis comparison
+- Phase 9 added: SigLIP2-SO400M Backbone Comparison — swap CLIP ViT-B/16 with SigLIP2 SO400M (google/siglip2-so400m-patch16-256), re-extract features, run identical ablation matrix, compare against both CLIP and SigLIP2 ViT-B/16-256
 
 ### Roadmap Evolution
 

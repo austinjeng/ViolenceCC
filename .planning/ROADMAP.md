@@ -261,11 +261,21 @@ Plans:
 
 
 **Plans:** 4 plans
-
 Plans:
+**Wave 1**
+
 - [ ] 09-01-PLAN.md -- SO400M backbone config, 10 YAML configs, 6 ablation queues, test updates
-- [ ] 09-02-PLAN.md -- SO400M feature extraction for UCF-Crime and XD-Violence
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 09-02-PLAN.md -- SO400M feature extraction for UCF-Crime and XD-Violence (~1.1 hrs GPU)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 09-03-PLAN.md -- Run 14 SO400M ablation experiments (8 main + 6 seed stability)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [ ] 09-04-PLAN.md -- Three-way comparison analysis script, tables, and charts
 
 ---

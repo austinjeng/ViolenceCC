@@ -461,16 +461,16 @@ Disk space available: 1,414 GB free on E: drive. Storage is negligible.
 | A3 | SO400M features will produce meaningfully different results from SigLIP2-base and CLIP (thesis-worthy comparison) | Summary | If results are nearly identical to SigLIP2-base, the comparison is still valuable as a scaling analysis (93M vs 428M visual params at same resolution shows diminishing returns) |
 | A4 | The `so400m` cache_variant tag is sufficient to distinguish SO400M runs in results-index.csv | Pattern 3 | If collisions occur with Phase 8 `siglip2` tags, rename to more specific variant; risk is LOW because `so400m` is unique |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Should the three-way comparison script extend Phase 8's `generate_phase8_charts.py` or be a new script?**
    - What we know: Phase 8's script uses a two-column COMPARISON_MAP with hardcoded CLIP and SigLIP2 column names. Extending it to three columns requires restructuring the `build_comparison_table()` and `plot_comparison_bars()` functions.
    - What's unclear: Whether the Phase 8 charts should remain as-is (for reproducibility of Phase 8 deliverables) or be replaced by the three-way version.
-   - Recommendation: Create a new `generate_phase9_charts.py` that produces the three-way table and charts. Leave Phase 8's script untouched. The three-way comparison supersedes the two-way for the thesis, but the Phase 8 script remains as documentation of Phase 8's deliverables.
+   - RESOLVED: Create new `generate_phase9_charts.py` (implemented in Plan 04). Leave Phase 8's script untouched.
 
 2. **Should the thesis comparison table include the Phase 7 sweep winner (lr=1e-3, k=2) for SO400M?**
    - What we know: Phase 7 found XD benefits from lr=1e-3/k=2. Phase 8 excluded sweep winners to keep the backbone comparison clean (default hyperparameters only).
-   - Recommendation: Keep the primary comparison at default hyperparameters (lr=1e-4, k=3) for controlled comparison, same decision as Phase 8. The thesis can note this as a limitation ("backbone comparison uses default hyperparameters; per-backbone tuning may yield different rankings").
+   - RESOLVED: Keep default hyperparameters for controlled comparison (same as Phase 8). Thesis notes this as limitation.
 
 ## Environment Availability
 
