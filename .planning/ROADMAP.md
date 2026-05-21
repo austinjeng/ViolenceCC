@@ -20,7 +20,7 @@
 - [ ] **Phase 6: Analysis & Visualization** - Temporal curve plots, skeleton overlays, and per-category breakdowns ready for thesis
 - [x] **Phase 7: XD-Violence Hyperparameter Sweep** - 198-config sweep across XD + UCF; XD winner lr=1e-3/k=2 (AP=74.69%, +3.72pp); UCF hyperparameter-insensitive; RTFM gap = training regime (completed 2026-05-02)
 - [x] **Phase 8: SigLIP2 Backbone Comparison** - Swap CLIP ViT-B/16 with SigLIP2 ViT-B/16-256 as visual-language backbone; re-extract features, run identical ablations on UCF-Crime and XD-Violence, compare against CLIP results for thesis (completed 2026-05-20; UCF: SigLIP2 ~2pp below CLIP AUC; XD: roughly competitive, slight AP gains on pooling ablations)
-- [ ] **Phase 9: SigLIP2-SO400M Backbone Comparison** - Swap CLIP ViT-B/16 with SigLIP2 SO400M (google/siglip2-so400m-patch16-256) as visual-language backbone; re-extract features, run identical ablation matrix, compare against CLIP and SigLIP2 ViT-B/16-256 for thesis
+- [x] **Phase 9: SigLIP2-SO400M Backbone Comparison** - Swap CLIP ViT-B/16 with SigLIP2 SO400M (google/siglip2-so400m-patch16-256) as visual-language backbone; re-extract features, run identical ablation matrix, compare against CLIP and SigLIP2 ViT-B/16-256 for thesis (completed 2026-05-21)
 
 ---
 
@@ -260,7 +260,7 @@ Plans:
   4. A three-way comparison table (CLIP vs SigLIP2 ViT-B/16-256 vs SigLIP2 SO400M) exists for all ablation rows on both datasets, suitable for thesis inclusion
 
 
-**Plans:** 1/4 plans executed
+**Plans:** 4/4 plans complete
 Plans:
 **Wave 1**
 
@@ -268,15 +268,15 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 09-02-PLAN.md -- SO400M feature extraction for UCF-Crime and XD-Violence (~1.1 hrs GPU)
+- [x] 09-02-PLAN.md -- SO400M feature extraction for UCF-Crime and XD-Violence (~1.1 hrs GPU)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 09-03-PLAN.md -- Run 14 SO400M ablation experiments (8 main + 6 seed stability)
+- [x] 09-03-PLAN.md -- Run 14 SO400M ablation experiments (8 main + 6 seed stability)
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 09-04-PLAN.md -- Three-way comparison analysis script, tables, and charts
+- [x] 09-04-PLAN.md -- Three-way comparison analysis script, tables, and charts
 
 ---
 
@@ -294,7 +294,7 @@ Plans:
 | 6. Analysis & Visualization | 2/2 | In Progress | - |
 | 7. XD-Violence Hyperparameter Sweep | 4/4 | Complete | 2026-05-02 |
 | 8. SigLIP2 Backbone Comparison | 4/4 | Complete | 2026-05-20 |
-| 9. SigLIP2-SO400M Backbone Comparison | 1/4 | In Progress|  |
+| 9. SigLIP2-SO400M Backbone Comparison | 4/4 | Complete   | 2026-05-21 |
 
 ---
 
