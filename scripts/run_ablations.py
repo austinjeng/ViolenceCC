@@ -237,6 +237,33 @@ QUEUES = {
         RunSpec("xd", "gated_fusion", 123,  "configs/gated_fusion_xd_so400m.yaml", "so400m"),
         RunSpec("xd", "gated_fusion", 2024, "configs/gated_fusion_xd_so400m.yaml", "so400m"),
     ],
+    # Phase 10 SigLIP2 Giant-opt backbone comparison queues
+    "phase10_ucf_main": [
+        RunSpec("ucf", "clip_only",    42, "configs/clip_only_giant.yaml",    "giant"),
+        RunSpec("ucf", "late_fusion",  42, "configs/late_fusion_giant.yaml",  "giant"),
+        RunSpec("ucf", "gated_fusion", 42, "configs/gated_fusion_giant.yaml", "giant"),
+    ],
+    "phase10_xd_main": [
+        RunSpec("xd", "clip_only",    42, "configs/clip_only_xd_giant.yaml",    "giant"),
+        RunSpec("xd", "late_fusion",  42, "configs/late_fusion_xd_giant.yaml",  "giant"),
+        RunSpec("xd", "gated_fusion", 42, "configs/gated_fusion_xd_giant.yaml", "giant"),
+    ],
+    "phase10_ucf_pooling": [
+        RunSpec("ucf", "gated_fusion", 42, "configs/gated_fusion_giant_2person.yaml",   "giant_2person"),
+        RunSpec("ucf", "gated_fusion", 42, "configs/gated_fusion_giant_clip_mean.yaml", "giant_clip_mean"),
+    ],
+    "phase10_xd_pooling": [
+        RunSpec("xd", "gated_fusion", 42, "configs/gated_fusion_xd_giant_2person.yaml",   "giant_2person"),
+        RunSpec("xd", "gated_fusion", 42, "configs/gated_fusion_xd_giant_clip_mean.yaml", "giant_clip_mean"),
+    ],
+    "phase10_ucf_seeds": [
+        RunSpec("ucf", "gated_fusion", 123,  "configs/gated_fusion_giant.yaml", "giant"),
+        RunSpec("ucf", "gated_fusion", 2024, "configs/gated_fusion_giant.yaml", "giant"),
+    ],
+    "phase10_xd_seeds": [
+        RunSpec("xd", "gated_fusion", 123,  "configs/gated_fusion_xd_giant.yaml", "giant"),
+        RunSpec("xd", "gated_fusion", 2024, "configs/gated_fusion_xd_giant.yaml", "giant"),
+    ],
 }
 
 

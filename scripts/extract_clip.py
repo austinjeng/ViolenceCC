@@ -138,6 +138,13 @@ BACKBONE_CONFIGS = {
         "output_subdir": "siglip2_so400m",
         "mean_subdir": "siglip2_so400m_mean",
     },
+    "siglip2-giant": {
+        "model_name": "ViT-gopt-16-SigLIP2-256",
+        "pretrained": "webli",
+        "embed_dim": 1536,      # encode_image output dim
+        "output_subdir": "siglip2_giant",
+        "mean_subdir": "siglip2_giant_mean",
+    },
 }
 
 

@@ -1,0 +1,41 @@
+# configs/gated_fusion_giant_2person.yaml
+# Phase 10: Giant-opt 2-person multi-person aggregation ablation. Mirrors gated_fusion_so400m_2person.yaml with Giant-opt features.
+seed: 42
+dataset: ucf
+
+paths:
+  skeleton_features: "E:/features/ucf/skeleton_2person"
+  clip_features: "E:/features/ucf/siglip2_giant"
+  splits_dir: "data/splits"
+  results_dir: "results"
+
+model:
+  variant: gated_fusion
+  skel_dim: 512
+  clip_dim: 3072
+  shared_dim: 256          # PRD 9.2 shared projection space
+  head_hidden: [128, 32]
+  dropout: 0.3
+
+data:
+  T: 32
+  batch_size: 16
+  num_workers: 4
+  pin_memory: true
+  skel_agg: concat
+
+train:
+  lr: 1.0e-4
+  weight_decay: 1.0e-2
+  epochs: 50
+  warmup_epochs: 5
+  patience: 10
+  k_topk: 3
+  margin: 1.0
+  lam_sparse: 8.0e-3
+  lam_smooth: 8.0e-4
+
+wandb:
+  project: violencecc
+  mode: disabled          # Rule 3 fallback: wandb preflight exit 2 (no API key); run CSV-only per plan 04-06 Step A Option C
+  tags: [phase10, gated_fusion, ucf, 2person, giant]
