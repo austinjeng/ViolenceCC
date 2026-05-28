@@ -278,6 +278,36 @@ Plans:
 
 - [x] 09-04-PLAN.md -- Three-way comparison analysis script, tables, and charts
 
+### Phase 10: SigLIP2 Giant-opt Backbone Comparison
+
+**Goal**: Add SigLIP2 Giant-opt (ViT-gopt-16-SigLIP2-256, 1.16B vision params, 1536-d) as the fourth backbone, re-extract features, run the identical ablation matrix, and produce a four-way backbone comparison table for the thesis
+**Depends on**: Phase 9 (SO400M results + infrastructure), Phase 8 (SigLIP2 ViT-B/16 results), Phase 4/4c (CLIP results)
+**Requirements**: None new (extends EVAL-02, EVAL-03, EVAL-04)
+**Success Criteria**:
+
+  1. SigLIP2 Giant-opt features extracted for all UCF-Crime and XD-Violence videos (train+val+test splits)
+  2. All model variants and pooling ablations trained and evaluated on both datasets with Giant-opt features
+  3. 3-seed stability runs completed for Gated Fusion on both datasets
+  4. Four-way comparison table (CLIP vs SigLIP2 ViT-B/16 vs SO400M vs Giant-opt) exists for all ablation rows
+
+**Plans:** 0/4 plans complete
+Plans:
+**Wave 1**
+
+- [ ] 10-01-PLAN.md -- Giant-opt backbone config, 10 YAML configs, 6 ablation queues, test updates
+
+**Wave 2** *(blocked on Wave 1)*
+
+- [ ] 10-02-PLAN.md -- Giant-opt feature extraction for UCF-Crime and XD-Violence (12 runs: train+val+test)
+
+**Wave 3** *(blocked on Wave 2)*
+
+- [ ] 10-03-PLAN.md -- Run 14 Giant-opt ablation experiments (8 main + 6 seed stability)
+
+**Wave 4** *(blocked on Wave 3)*
+
+- [ ] 10-04-PLAN.md -- Four-way comparison analysis script, tables, and charts
+
 ---
 
 ## Progress Table
@@ -295,6 +325,7 @@ Plans:
 | 7. XD-Violence Hyperparameter Sweep | 4/4 | Complete | 2026-05-02 |
 | 8. SigLIP2 Backbone Comparison | 4/4 | Complete | 2026-05-20 |
 | 9. SigLIP2-SO400M Backbone Comparison | 4/4 | Complete   | 2026-05-21 |
+| 10. SigLIP2 Giant-opt Backbone Comparison | 0/4 | Executing | - |
 
 ---
 

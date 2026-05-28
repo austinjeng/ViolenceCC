@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 current_phase: 09
-current_plan: 1
-status: executing
-stopped_at: Phase 6 context gathered
+current_plan: 4
+status: complete
+stopped_at: Phase 9 complete — all 4 plans executed, three-way backbone comparison delivered
 last_updated: "2026-05-21T07:11:10.405Z"
 last_activity: 2026-05-21
 progress:
@@ -19,7 +19,7 @@ progress:
 # State: ViolenceCC
 
 **Last updated:** 2026-05-20
-**Session:** Phase 9 executing. Plan 09-01 complete (SO400M configs, queues, tests). Plan 09-02 feature extraction in progress. SO400M is 1152-d (2304-d pooled), ~152 img/s, ~1.1 hrs total.
+**Session:** Phase 9 complete. Three-way backbone comparison (CLIP vs SigLIP2 ViT-B/16 vs SigLIP2 SO400M) delivered. SO400M strongest on XD-Violence (+7.1pp AP visual-only), recovers near-CLIP on UCF-Crime.
 
 Last activity: 2026-05-21
 
@@ -36,16 +36,16 @@ Last activity: 2026-05-21
 
 ## Current Position
 
-Phase: 09 (siglip2-so400m-backbone-comparison) — EXECUTING
-Plan: 3 of 4
+Phase: 09 (siglip2-so400m-backbone-comparison) — COMPLETE
+Plan: 4 of 4
 **Current phase:** 09
-**Current plan:** 1
-**Status:** Ready to execute
+**Current plan:** 4
+**Status:** Complete
 
 **Progress:**
 
 [██████████] 100%
-Phase 9 [██░░░░░░░░] 25%  SigLIP2-SO400M Backbone Comparison (1/4 plans done)
+Phase 9 [██████████] 100%  SigLIP2-SO400M Backbone Comparison (4/4 plans done)
 
 ---
 

@@ -7,6 +7,7 @@ data/features/
 
 # Training results
 results/
+results_sweep/
 
 # Python
 __pycache__/
@@ -38,3 +39,6 @@ wandb/
 
 # Claude Code
 .claude/
+
+# Firecrawl
+.gsd/firecrawl_api_key
