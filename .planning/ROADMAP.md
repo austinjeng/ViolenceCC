@@ -308,6 +308,32 @@ Plans:
 
 - [ ] 10-04-PLAN.md -- Four-way comparison analysis script, tables, and charts
 
+### Phase 11: Thesis Manuscript
+
+**Goal**: Write the full master's thesis manuscript targeting a workshop venue, integrating all experimental results (CLIP baseline, SigLIP2 backbone comparisons, ablation studies) into a cohesive document with introduction, related work, methodology, experiments, and conclusion chapters
+**Depends on**: Phase 10 (four-way backbone comparison), Phase 7 (hyperparameter sweep), Phase 4/4c (baseline results)
+**Requirements**: None new (writing deliverable, not code)
+**Success Criteria**:
+
+  1. Complete thesis manuscript draft with all required chapters
+  2. All experimental results tables and figures integrated from pipeline outputs
+  3. Workshop-ready formatting and submission compliance
+
+**Plans:** 0/4 plans complete
+Plans:
+**Wave 1**
+
+- [ ] 11-01-PLAN.md -- TTA backbone extension (evaluate_tta.py parameterization + corrupted feature extraction + TTA evaluation grid)
+- [ ] 11-02-PLAN.md -- Paper directory setup + BibTeX library + LaTeX scaffold
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 11-03-PLAN.md -- Publication-quality figures + architecture diagram
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 11-04-PLAN.md -- Complete LaTeX paper draft (full prose, tables, figures, citations)
+
 ---
 
 ## Progress Table
@@ -326,6 +352,7 @@ Plans:
 | 8. SigLIP2 Backbone Comparison | 4/4 | Complete | 2026-05-20 |
 | 9. SigLIP2-SO400M Backbone Comparison | 4/4 | Complete   | 2026-05-21 |
 | 10. SigLIP2 Giant-opt Backbone Comparison | 0/4 | Executing | - |
+| 11. Thesis Manuscript | 0/4 | Planned | - |
 
 ---
 
