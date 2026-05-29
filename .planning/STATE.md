@@ -5,9 +5,9 @@ milestone_name: milestone
 current_phase: 09
 current_plan: 4
 status: complete
-stopped_at: Phase 9 complete — all 4 plans executed, three-way backbone comparison delivered
-last_updated: "2026-05-21T07:11:10.405Z"
-last_activity: 2026-05-21
+stopped_at: Phase 11 context gathered — thesis manuscript decisions captured
+last_updated: "2026-05-29"
+last_activity: 2026-05-29
 progress:
   total_phases: 11
   completed_phases: 11
@@ -18,8 +18,8 @@ progress:
 
 # State: ViolenceCC
 
-**Last updated:** 2026-05-20
-**Session:** Phase 9 complete. Three-way backbone comparison (CLIP vs SigLIP2 ViT-B/16 vs SigLIP2 SO400M) delivered. SO400M strongest on XD-Violence (+7.1pp AP visual-only), recovers near-CLIP on UCF-Crime.
+**Last updated:** 2026-05-29
+**Session:** Phase 11 context gathered. CGW '26 workshop paper decisions captured: full pipeline study, ACM sigconf 8-10pp, experiments-heavy, TTA on all backbones, June 1 professor deadline.
 
 Last activity: 2026-05-21
 
@@ -132,6 +132,7 @@ Targets from PRD v2.3:
 
 - Phase 8 added: SigLIP2 Backbone Comparison — swap CLIP ViT-B/16 with SigLIP2 Giant (google/siglip2-giant-opt-patch16-384), re-extract features, run identical ablations for thesis comparison
 - Phase 9 added: SigLIP2-SO400M Backbone Comparison — swap CLIP ViT-B/16 with SigLIP2 SO400M (google/siglip2-so400m-patch16-256), re-extract features, run identical ablation matrix, compare against both CLIP and SigLIP2 ViT-B/16-256
+- Phase 11 added: Thesis Manuscript — full master's thesis document targeting workshop venue, integrating all experimental results
 
 ### Roadmap Evolution
 
