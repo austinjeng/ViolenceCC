@@ -319,12 +319,12 @@ Plans:
   2. All experimental results tables and figures integrated from pipeline outputs
   3. Workshop-ready formatting and submission compliance
 
-**Plans:** 0/4 plans complete
+**Plans:** 2/4 plans executed
 Plans:
 **Wave 1**
 
-- [ ] 11-01-PLAN.md -- TTA backbone extension (evaluate_tta.py parameterization + corrupted feature extraction + TTA evaluation grid)
-- [ ] 11-02-PLAN.md -- Paper directory setup + BibTeX library + LaTeX scaffold
+- [x] 11-01-PLAN.md -- TTA backbone extension (evaluate_tta.py parameterization + corrupted feature extraction + TTA evaluation grid)
+- [x] 11-02-PLAN.md -- Paper directory setup + BibTeX library + LaTeX scaffold
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -352,7 +352,7 @@ Plans:
 | 8. SigLIP2 Backbone Comparison | 4/4 | Complete | 2026-05-20 |
 | 9. SigLIP2-SO400M Backbone Comparison | 4/4 | Complete   | 2026-05-21 |
 | 10. SigLIP2 Giant-opt Backbone Comparison | 0/4 | Executing | - |
-| 11. Thesis Manuscript | 0/4 | Planned | - |
+| 11. Thesis Manuscript | 2/4 | In Progress|  |
 
 ---
 
