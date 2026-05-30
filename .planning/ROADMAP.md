@@ -319,7 +319,7 @@ Plans:
   2. All experimental results tables and figures integrated from pipeline outputs
   3. Workshop-ready formatting and submission compliance
 
-**Plans:** 2/4 plans executed
+**Plans:** 3/4 plans executed
 Plans:
 **Wave 1**
 
@@ -328,7 +328,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 11-03-PLAN.md -- Publication-quality figures + architecture diagram
+- [x] 11-03-PLAN.md -- Publication-quality figures + architecture diagram
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -352,7 +352,7 @@ Plans:
 | 8. SigLIP2 Backbone Comparison | 4/4 | Complete | 2026-05-20 |
 | 9. SigLIP2-SO400M Backbone Comparison | 4/4 | Complete   | 2026-05-21 |
 | 10. SigLIP2 Giant-opt Backbone Comparison | 0/4 | Executing | - |
-| 11. Thesis Manuscript | 2/4 | In Progress|  |
+| 11. Thesis Manuscript | 3/4 | In Progress|  |
 
 ---
 
