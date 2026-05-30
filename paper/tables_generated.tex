@@ -1,0 +1,54 @@
+% Table 1: UCF-Crime Ablation Results (AUC)
+\begin{table*}[t]
+\caption{Ablation study on UCF-Crime. AUC (\%) reported for each fusion variant across four visual backbones. Gated Fusion rows show mean$\pm$std over three seeds (42, 123, 2024). Best result per row in \textbf{bold}. $\Delta$ relative to CLIP ViT-B/16 baseline.}
+\label{tab:ucf-ablation}
+\begin{tabular}{l c c c c c}
+\toprule
+Variant & CLIP ViT-B/16 & SigLIP2 Base & SigLIP2 SO400M & SigLIP2 Giant & Best $\Delta$ \\
+\midrule
+Skeleton Only & \textbf{71.8} & --- & --- & --- & --- \\
+Visual Only & 81.7 & 79.1 & 81.4 & \textbf{83.1} & $\uparrow$+1.4 \\
+\midrule
+Late Fusion & 78.7 & 79.9 & 80.3 & \textbf{80.9} & $\uparrow$+2.2 \\
+Gated Fusion & 82.0$\pm$0.3 & 79.8$\pm$0.2 & 81.9$\pm$0.4 & \textbf{83.3$\pm$0.3} & $\uparrow$+1.3 \\
+GF 2-Person & 81.7 & 79.5 & 82.0 & \textbf{83.5} & $\uparrow$+1.8 \\
+GF Mean-Only & 81.8 & 80.0 & 82.4 & \textbf{83.6} & $\uparrow$+1.8 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+% Table 2: XD-Violence Ablation Results (AP)
+\begin{table*}[t]
+\caption{Ablation study on XD-Violence. AP (\%) reported for each fusion variant across four visual backbones. Gated Fusion rows show mean$\pm$std over three seeds. Best result per row in \textbf{bold}. $\Delta$ relative to CLIP ViT-B/16 baseline.}
+\label{tab:xd-ablation}
+\begin{tabular}{l c c c c c}
+\toprule
+Variant & CLIP ViT-B/16 & SigLIP2 Base & SigLIP2 SO400M & SigLIP2 Giant & Best $\Delta$ \\
+\midrule
+Skeleton Only & \textbf{41.3} & --- & --- & --- & --- \\
+Visual Only & 70.5 & 72.1 & \textbf{77.6} & 76.3 & $\uparrow$+7.1 \\
+\midrule
+Late Fusion & 65.5 & 65.6 & 66.4 & \textbf{66.6} & $\uparrow$+1.1 \\
+Gated Fusion & 71.0$\pm$1.1 & \textbf{74.7$\pm$2.9} & 73.8$\pm$2.8 & 73.8$\pm$1.6 & $\uparrow$+3.7 \\
+GF 2-Person & 71.0 & 73.1 & \textbf{74.8} & 72.7 & $\uparrow$+3.8 \\
+GF Mean-Only & 69.6 & 72.4 & 72.5 & \textbf{73.8} & $\uparrow$+4.2 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+% Table 3: TTA Results on UCF-Crime-C
+\begin{table}[t]
+\caption{Test-time adaptation results on UCF-Crime-C, averaged over 20 corruption conditions (4 types $\times$ 5 severities). AUC (\%) reported. Best method per backbone in \textbf{bold}.}
+\label{tab:tta}
+\begin{tabular}{l c c c c}
+\toprule
+Backbone & Source-Only & TENT & SAR & $\Delta$ \\
+\midrule
+CLIP ViT-B/16 & 61.4 & 61.6 & \textbf{62.0} & $\uparrow$+0.6 \\
+SigLIP2 Base & \textbf{56.8} & 56.5 & 56.5 & 0.0 \\
+SigLIP2 SO400M & \textbf{58.7} & 58.4 & 58.7 & 0.0 \\
+SigLIP2 Giant & 60.3 & 60.3 & \textbf{60.4} & $\uparrow$+0.0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
