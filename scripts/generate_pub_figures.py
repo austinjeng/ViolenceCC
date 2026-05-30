@@ -107,11 +107,12 @@ def _setup_style():
 # =============================================================================
 
 def find_best_temporal_video() -> str:
-    """Find UCF test video where gated fusion most clearly outperforms both
-    single-modality baselines (skeleton-only and visual-only).
+    """Find UCF test video where gated fusion shows clear temporal dynamics
+    AND outperforms single-modality baselines.
 
-    Heuristic: maximize mean(gated) - max(mean(clip), mean(skel))
-    among anomalous videos (non-Normal).
+    Heuristic: score = range(gated) * (1 + advantage_over_both)
+    Prioritizes videos with high temporal variation in gated fusion scores
+    AND where fusion outperforms both skeleton-only and visual-only.
     """
     runs = {}
     for variant, run_name in [
@@ -122,24 +123,29 @@ def find_best_temporal_video() -> str:
         path = RESULTS_DIR / run_name / "eval_scores.npz"
         if not path.exists():
             print(f"  [WARN] Missing {path}")
-            return "Shooting008"  # fallback
+            return "Shooting008"
         runs[variant] = np.load(path)
 
     anom_vids = [k for k in runs["gated"].files if not k.startswith("Normal")]
 
-    best_vid, best_adv = "Shooting008", -999
+    best_vid, best_score = "Shooting008", -999
     for vid in anom_vids:
         if vid not in runs["clip"].files or vid not in runs["skel"].files:
             continue
-        g = runs["gated"][vid].mean()
-        c = runs["clip"][vid].mean()
-        s = runs["skel"][vid].mean()
-        adv = g - max(c, s)
-        if adv > best_adv:
-            best_adv = adv
+        g = runs["gated"][vid]
+        c = runs["clip"][vid]
+        s = runs["skel"][vid]
+        g_range = float(g.max() - g.min())
+        adv = float(g.max()) - max(float(c.max()), float(s.max()))
+        n_frames = len(g)
+        if g_range < 0.3 or n_frames > 10000:
+            continue
+        score = g_range * (1.0 + max(adv, 0.0))
+        if score > best_score:
+            best_score = score
             best_vid = vid
 
-    print(f"  Selected temporal video: {best_vid} (advantage={best_adv:.4f})")
+    print(f"  Selected temporal video: {best_vid} (score={best_score:.4f})")
     return best_vid
 
 
