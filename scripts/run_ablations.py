@@ -106,6 +106,7 @@ class TTARunSpec:
     """Single TTA evaluation run (D-09).
 
     D-13 deterministic naming: {method}_{type}_{severity}_lr{lr}[_rho{rho}]
+    Phase 11: backbone field for multi-backbone TTA evaluation.
     """
 
     corruption_type: str   # gaussian_noise, motion_blur, jpeg_compression, brightness
@@ -113,12 +114,24 @@ class TTARunSpec:
     method: str            # source_only, tent, sar
     lr: float              # from {1e-4, 5e-4, 1e-3, 5e-3}
     rho: float = 0.0      # SAR only, from {0.001, 0.005, 0.01, 0.05, 0.1}
-    source_run: str = "ucf_gated_fusion_s42"
+    backbone: str = "clip-vit-b-16"
+    source_run: str = ""   # auto-resolved from backbone if empty
+
+    def __post_init__(self):
+        """Auto-resolve source_run from backbone if not explicitly set."""
+        if not self.source_run:
+            from src.tta.evaluate_tta import BACKBONE_SOURCE_RUNS
+            self.source_run = BACKBONE_SOURCE_RUNS[self.backbone]
 
     @property
     def run_name(self) -> str:
-        """D-13 deterministic naming: {method}_{type}_{severity}_lr{lr}[_rho{rho}]"""
-        base = f"{self.method}_{self.corruption_type}_{self.severity}_lr{self.lr}"
+        """D-13 deterministic naming: [backbone_]{method}_{type}_{severity}_lr{lr}[_rho{rho}]"""
+        # Non-CLIP backbones get a prefix to avoid collisions with existing runs
+        prefix = ""
+        if self.backbone != "clip-vit-b-16":
+            from src.tta.evaluate_tta import BACKBONE_FEATURE_PREFIX
+            prefix = f"{BACKBONE_FEATURE_PREFIX[self.backbone]}_"
+        base = f"{prefix}{self.method}_{self.corruption_type}_{self.severity}_lr{self.lr}"
         if self.method == "sar" and self.rho > 0:
             base += f"_rho{self.rho}"
         return base
@@ -454,6 +467,33 @@ TTA_QUEUES = {
     ],  # 400 runs
 }
 
+# ----------------------------------------------------------------------
+# Phase 11 TTA backbone queues: extend TTA to siglip2, so400m, giant.
+# Uses placeholder LR/rho from best CLIP configs (updated after
+# analyze_tta_best.py finds optimal values from 500 CLIP runs).
+# source_only + tent + sar for each non-CLIP backbone.
+# 3 backbones x (20 source + 20 tent + 100 sar) = 420 runs total.
+# ----------------------------------------------------------------------
+_TTA_BACKBONES = ["siglip2-base", "siglip2-so400m", "siglip2-giant"]
+
+TTA_QUEUES["tta_backbone_source"] = [
+    TTARunSpec(ct, sev, "source_only", 0.0, backbone=bb)
+    for bb in _TTA_BACKBONES
+    for ct in _CORRUPTION_TYPES for sev in _SEVERITIES
+]  # 3 x 20 = 60 runs
+
+TTA_QUEUES["tta_backbone_tent"] = [
+    TTARunSpec(ct, sev, "tent", 1e-3, backbone=bb)
+    for bb in _TTA_BACKBONES
+    for ct in _CORRUPTION_TYPES for sev in _SEVERITIES
+]  # 3 x 20 = 60 runs (placeholder lr=1e-3)
+
+TTA_QUEUES["tta_backbone_sar"] = [
+    TTARunSpec(ct, sev, "sar", 1e-3, rho=0.05, backbone=bb)
+    for bb in _TTA_BACKBONES
+    for ct in _CORRUPTION_TYPES for sev in _SEVERITIES
+]  # 3 x 20 = 60 runs (placeholder lr=1e-3, rho=0.05)
+
 
 # ----------------------------------------------------------------------
 # Helpers
@@ -617,6 +657,11 @@ def run_queue(
 # ----------------------------------------------------------------------
 # Phase 5 TTA run helpers (D-09)
 # ----------------------------------------------------------------------
+def _tta_subdir(spec: "TTARunSpec") -> str:
+    """Return 'tta' for CLIP backbone, 'tta_backbone' for others."""
+    return "tta" if spec.backbone == "clip-vit-b-16" else "tta_backbone"
+
+
 def run_one_tta(
     spec: "TTARunSpec",
     results_root: Path,
@@ -624,7 +669,7 @@ def run_one_tta(
     timeout_s: int = 600,
 ) -> dict:
     """Run one TTA evaluation via subprocess to src/tta/evaluate_tta.py."""
-    run_dir = results_root / "tta" / spec.run_name
+    run_dir = results_root / _tta_subdir(spec) / spec.run_name
     status = {
         "spec": spec.run_name,
         "start_time": time.strftime("%Y-%m-%dT%H:%M:%S"),
@@ -639,6 +684,7 @@ def run_one_tta(
         "--method", spec.method,
         "--lr", str(spec.lr),
         "--rho", str(spec.rho),
+        "--backbone", spec.backbone,
         "--output-dir", str(run_dir),
     ]
     try:
@@ -684,6 +730,7 @@ def run_one_tta(
         "severity": spec.severity,
         "lr": spec.lr,
         "rho": spec.rho if spec.method == "sar" else "",
+        "backbone": spec.backbone,
     }
     results_index_append(results_root / "results-index.csv", row)
     status["phase"] = "done"
@@ -700,7 +747,7 @@ def run_queue_tta(
     and continue. Returns a summary with succeeded/skipped/failed."""
     summary = {"succeeded": [], "skipped": [], "failed": []}
     for spec in specs:
-        run_dir = results_root / "tta" / spec.run_name
+        run_dir = results_root / _tta_subdir(spec) / spec.run_name
         if is_done(run_dir):
             summary["skipped"].append(spec.run_name)
             print(f"[skip] {spec.run_name} (.done present)")

@@ -53,6 +53,24 @@ logger = logging.getLogger(__name__)
 
 CORRUPTION_TYPES = ("gaussian_noise", "jpeg_compression", "brightness", "motion_blur")
 
+# Backbone -> feature subdirectory prefix (matches extract_clip.py output_subdir)
+BACKBONE_FEATURE_PREFIX = {
+    "clip-vit-b-16": "clip",
+    "siglip2-base": "siglip2",
+    "siglip2-so400m": "siglip2_so400m",
+    "siglip2-giant": "siglip2_giant",
+}
+
+# Backbone -> s42 gated fusion source run directory name
+BACKBONE_SOURCE_RUNS = {
+    "clip-vit-b-16": "ucf_gated_fusion_s42",
+    "siglip2-base": "ucf_gated_fusion_siglip2_s42",
+    "siglip2-so400m": "ucf_gated_fusion_so400m_s42",
+    "siglip2-giant": "ucf_gated_fusion_giant_s42",
+}
+
+BACKBONE_CHOICES = list(BACKBONE_FEATURE_PREFIX.keys())
+
 
 def parse_args(argv=None):
     ap = argparse.ArgumentParser(description="TTA evaluation (Phase 5 TTA-06)")
@@ -63,6 +81,9 @@ def parse_args(argv=None):
     ap.add_argument("--method", required=True, choices=["source_only", "tent", "sar"])
     ap.add_argument("--lr", type=float, default=1e-3)
     ap.add_argument("--rho", type=float, default=0.05, help="SAR only: SAM rho")
+    ap.add_argument("--backbone", type=str, default="clip-vit-b-16",
+                    choices=BACKBONE_CHOICES,
+                    help="Vision backbone for feature loading (default: clip-vit-b-16)")
     ap.add_argument("--output-dir", required=True,
                     help="Output directory for eval_metrics.json + eval_scores.npz + .done")
     ap.add_argument("--feature-root", type=str, default="E:/features/ucf",
@@ -84,14 +105,20 @@ def _load_test_video_features(
     corruption_type: str,
     severity: int,
     feature_root: Path,
+    backbone: str = "clip-vit-b-16",
 ) -> tuple:
     """Load corrupted skel + clip .npy for one test video.
 
     Per M7: gaussian_noise and brightness use CLEAN skeleton cache
     (corruption only affects pixel-domain, not skeleton joint coordinates
     extracted from clean video).
+
+    Args:
+        backbone: Vision backbone key — determines feature subdirectory prefix
+                  via BACKBONE_FEATURE_PREFIX (e.g. 'clip', 'siglip2_giant').
     """
-    clip_dir = feature_root / f"clip_{corruption_type}_{severity}"
+    prefix = BACKBONE_FEATURE_PREFIX[backbone]
+    clip_dir = feature_root / f"{prefix}_{corruption_type}_{severity}"
     if corruption_type in SKELETON_REEXTRACT_TYPES:
         skel_dir = feature_root / f"skeleton_{corruption_type}_{severity}"
     else:
@@ -207,6 +234,7 @@ def run_tta_evaluation(
     rho: float,
     output_dir: Path,
     feature_root: Path | None = None,
+    backbone: str = "clip-vit-b-16",
 ):
     """Full TTA evaluation for one configuration.
 
@@ -219,6 +247,7 @@ def run_tta_evaluation(
         rho: SAM rho parameter (SAR only).
         output_dir: Directory for eval_metrics.json + eval_scores.npz + .done.
         feature_root: Root directory for corruption feature caches.
+        backbone: Vision backbone key for feature subdirectory routing.
     """
     if feature_root is None:
         feature_root = Path("E:/features/ucf")
@@ -261,7 +290,7 @@ def run_tta_evaluation(
     n_skipped = 0
     for vid in video_ids:
         skel, clip = _load_test_video_features(
-            vid, corruption_type, severity, feature_root
+            vid, corruption_type, severity, feature_root, backbone=backbone
         )
         if skel is None:
             n_skipped += 1
@@ -299,6 +328,7 @@ def run_tta_evaluation(
         "severity": severity,
         "lr": lr,
         "rho": rho if method == "sar" else None,
+        "backbone": backbone,
         "source_run": str(source_run.name),
         "n_adapted_params": n_adapted_params,
         "n_videos_evaluated": len(per_video_snippet_scores),
@@ -368,6 +398,7 @@ def main(argv=None) -> int:
         rho=args.rho,
         output_dir=Path(args.output_dir).resolve(),
         feature_root=Path(args.feature_root),
+        backbone=args.backbone,
     )
     return 0
 
