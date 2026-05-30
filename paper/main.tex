@@ -1,0 +1,221 @@
+%%
+%% Main LaTeX source for CGW '26 submission
+%%
+\documentclass[sigconf]{acmart}
+
+%% BibTeX command
+\AtBeginDocument{%
+  \providecommand\BibTeX{{%
+    \normalfont B\kern-0.5em{\scshape i\kern-0.25em b}\kern-0.8em\TeX}}}
+
+%% Rights management
+\setcopyright{rightsretained}
+\copyrightyear{2026}
+\acmYear{2026}
+\acmDOI{}
+
+%% Conference metadata
+\acmConference[CGW '26]{}{July 09--10, 2026}{Hsinchu City, Taiwan}
+\acmISBN{}
+
+\settopmatter{printacmref=false}
+
+\begin{document}
+
+\title{Dual-Modal Skeleton-Visual Fusion for Weakly Supervised Violence Detection: A Multi-Backbone Study}
+
+\author{Austin Jeng}
+\affiliation{%
+  \institution{National Yang Ming Chiao Tung University}
+  \city{Hsinchu}
+  \country{Taiwan}}
+
+\begin{abstract}
+% TODO: Write abstract
+\end{abstract}
+
+\begin{CCSXML}
+<ccs2012>
+  <concept>
+    <concept_id>10010147.10010178.10010224.10010225.10010228</concept_id>
+    <concept_desc>Computing methodologies~Activity recognition and understanding</concept_desc>
+    <concept_significance>500</concept_significance>
+  </concept>
+  <concept>
+    <concept_id>10010147.10010257.10010293.10010294</concept_id>
+    <concept_desc>Computing methodologies~Neural networks</concept_desc>
+    <concept_significance>300</concept_significance>
+  </concept>
+</ccs2012>
+\end{CCSXML}
+
+\ccsdesc[500]{Computing methodologies~Activity recognition and understanding}
+\ccsdesc[300]{Computing methodologies~Neural networks}
+
+\keywords{video anomaly detection, weakly supervised learning, multi-modal fusion, skeleton graph convolution, test-time adaptation}
+
+\maketitle
+
+%%
+%% Section 1: Introduction
+%%
+\section{Introduction}
+% TODO: Write introduction
+
+% \begin{figure}[t]
+%   \centering
+%   \includegraphics[width=\columnwidth]{figures/pipeline-overview.pdf}
+%   \caption{Overview of the dual-modal fusion pipeline.}
+%   \label{fig:pipeline-overview}
+% \end{figure}
+
+%%
+%% Section 2: Related Work
+%%
+\section{Related Work}
+
+\subsection{Video Anomaly Detection}
+% TODO: Write video anomaly detection related work
+
+\subsection{Multi-Modal Fusion}
+% TODO: Write multi-modal fusion related work
+
+\subsection{Test-Time Adaptation}
+% TODO: Write test-time adaptation related work
+
+%%
+%% Section 3: Methodology
+%%
+\section{Methodology}
+
+% \begin{figure}[t]
+%   \centering
+%   \includegraphics[width=\columnwidth]{figures/architecture.pdf}
+%   \caption{Architecture of the dual-modal fusion framework.}
+%   \label{fig:architecture}
+% \end{figure}
+
+\subsection{Skeleton Extraction with RTMPose}
+% TODO: Write skeleton extraction methodology
+
+\subsection{CTR-GCN Feature Extraction}
+% TODO: Write CTR-GCN feature extraction methodology
+
+\subsection{Visual-Language Feature Extraction}
+% TODO: Write visual-language feature extraction methodology
+
+\subsection{Fusion Mechanisms}
+% TODO: Write fusion mechanisms methodology
+
+% \begin{figure}[t]
+%   \centering
+%   \includegraphics[width=\columnwidth]{figures/fusion-detail.pdf}
+%   \caption{Comparison of fusion mechanisms.}
+%   \label{fig:fusion-detail}
+% \end{figure}
+
+\subsection{MIL Training with Ranking Loss}
+% TODO: Write MIL training methodology
+
+%%
+%% Section 4: Experiments
+%%
+\section{Experiments}
+
+\subsection{Datasets}
+% TODO: Write datasets description
+
+% \begin{table}[t]
+%   \caption{Dataset statistics.}
+%   \label{tab:datasets}
+%   \begin{tabular}{lrrr}
+%     \toprule
+%     Dataset & Videos & Anomaly Classes & Duration (hrs) \\
+%     \midrule
+%     UCF-Crime & 1,900 & 13 & 128 \\
+%     XD-Violence & 4,754 & 6 & 217 \\
+%     \bottomrule
+%   \end{tabular}
+% \end{table}
+
+\subsection{Implementation Details}
+% TODO: Write implementation details
+
+\subsection{Ablation Study}
+% TODO: Write ablation study
+
+% \begin{table}[t]
+%   \caption{Ablation study on UCF-Crime.}
+%   \label{tab:ablation}
+%   \begin{tabular}{lccc}
+%     \toprule
+%     Configuration & AUC (\%) & AP (\%) \\
+%     \midrule
+%     % TODO: Fill ablation results
+%     \bottomrule
+%   \end{tabular}
+% \end{table}
+
+\subsection{Backbone Comparison}
+% TODO: Write backbone comparison
+
+% \begin{table}[t]
+%   \caption{Backbone comparison on UCF-Crime.}
+%   \label{tab:backbone}
+%   \begin{tabular}{lccc}
+%     \toprule
+%     Backbone & AUC (\%) & AP (\%) \\
+%     \midrule
+%     % TODO: Fill backbone results
+%     \bottomrule
+%   \end{tabular}
+% \end{table}
+
+% \begin{figure}[t]
+%   \centering
+%   \includegraphics[width=\columnwidth]{figures/backbone-comparison.pdf}
+%   \caption{Backbone comparison results.}
+%   \label{fig:backbone-comparison}
+% \end{figure}
+
+\subsection{TTA Results}
+% TODO: Write TTA results
+
+% \begin{table}[t]
+%   \caption{Test-time adaptation results.}
+%   \label{tab:tta}
+%   \begin{tabular}{lccc}
+%     \toprule
+%     Method & AUC (\%) & AP (\%) \\
+%     \midrule
+%     % TODO: Fill TTA results
+%     \bottomrule
+%   \end{tabular}
+% \end{table}
+
+%%
+%% Section 5: Discussion
+%%
+\section{Discussion}
+% TODO: Write discussion
+
+%%
+%% Section 6: Limitations and Future Work
+%%
+\section{Limitations and Future Work}
+% TODO: Write limitations and future work
+
+%%
+%% Section 7: Conclusion
+%%
+\section{Conclusion}
+% TODO: Write conclusion
+
+\begin{acks}
+% TODO: Write acknowledgments
+\end{acks}
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{references}
+
+\end{document}
