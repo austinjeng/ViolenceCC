@@ -8,6 +8,7 @@ paths:
   clip_features: "E:/features/ucf/siglip2_so400m_mean"
   splits_dir: "data/splits"
   results_dir: "results"
+  snippet_boundaries_dir: "E:/snippets/ucf"
 
 model:
   variant: gated_fusion
@@ -32,7 +33,7 @@ train:
   k_topk: 3
   margin: 1.0
   lam_sparse: 8.0e-3
-  lam_smooth: 8.0e-4
+  lam_smooth: 0.0
 
 wandb:
   project: violencecc

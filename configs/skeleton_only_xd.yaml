@@ -30,7 +30,7 @@ train:
   k_topk: 3               # D-01
   margin: 1.0             # D-02
   lam_sparse: 8.0e-3      # D-03
-  lam_smooth: 8.0e-4      # D-03
+  lam_smooth: 0.0      # D-03
 
 wandb:
   project: violencecc     # D-13
