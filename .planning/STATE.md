@@ -175,6 +175,7 @@ None currently.
 | 260506-3uu | XD-Violence presentation materials — markdown reports (EN + ZH-TW) with 20 charts | 2026-05-06 | d3e4e48 | [260506-3uu-xd-violence-presentation-materials-markd](./quick/260506-3uu-xd-violence-presentation-materials-markd/) |
 | 260531-mcp | Add project-scoped Overleaf MCP config (.mcp.json, env-var placeholders) | 2026-05-31 | 42d368a | — (inline /gsd:fast) |
 | 260601-gap | Reconcile paper main.tex methodology with actual configs/results (text→code fixes from code review) | 2026-06-01 | a12b64e | [260601-gap-reconcile-paper-main-tex-methodology-and](./quick/260601-gap-reconcile-paper-main-tex-methodology-and/) |
+| 260601-c1f | Reframe §4.1 to remove false no-test-leakage claim (C1 honest fix) | 2026-06-01 | (this commit) | — (inline /gsd:fast) |
 
 ---
 
