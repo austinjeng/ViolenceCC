@@ -23,7 +23,7 @@ decisions:
 metrics:
   duration_seconds: 491
   completed_date: "2026-05-30"
-  tasks_completed: 1
+  tasks_completed: 2
   tasks_total: 2
 ---
 
@@ -77,9 +77,23 @@ Backbone-parameterized TTA evaluation infrastructure with CLIP best-config analy
 | TENT | 5e-3 | - | 0.6158 | 20 |
 | source_only | - | - | 0.6145 | 20 |
 
-## Task 2: Run TTA Backbone Experiments [AWAITING HUMAN EXECUTION]
+## Task 2: Run TTA Backbone Experiments [COMPLETE]
 
-Task 2 is a human checkpoint. The user must run GPU-intensive jobs manually.
+All GPU jobs completed successfully (458.9 min total):
+- 60/60 corrupted feature extractions succeeded (3 backbones x 4 corruptions x 5 severities)
+- 3 TTA evaluation queues (source, tent, sar) completed
+- Summary CSV generated at `results/tta_backbone/summary.csv`
+
+### TTA Backbone Results
+
+| Backbone | Source-Only AUC | TENT AUC | SAR AUC | Best Delta |
+|----------|----------------|----------|---------|------------|
+| CLIP ViT-B/16 | 0.6145 | 0.6158 | **0.6202** | +0.57% |
+| SigLIP2 Base | 0.5680 | 0.5647 | 0.5655 | -0.25% |
+| SigLIP2 SO400M | 0.5873 | 0.5844 | 0.5870 | -0.03% |
+| SigLIP2 Giant | 0.6034 | 0.6031 | **0.6037** | +0.03% |
+
+**Key finding:** LN-based TTA shows marginal improvement on CLIP only (+0.57% SAR). SigLIP2 variants show negligible or slightly negative effects. Confirms honest negative finding for the paper.
 
 ## Deviations from Plan
 
