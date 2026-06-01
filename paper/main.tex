@@ -122,7 +122,7 @@ Test-time adaptation seeks to improve model robustness to distribution shift wit
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\textwidth]{figures/fig_architecture.png}
-  \caption{Overview of the dual-modal fusion pipeline. Videos are processed through two parallel streams: (1)~skeleton extraction via RTMPose followed by CTR-GCN feature encoding, and (2)~visual-language feature extraction via a frozen backbone (CLIP or SigLIP2 variants). The resulting 256-d skeleton features and visual features are combined through either late fusion (concatenation with linear projection) or gated fusion (learned modality weighting with LayerNorm). The fused representation is scored by a snippet-level anomaly classifier trained with MIL ranking loss.}
+  \caption{Overview of the dual-modal fusion pipeline. Videos are processed through two parallel streams: (1)~skeleton extraction via RTMPose followed by CTR-GCN feature encoding, and (2)~visual-language feature extraction via a frozen backbone (CLIP or SigLIP2 variants). The resulting 256-d skeleton features and visual features are combined through either late fusion (equal-weight score averaging) or gated fusion (learned modality weighting with LayerNorm). The fused representation is scored by a snippet-level anomaly classifier trained with MIL ranking loss.}
   \label{fig:architecture}
 \end{figure*}
 
@@ -161,25 +161,25 @@ For each 64-frame snippet, we extract frame-level features at 1~FPS sampling rat
 
 We investigate two fusion strategies for combining skeleton features $\mathbf{s} \in \mathbb{R}^{256}$ with visual features $\mathbf{v} \in \mathbb{R}^{d_v}$:
 
-\textbf{Late Fusion.} The simplest approach concatenates the two feature vectors and projects them to a shared 512-dimensional space through a linear transformation followed by ReLU activation:
+\textbf{Late Fusion.} The simplest approach scores each modality independently and averages the two snippet-level anomaly scores. Each modality is passed through its own classifier head---$h_s(\cdot)$ for the skeleton stream and $h_v(\cdot)$ for the visual stream---and the resulting per-snippet scores are combined with a fixed equal weight:
 \begin{equation}
-    \mathbf{f}_{\text{late}} = \text{ReLU}\left(W_{\text{proj}} \left[ \mathbf{s} \| \mathbf{v} \right] + \mathbf{b}_{\text{proj}}\right)
+    a_{\text{late}} = \tfrac{1}{2}\, h_s(\mathbf{s}) + \tfrac{1}{2}\, h_v(\mathbf{v})
 \end{equation}
-where $[\cdot \| \cdot]$ denotes concatenation and $W_{\text{proj}} \in \mathbb{R}^{512 \times (256 + d_v)}$. This serves as a baseline that treats both modalities equally without learned weighting.
+This serves as a baseline that treats both modalities equally with a fixed weighting and no input-dependent adaptation.
 
 \textbf{Gated Fusion.} To enable the network to learn input-dependent modality weighting, we employ a gated fusion mechanism. Each modality is first projected to a shared 256-d space and normalized:
 \begin{equation}
     \hat{\mathbf{s}} = \text{LN}_s(W_s \mathbf{s} + \mathbf{b}_s), \quad \hat{\mathbf{v}} = \text{LN}_v(W_v \mathbf{v} + \mathbf{b}_v)
 \end{equation}
-A gating scalar $g \in [0, 1]$ is computed from the concatenated projected features:
+A gating vector $\mathbf{g} \in [0, 1]^{256}$ is computed per dimension from the concatenated projected features:
 \begin{equation}
-    g = \sigma\left( W_g \left[ \hat{\mathbf{s}} \| \hat{\mathbf{v}} \right] + b_g \right)
+    \mathbf{g} = \sigma\left( W_g \left[ \hat{\mathbf{s}} \| \hat{\mathbf{v}} \right] + \mathbf{b}_g \right)
 \end{equation}
-The fused representation is a weighted combination:
+The fused representation applies the gated blend together with a residual connection that retains both projected modalities, followed by dropout:
 \begin{equation}
-    \mathbf{f}_{\text{gated}} = \text{LN}_f\left( g \cdot \hat{\mathbf{s}} + (1 - g) \cdot \hat{\mathbf{v}} \right)
+    \mathbf{f}_{\text{gated}} = \text{LN}_f\left( \mathbf{g} \odot \hat{\mathbf{s}} + (1 - \mathbf{g}) \odot \hat{\mathbf{v}} + \hat{\mathbf{s}} + \hat{\mathbf{v}} \right)
 \end{equation}
-where $\text{LN}_s$, $\text{LN}_v$, and $\text{LN}_f$ are LayerNorm~\cite{ba2016layernorm} layers. The use of three LayerNorm layers (rather than BatchNorm) is motivated by the variable batch composition in MIL training and has implications for TTA, as discussed in Section~\ref{sec:tta}.
+where $\odot$ denotes element-wise multiplication and $\text{LN}_s$, $\text{LN}_v$, and $\text{LN}_f$ are LayerNorm~\cite{ba2016layernorm} layers (dropout is applied after $\text{LN}_f$). The residual term $\hat{\mathbf{s}} + \hat{\mathbf{v}}$ gives an effective per-dimension weighting of $(1 + \mathbf{g}) \odot \hat{\mathbf{s}} + (2 - \mathbf{g}) \odot \hat{\mathbf{v}}$, so the gate modulates each modality's \emph{relative} contribution over a baseline that always retains both, rather than suppressing either outright. The use of three LayerNorm layers (rather than BatchNorm) is motivated by the variable batch composition in MIL training and has implications for TTA, as discussed in Section~\ref{sec:tta}.
 
 \subsection{MIL Training with Ranking Loss}
 
@@ -260,7 +260,7 @@ GF Mean-Only & 69.6 & 72.4 & 72.5 & \textbf{73.8} & $\uparrow$+4.2 \\
 
 \textbf{Skeleton features provide complementary information.} The skeleton-only baseline achieves 71.8\% AUC on UCF-Crime and 41.3\% AP on XD-Violence---substantially below the visual-only baselines. However, this lower standalone performance does not diminish the skeleton modality's contribution to fusion. On UCF-Crime, Gated Fusion with CLIP (81.4\%) exceeds the CLIP visual-only baseline (81.1\%), indicating that skeleton features contribute information not captured by visual appearance alone. The same pattern holds for the strongest backbone: SigLIP2 Giant reaches 82.5\% AUC with Gated Fusion versus 82.4\% visual-only.
 
-\textbf{Gated fusion outperforms late fusion consistently.} Across all four backbones and both datasets, the gated fusion mechanism outperforms simple late fusion (concatenation with projection). This gap is particularly notable on XD-Violence, where late fusion with CLIP achieves only 65.5\% AP compared to 71.0\% for gated fusion---a difference of 5.5 percentage points. We attribute this to the learned gating mechanism's ability to weight modalities differently for each input, suppressing the weaker modality when its signal is noisy.
+\textbf{Gated fusion outperforms late fusion consistently.} Across all four backbones and both datasets, the gated fusion mechanism outperforms simple late fusion (equal-weight score averaging). This gap is particularly notable on XD-Violence, where late fusion with CLIP achieves only 65.5\% AP compared to 71.0\% for gated fusion---a difference of 5.5 percentage points. We attribute this to the learned gating mechanism's ability to weight modalities differently for each input, reducing the weaker modality's relative contribution when its signal is noisy.
 
 \begin{figure}[t]
   \centering
@@ -269,7 +269,7 @@ GF Mean-Only & 69.6 & 72.4 & 72.5 & \textbf{73.8} & $\uparrow$+4.2 \\
   \label{fig:temporal-scores}
 \end{figure}
 
-\textbf{Late fusion can degrade performance.} A notable finding is that late fusion sometimes performs worse than the visual-only baseline. On UCF-Crime, CLIP late fusion (78.6\%) falls below CLIP visual-only (81.1\%), a drop of 2.5 percentage points. This suggests that naive concatenation allows the weaker skeleton signal to interfere with the stronger visual features when the projection layer lacks the capacity to learn an appropriate weighting. The gated mechanism resolves this by learning to modulate each modality's contribution.
+\textbf{Late fusion can degrade performance.} A notable finding is that late fusion sometimes performs worse than the visual-only baseline. On UCF-Crime, CLIP late fusion (78.6\%) falls below CLIP visual-only (81.1\%), a drop of 2.5 percentage points. This suggests that the fixed equal weighting lets the weaker skeleton signal drag down every fused score, with no input-dependent mechanism to reduce its weight relative to the stronger visual stream. The gated mechanism resolves this by learning to modulate each modality's contribution.
 
 Figure~\ref{fig:temporal-scores} illustrates the temporal behavior of our gated fusion model on a representative test video, demonstrating sharper anomaly score peaks compared to single-modality baselines.
 
@@ -336,7 +336,7 @@ For the CLIP backbone we apply the best TENT~\cite{wang2021tent} and SAR~\cite{n
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\textwidth]{figures/fig_gating_distribution.pdf}
-  \caption{Gating weight distributions by anomaly category. Left: UCF-Crime. Right: XD-Violence. A gate value of $g > 0.5$ indicates stronger skeleton weighting. Categories involving distinctive human motion patterns (e.g., Fighting, Assault) tend to show higher skeleton weighting compared to scene-level events (e.g., Explosion, Arson).}
+  \caption{Gating weight distributions by anomaly category. Left: UCF-Crime. Right: XD-Violence. A mean gate value $\bar{g} > 0.5$ indicates stronger skeleton weighting. Categories involving distinctive human motion patterns (e.g., Fighting, Assault) tend to show higher skeleton weighting compared to scene-level events (e.g., Explosion, Arson).}
   \label{fig:gating-distribution}
 \end{figure*}
 
@@ -346,7 +346,7 @@ Our results reveal several patterns that merit discussion beyond the per-section
 
 \textbf{Dataset-specific backbone preferences.} The divergence between UCF-Crime and XD-Violence in optimal backbone selection (Giant for UCF-Crime, SO400M for XD-Violence visual-only) has practical implications for system deployment. UCF-Crime consists of fixed-camera surveillance footage where the larger Giant backbone's richer representations may better disambiguate fine-grained anomaly categories. XD-Violence draws from heterogeneous sources including movies, sports broadcasts, and news footage, where SO400M's training on a broader data distribution (400M+ samples) may provide better domain coverage. This finding cautions against selecting a visual backbone based on general-purpose benchmarks alone and suggests that dataset-specific evaluation is essential.
 
-\textbf{The late fusion failure mode.} The consistent underperformance of late fusion relative to both gated fusion and, in some cases, visual-only baselines warrants attention. When the skeleton signal quality is low (as reflected by its 71.8\% standalone AUC on UCF-Crime and 41.3\% AP on XD-Violence), simple concatenation forces the downstream classifier to disentangle useful skeleton information from noise---a task that a single linear projection may lack the capacity to solve. The gated mechanism, by learning to modulate each modality's contribution with a sigmoid gate, provides an implicit attention mechanism that can effectively suppress the skeleton stream for inputs where visual features alone are more informative.
+\textbf{The late fusion failure mode.} The consistent underperformance of late fusion relative to both gated fusion and, in some cases, visual-only baselines warrants attention. Late fusion combines the two modalities with a fixed equal weight, so when the skeleton signal quality is low (as reflected by its 71.8\% standalone AUC on UCF-Crime and 41.3\% AP on XD-Violence) it still contributes half of every score, degrading inputs where the visual stream alone is more reliable. The gated mechanism instead learns an input-dependent, per-dimension reweighting over a residual baseline, allowing it to reduce the skeleton stream's relative contribution for inputs where visual features are more informative.
 
 \textbf{TTA and the LayerNorm barrier.} Our TTA results constitute an informative negative finding that is relevant beyond the VAD domain. As transformer-based architectures increasingly replace convolutional networks in vision pipelines, the transition from BatchNorm to LayerNorm implies that the assumptions underlying popular TTA methods may not hold. In the BN setting, running mean and variance statistics serve as a compressed representation of the source distribution, and entropy minimization effectively recalibrates these statistics to the target distribution~\cite{wang2021tent}. LayerNorm lacks this distributional memory---its normalization is computed independently per sample, so there is no accumulated source-distribution information to update. The affine parameters ($\gamma$, $\beta$) of LN encode feature-level scaling preferences that appear to be largely invariant to the types of distribution shift induced by our corruption conditions. Future TTA approaches for LN-based architectures may need to target feature-level recalibration through mechanisms other than affine parameter adaptation, such as prompt tuning or adapter-based strategies that can capture distributional information without relying on batch statistics.
 
