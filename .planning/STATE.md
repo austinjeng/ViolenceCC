@@ -178,6 +178,7 @@ None currently.
 | 260601-c1f | Reframe §4.1 to remove false no-test-leakage claim (C1 honest fix) | 2026-06-01 | 1866cb3 | — (inline /gsd:fast) |
 | 260601-jtb | Fix H1 UCF eval truncation: full-length recompute script + comparison + eval-code patch (paper numbers NOT yet updated — pending review) | 2026-06-01 | 7bdb3c4 | [260601-jtb-fix-h1-ucf-eval-frame-grid-truncation-fu](./quick/260601-jtb-fix-h1-ucf-eval-frame-grid-truncation-fu/) |
 | 260601-kjm | Propagate H1 full-length UCF numbers into canonical artifacts + regenerated tables/figures + main.tex (UCF headline 83.3→82.5; XD/TTA unchanged; all qualitative claims survive) | 2026-06-01 | 4c352b8 | [260601-kjm-propagate-h1-full-length-ucf-metrics-int](./quick/260601-kjm-propagate-h1-full-length-ucf-metrics-int/) |
+| 260601-mry | H2/H3 Direction A: align gated (residual+vector gate) & late-fusion (score-avg) equations + Discussion with implemented code (9 edits, editorial, no re-run) | 2026-06-01 | ced266f | [260601-mry-h2-h3-direction-a-rewrite-gated-late-fus](./quick/260601-mry-h2-h3-direction-a-rewrite-gated-late-fus/) |
 
 ---
 
