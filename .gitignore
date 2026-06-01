@@ -42,3 +42,15 @@ wandb/
 
 # Firecrawl
 .gsd/firecrawl_api_key
+
+# LaTeX build artifacts (paper/) — global *.log rule above already covers main.log
+paper/main.pdf
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.out
+paper/*.fls
+paper/*.fdb_latexmk
+paper/*.toc
+paper/*.synctex.gz
+paper/*.cut
