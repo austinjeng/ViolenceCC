@@ -40,7 +40,7 @@
 %% Abstract (D-42: written last, placed first)
 %%
 \begin{abstract}
-Weakly supervised video anomaly detection (VAD) aims to localize anomalous events using only video-level labels, yet most existing approaches rely on a single visual modality and assume fixed deployment conditions. We present a dual-modal fusion framework that combines skeleton dynamics from a frozen CTR-GCN encoder with visual-language features from frozen vision-language backbones, trained with multiple instance learning (MIL) ranking loss on frozen backbone features (only the lightweight fusion head is learned). We conduct a systematic study across four visual backbones---CLIP ViT-B/16, SigLIP2 ViT-B/16, SigLIP2 SO400M, and SigLIP2 Giant---on both UCF-Crime and XD-Violence benchmarks. Our gated fusion mechanism with learned modality weighting achieves 83.3\% AUC on UCF-Crime (SigLIP2 Giant) and 74.7\% AP on XD-Violence (SigLIP2 Base), demonstrating that skeleton features provide complementary motion information despite their lower standalone performance. We further investigate LayerNorm-based test-time adaptation (TTA) via TENT and SAR across all four backbones under 20 synthetic corruption conditions. The TTA experiments reveal that entropy minimization on LayerNorm parameters yields marginal improvements (+0.6\% for CLIP with SAR) and no consistent benefit for SigLIP2 variants, suggesting that the batch-normalization assumption underlying current TTA methods does not transfer effectively to LayerNorm-based architectures.
+Weakly supervised video anomaly detection (VAD) aims to localize anomalous events using only video-level labels, yet most existing approaches rely on a single visual modality and assume fixed deployment conditions. We present a dual-modal fusion framework that combines skeleton dynamics from a frozen CTR-GCN encoder with visual-language features from frozen vision-language backbones, trained with multiple instance learning (MIL) ranking loss on frozen backbone features (only the lightweight fusion head is learned). We conduct a systematic study across four visual backbones---CLIP ViT-B/16, SigLIP2 ViT-B/16, SigLIP2 SO400M, and SigLIP2 Giant---on both UCF-Crime and XD-Violence benchmarks. Our gated fusion mechanism with learned modality weighting achieves 82.5\% AUC on UCF-Crime (SigLIP2 Giant) and 74.7\% AP on XD-Violence (SigLIP2 Base), demonstrating that skeleton features provide complementary motion information despite their lower standalone performance. We further investigate LayerNorm-based test-time adaptation (TTA) via TENT and SAR across all four backbones under 20 synthetic corruption conditions. The TTA experiments reveal that entropy minimization on LayerNorm parameters yields marginal improvements (+0.6\% for CLIP with SAR) and no consistent benefit for SigLIP2 variants, suggesting that the batch-normalization assumption underlying current TTA methods does not transfer effectively to LayerNorm-based architectures.
 \end{abstract}
 
 \begin{CCSXML}
@@ -229,12 +229,12 @@ Tables~\ref{tab:ucf-ablation} and~\ref{tab:xd-ablation} present the ablation res
 Variant & CLIP ViT-B/16 & SigLIP2 Base & SigLIP2 SO400M & SigLIP2 Giant & Best $\Delta$ \\
 \midrule
 Skeleton Only & \textbf{71.8} & --- & --- & --- & --- \\
-Visual Only & 81.7 & 79.1 & 81.4 & \textbf{83.1} & $\uparrow$+1.4 \\
+Visual Only & 81.1 & 78.3 & 80.9 & \textbf{82.4} & $\uparrow$+1.2 \\
 \midrule
-Late Fusion & 78.7 & 79.9 & 80.3 & \textbf{80.9} & $\uparrow$+2.2 \\
-Gated Fusion & 82.0$\pm$0.3 & 79.8$\pm$0.2 & 81.9$\pm$0.4 & \textbf{83.3$\pm$0.3} & $\uparrow$+1.3 \\
-GF 2-Person & 81.7 & 79.5 & 82.0 & \textbf{83.5} & $\uparrow$+1.8 \\
-GF Mean-Only & 81.8 & 80.0 & 82.4 & \textbf{83.6} & $\uparrow$+1.8 \\
+Late Fusion & 78.6 & 79.5 & 80.0 & \textbf{80.8} & $\uparrow$+2.2 \\
+Gated Fusion & 81.4$\pm$0.3 & 79.0$\pm$0.1 & 81.3$\pm$0.3 & \textbf{82.5$\pm$0.4} & $\uparrow$+1.2 \\
+GF 2-Person & 81.1 & 78.7 & 81.3 & \textbf{82.7} & $\uparrow$+1.6 \\
+GF Mean-Only & 81.1 & 79.4 & 81.8 & \textbf{83.0} & $\uparrow$+1.9 \\
 \bottomrule
 \end{tabular}
 \end{table*}
@@ -258,7 +258,7 @@ GF Mean-Only & 69.6 & 72.4 & 72.5 & \textbf{73.8} & $\uparrow$+4.2 \\
 \end{tabular}
 \end{table*}
 
-\textbf{Skeleton features provide complementary information.} The skeleton-only baseline achieves 71.8\% AUC on UCF-Crime and 41.3\% AP on XD-Violence---substantially below the visual-only baselines. However, this lower standalone performance does not diminish the skeleton modality's contribution to fusion. On UCF-Crime, Gated Fusion with CLIP (82.0\%) exceeds the CLIP visual-only baseline (81.7\%), indicating that skeleton features contribute information not captured by visual appearance alone. The improvement is more pronounced with stronger backbones: SigLIP2 Giant achieves 83.3\% AUC with Gated Fusion compared to 83.1\% visual-only.
+\textbf{Skeleton features provide complementary information.} The skeleton-only baseline achieves 71.8\% AUC on UCF-Crime and 41.3\% AP on XD-Violence---substantially below the visual-only baselines. However, this lower standalone performance does not diminish the skeleton modality's contribution to fusion. On UCF-Crime, Gated Fusion with CLIP (81.4\%) exceeds the CLIP visual-only baseline (81.1\%), indicating that skeleton features contribute information not captured by visual appearance alone. The same pattern holds for the strongest backbone: SigLIP2 Giant reaches 82.5\% AUC with Gated Fusion versus 82.4\% visual-only.
 
 \textbf{Gated fusion outperforms late fusion consistently.} Across all four backbones and both datasets, the gated fusion mechanism outperforms simple late fusion (concatenation with projection). This gap is particularly notable on XD-Violence, where late fusion with CLIP achieves only 65.5\% AP compared to 71.0\% for gated fusion---a difference of 5.5 percentage points. We attribute this to the learned gating mechanism's ability to weight modalities differently for each input, suppressing the weaker modality when its signal is noisy.
 
@@ -269,7 +269,7 @@ GF Mean-Only & 69.6 & 72.4 & 72.5 & \textbf{73.8} & $\uparrow$+4.2 \\
   \label{fig:temporal-scores}
 \end{figure}
 
-\textbf{Late fusion can degrade performance.} A notable finding is that late fusion sometimes performs worse than the visual-only baseline. On UCF-Crime, CLIP late fusion (78.7\%) falls below CLIP visual-only (81.7\%), a drop of 3.0 percentage points. This suggests that naive concatenation allows the weaker skeleton signal to interfere with the stronger visual features when the projection layer lacks the capacity to learn an appropriate weighting. The gated mechanism resolves this by learning to modulate each modality's contribution.
+\textbf{Late fusion can degrade performance.} A notable finding is that late fusion sometimes performs worse than the visual-only baseline. On UCF-Crime, CLIP late fusion (78.6\%) falls below CLIP visual-only (81.1\%), a drop of 2.5 percentage points. This suggests that naive concatenation allows the weaker skeleton signal to interfere with the stronger visual features when the projection layer lacks the capacity to learn an appropriate weighting. The gated mechanism resolves this by learning to modulate each modality's contribution.
 
 Figure~\ref{fig:temporal-scores} illustrates the temporal behavior of our gated fusion model on a representative test video, demonstrating sharper anomaly score peaks compared to single-modality baselines.
 
@@ -284,13 +284,13 @@ Figure~\ref{fig:temporal-scores} illustrates the temporal behavior of our gated 
 
 A key finding of our study is that \emph{backbone choice interacts with dataset characteristics} in ways that are not predicted by general-purpose benchmark rankings. Figure~\ref{fig:backbone-comparison} visualizes these interactions across all variants.
 
-\textbf{UCF-Crime favors larger backbones.} On UCF-Crime, SigLIP2 Giant consistently achieves the highest scores across nearly all fusion variants: 83.1\% visual-only, 83.3\% gated fusion, and 83.6\% with mean-only pooling. The ranking follows model capacity---Giant $>$ SO400M $\approx$ CLIP $>$ SigLIP2 Base---suggesting that the 13-category surveillance setting benefits from richer visual representations.
+\textbf{UCF-Crime favors larger backbones.} On UCF-Crime, SigLIP2 Giant consistently achieves the highest scores across nearly all fusion variants: 82.4\% visual-only, 82.5\% gated fusion, and 83.0\% with mean-only pooling. The ranking follows model capacity---Giant $>$ SO400M $\approx$ CLIP $>$ SigLIP2 Base---suggesting that the 13-category surveillance setting benefits from richer visual representations.
 
 \textbf{XD-Violence favors SO400M for visual features.} On XD-Violence, SigLIP2 SO400M achieves the highest visual-only AP (77.6\%), exceeding the larger Giant model (76.3\%). This reversal may reflect SO400M's training on a broader data distribution (400M+ samples), which provides better coverage of XD-Violence's more diverse content sourced from movies, sports, and online media rather than fixed-camera surveillance.
 
 \textbf{Fusion redistributes backbone rankings.} The backbone rankings observed for visual-only features do not perfectly predict fusion performance. On XD-Violence, while SO400M leads in visual-only AP (77.6\%), SigLIP2 Base achieves competitive gated fusion performance (74.7\% AP mean over 3 seeds), indicating that the interaction between skeleton and visual features depends on the specific representational properties of each backbone rather than its raw visual capacity alone. This redistribution suggests that different backbones exhibit different degrees of complementarity with the skeleton modality, a finding that would be missed in single-backbone evaluations.
 
-\textbf{Seed stability.} On UCF-Crime, Gated Fusion exhibits low variance across seeds for all backbones (standard deviation 0.2--0.4\% AUC), reflecting stable training dynamics on this dataset. On XD-Violence, variance is notably higher for SigLIP2 Base (2.9\% AP std) and SO400M (2.8\% AP std) compared to CLIP (1.1\% AP std) and Giant (1.6\% AP std). We attribute this increased variance to two factors: (1)~AP is inherently more sensitive to score calibration than AUC, amplifying the effect of random initialization on precision-recall trade-offs; and (2)~XD-Violence's category imbalance and heterogeneous video sources create a more complex optimization landscape where different initializations may converge to qualitatively different local minima.
+\textbf{Seed stability.} On UCF-Crime, Gated Fusion exhibits low variance across seeds for all backbones (standard deviation 0.1--0.4\% AUC), reflecting stable training dynamics on this dataset. On XD-Violence, variance is notably higher for SigLIP2 Base (2.9\% AP std) and SO400M (2.8\% AP std) compared to CLIP (1.1\% AP std) and Giant (1.6\% AP std). We attribute this increased variance to two factors: (1)~AP is inherently more sensitive to score calibration than AUC, amplifying the effect of random initialization on precision-recall trade-offs; and (2)~XD-Violence's category imbalance and heterogeneous video sources create a more complex optimization landscape where different initializations may converge to qualitatively different local minima.
 
 \subsection{TTA Results}
 \label{sec:tta}
@@ -359,7 +359,7 @@ Our results reveal several patterns that merit discussion beyond the per-section
 
 Our study has several limitations that should be considered when interpreting the results.
 
-\textbf{Performance gaps.} Our best UCF-Crime result (83.6\% AUC with SigLIP2 Giant GF Mean-Only) falls below the published performance of methods that use end-to-end fine-tuned backbones or temporal modeling specifically designed for anomaly detection. This gap reflects our architectural choice to freeze all backbone encoders, which prioritizes computational efficiency and modularity over peak performance. Unfreezing selected backbone layers or incorporating temporal transformers could improve absolute numbers but would increase training cost substantially on our single-GPU setup.
+\textbf{Performance gaps.} Our best UCF-Crime result (83.0\% AUC with SigLIP2 Giant GF Mean-Only) falls below the published performance of methods that use end-to-end fine-tuned backbones or temporal modeling specifically designed for anomaly detection. This gap reflects our architectural choice to freeze all backbone encoders, which prioritizes computational efficiency and modularity over peak performance. Unfreezing selected backbone layers or incorporating temporal transformers could improve absolute numbers but would increase training cost substantially on our single-GPU setup.
 
 \textbf{Seed sensitivity on XD-Violence.} The XD-Violence gated fusion results exhibit higher variance across seeds (standard deviation up to 2.9\% for SigLIP2 Base) compared to UCF-Crime (maximum 0.4\%). This sensitivity to initialization suggests that the AP metric and XD-Violence's imbalanced category distribution create a more challenging optimization landscape. Future work should investigate ensemble strategies or variance-reduction techniques for more stable training.
 
@@ -384,7 +384,7 @@ We have presented a dual-modal fusion framework for weakly supervised video anom
 
 First, skeleton features provide complementary motion information that consistently improves gated fusion performance over visual-only baselines, despite the skeleton modality's substantially lower standalone performance (71.8\% AUC on UCF-Crime). The gated mechanism learns category-adaptive modality weighting, assigning higher skeleton weights to motion-intensive anomaly types.
 
-Second, backbone choice interacts with dataset characteristics in non-trivial ways. SigLIP2 Giant achieves the best UCF-Crime results (83.3\% AUC with gated fusion, 83.6\% with mean-only pooling), while SigLIP2 SO400M leads on XD-Violence visual-only features (77.6\% AP). These dataset-specific preferences underscore the importance of multi-backbone evaluation for VAD system design.
+Second, backbone choice interacts with dataset characteristics in non-trivial ways. SigLIP2 Giant achieves the best UCF-Crime results (82.5\% AUC with gated fusion, 83.0\% with mean-only pooling), while SigLIP2 SO400M leads on XD-Violence visual-only features (77.6\% AP). These dataset-specific preferences underscore the importance of multi-backbone evaluation for VAD system design.
 
 Third, our investigation of LayerNorm-based test-time adaptation via TENT and SAR reveals an informative negative result: entropy minimization on LN affine parameters provides at most marginal improvement (+0.6\% with CLIP SAR) and no consistent benefit for SigLIP2 variants across 20 corruption conditions. This finding highlights a gap in current TTA methodology as architectures transition from BatchNorm to LayerNorm.
 
