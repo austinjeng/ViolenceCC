@@ -25,6 +25,7 @@ import json
 import sys
 import tempfile
 import time
+import warnings
 from datetime import datetime
 from pathlib import Path
 
@@ -277,11 +278,37 @@ def _build_frame_arrays(cfg: dict, per_video_snippet_scores: dict):
     snippet_window = 64
     upsample_factor = 10
 
+    # H1: optionally derive the TRUE full video length from snippet boundary
+    # JSONs (total_frames*upsample) instead of the snippet-grid length
+    # (len(scores)*64*10), which drops the trailing partial 64-PNG window and
+    # truncates ~8.6% of frames. Gated behind paths.snippet_boundaries_dir so
+    # this is non-breaking: runs without the cfg key behave exactly as before
+    # (plus one warning).
+    boundaries_dir = cfg.get("paths", {}).get("snippet_boundaries_dir")
+    _warned_truncated = False
+
     frames_map: dict = {}
     labels_map: dict = {}
     cats_map: dict = {}
     for vid, scores in per_video_snippet_scores.items():
-        n_frames = len(scores) * snippet_window * upsample_factor
+        n_frames = None
+        if boundaries_dir:
+            bpath = Path(boundaries_dir) / f"{vid}_boundaries.json"
+            if bpath.exists():
+                with open(bpath, "r", encoding="utf-8") as f:
+                    total_frames = int(json.load(f)["total_frames"])
+                n_frames = total_frames * upsample_factor  # H1 TRUE full length
+        if n_frames is None:
+            # CLAUDE.md eval-stub convention: warn ONCE that the live eval is
+            # using the truncated snippet-grid length (H1).
+            if not _warned_truncated:
+                warnings.warn(
+                    "UCF eval uses the snippet-grid (truncated) length; set "
+                    "paths.snippet_boundaries_dir to use true full-length "
+                    "frames (H1)."
+                )
+                _warned_truncated = True
+            n_frames = len(scores) * snippet_window * upsample_factor
         if vid in annos:
             anno = annos[vid]
             cats_map[vid] = anno.category
