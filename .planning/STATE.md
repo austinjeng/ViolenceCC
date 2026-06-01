@@ -21,7 +21,7 @@ progress:
 **Last updated:** 2026-05-30
 **Session:** Phase 11 complete. All 4 plans executed. CGW '26 workshop paper draft complete (404 lines, 18 citations, 5 figures, 3 tables). Ready for Overleaf upload.
 
-Last activity: 2026-06-01 - Completed quick task 260601-gap: reconcile paper main.tex with actual configs/results (text→code). Code review surfaced unaddressed CRITICAL (test-set selection leakage, paper hparams mismatch) + HIGH (UCF eval truncation, gated residual eq, late-fusion eq) findings — see project memory project_paper_review_2026-06-01.
+Last activity: 2026-06-01 - Completed quick task 260601-or4: local LaTeX environment (MiKTeX + Strawberry Perl + latexmk) — scripts/build_paper.ps1 compiles paper/main.tex to a 9-page PDF locally (BibTeX resolved, idempotent), removing the Overleaf round-trip. Note: still-open paper-correctness items from project_paper_review_2026-06-01 (test-set selection leakage) remain unaddressed.
 
 ---
 
@@ -181,6 +181,7 @@ None currently.
 | 260601-mry | H2/H3 Direction A: align gated (residual+vector gate) & late-fusion (score-avg) equations + Discussion with implemented code (9 edits, editorial, no re-run) | 2026-06-01 | ced266f | [260601-mry-h2-h3-direction-a-rewrite-gated-late-fus](./quick/260601-mry-h2-h3-direction-a-rewrite-gated-late-fus/) |
 | 260601-o55 | Smoothness-axis fix (mil_loss dim1) + regression test; measured on headline UCF: AUC Δ−0.13pp (negligible), AP Δ−1.23pp (sensitive). Fix committed; XD-AP exposure not yet measured | 2026-06-01 | f89910b | [260601-o55-measure-smoothness-axis-fix-impact-on-he](./quick/260601-o55-measure-smoothness-axis-fix-impact-on-he/) |
 | 260601-okz | Measure smoothness fix on XD gated (Base+SO400M s42): MATERIAL & divergent — Base AP +0.76pp, SO400M AP −3.80pp, s42 ordering flips. XD Table 2 needs a decision (retrain / disable-smoothness / disclose); paper unchanged | 2026-06-01 | (measure only) | [260601-okz-measure-smoothness-fix-on-xd-gated-headl](./quick/260601-okz-measure-smoothness-fix-on-xd-gated-headl/) |
+| 260601-or4 | Local LaTeX env (MiKTeX 25.12 + Strawberry Perl + latexmk 4.88) to compile/view paper/main.tex locally; build_paper.ps1 → 9-page main.pdf, BibTeX refs resolved, idempotent. latexmk needed Perl; used --enable-installer for CTAN auto-install | 2026-06-01 | 169c2d3 | [260601-or4-local-latex-environment-miktex-latexmk-f](./quick/260601-or4-local-latex-environment-miktex-latexmk-f/) |
 
 ---
 
