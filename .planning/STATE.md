@@ -21,7 +21,7 @@ progress:
 **Last updated:** 2026-05-30
 **Session:** Phase 11 complete. All 4 plans executed. CGW '26 workshop paper draft complete (404 lines, 18 citations, 5 figures, 3 tables). Ready for Overleaf upload.
 
-Last activity: 2026-06-01 - Completed quick task 260601-or4: local LaTeX environment (MiKTeX + Strawberry Perl + latexmk) — scripts/build_paper.ps1 compiles paper/main.tex to a 9-page PDF locally (BibTeX resolved, idempotent), removing the Overleaf round-trip. Note: still-open paper-correctness items from project_paper_review_2026-06-01 (test-set selection leakage) remain unaddressed.
+Last activity: 2026-06-02 - Smoothness-bug resolution: adopted DATASET-DEPENDENT smoothness (commit e4781fb) — XD uses lam_smooth=0 (λ=0 retrain kept: gated SO400M 78.7%, CLIP+5.5/Giant+3.1pp, near 80% gate, tighter variance), UCF keeps lam_smooth=8e-4 (λ=0 regressed UCF: skeleton-only −3.9pp, Giant gated −0.6pp). UCF canonical restored from *.pre_lam0.bak (=current paper numbers); XD canonical now holds λ=0 numbers. PENDING Stage 3 (fresh session): re-propagate XD only → Table 2 + abstract XD headline (74.7 Base→78.7 SO400M) + §4.3/§4.4 XD ordering+variance + XD figures; add dataset-dependent-smoothness methods note; UCF reproducibility sub-decision (retrain UCF at correct λ=8e-4, Δ≈0.13pp, vs disclose); recompile build_paper.ps1. Full before/after + plan in memory project_paper_review_2026-06-01. (Earlier today: C2/H4/C1/H1/H2/H3 all resolved+propagated; UCF headline 82.5%.)
 
 ---
 
