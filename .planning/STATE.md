@@ -21,7 +21,7 @@ progress:
 **Last updated:** 2026-05-30
 **Session:** Phase 11 complete. All 4 plans executed. CGW '26 workshop paper draft complete (404 lines, 18 citations, 5 figures, 3 tables). Ready for Overleaf upload.
 
-Last activity: 2026-05-30
+Last activity: 2026-06-01 - Completed quick task 260601-gap: reconcile paper main.tex with actual configs/results (text→code). Code review surfaced unaddressed CRITICAL (test-set selection leakage, paper hparams mismatch) + HIGH (UCF eval truncation, gated residual eq, late-fusion eq) findings — see project memory project_paper_review_2026-06-01.
 
 ---
 
@@ -174,6 +174,7 @@ None currently.
 | 260503-ow4 | Backbone extraction benchmark — CLIP, RTMPose, CTR-GCN, I3D cross-env pipeline cost | 2026-05-03 | 83883b2 | [260503-ow4-backbone-extraction-benchmark-clip-vit-b](./quick/260503-ow4-backbone-extraction-benchmark-clip-vit-b/) |
 | 260506-3uu | XD-Violence presentation materials — markdown reports (EN + ZH-TW) with 20 charts | 2026-05-06 | d3e4e48 | [260506-3uu-xd-violence-presentation-materials-markd](./quick/260506-3uu-xd-violence-presentation-materials-markd/) |
 | 260531-mcp | Add project-scoped Overleaf MCP config (.mcp.json, env-var placeholders) | 2026-05-31 | 42d368a | — (inline /gsd:fast) |
+| 260601-gap | Reconcile paper main.tex methodology with actual configs/results (text→code fixes from code review) | 2026-06-01 | a12b64e | [260601-gap-reconcile-paper-main-tex-methodology-and](./quick/260601-gap-reconcile-paper-main-tex-methodology-and/) |
 
 ---
 
