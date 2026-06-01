@@ -187,6 +187,14 @@ A PyTorch research codebase for weakly supervised violence-oriented video anomal
 
 ### Evaluation Stubs
 - When a code path produces placeholder metrics (e.g. `mil_loss=0.0`), emit a runtime warning so downstream tooling does not consume stubs as real values
+
+### Paper / LaTeX Build
+- The CGW '26 paper compiles locally via `scripts/build_paper.ps1` (MiKTeX + Strawberry Perl + latexmk; set up in quick task 260601-or4).
+- **After editing any paper LaTeX source** — `paper/main.tex`, `paper/references.bib`, a file under `paper/figures/`, or `paper/.latexmkrc` — recompile a fresh PDF and wipe stale build artifacts by running:
+  `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build_paper.ps1 -Clean`
+- `-Clean` runs `latexmk -C` (wipes ALL build artifacts) then does a full rebuild, so `paper/main.pdf` always reflects the latest edits with no stale intermediates left behind.
+- Build artifacts (`paper/main.pdf`, `*.aux/*.bbl/*.blg/*.fdb_latexmk/*.synctex.gz/...`) are git-ignored — NEVER commit them.
+- `paper/tables_generated.tex` is NOT `\input` by `main.tex` (tables are inlined); editing it alone does not change the build.
 <!-- GSD:conventions-end -->
 
 <!-- GSD:architecture-start source:ARCHITECTURE.md -->
