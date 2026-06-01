@@ -179,6 +179,7 @@ None currently.
 | 260601-jtb | Fix H1 UCF eval truncation: full-length recompute script + comparison + eval-code patch (paper numbers NOT yet updated — pending review) | 2026-06-01 | 7bdb3c4 | [260601-jtb-fix-h1-ucf-eval-frame-grid-truncation-fu](./quick/260601-jtb-fix-h1-ucf-eval-frame-grid-truncation-fu/) |
 | 260601-kjm | Propagate H1 full-length UCF numbers into canonical artifacts + regenerated tables/figures + main.tex (UCF headline 83.3→82.5; XD/TTA unchanged; all qualitative claims survive) | 2026-06-01 | 4c352b8 | [260601-kjm-propagate-h1-full-length-ucf-metrics-int](./quick/260601-kjm-propagate-h1-full-length-ucf-metrics-int/) |
 | 260601-mry | H2/H3 Direction A: align gated (residual+vector gate) & late-fusion (score-avg) equations + Discussion with implemented code (9 edits, editorial, no re-run) | 2026-06-01 | ced266f | [260601-mry-h2-h3-direction-a-rewrite-gated-late-fus](./quick/260601-mry-h2-h3-direction-a-rewrite-gated-late-fus/) |
+| 260601-o55 | Smoothness-axis fix (mil_loss dim1) + regression test; measured on headline UCF: AUC Δ−0.13pp (negligible), AP Δ−1.23pp (sensitive). Fix committed; XD-AP exposure not yet measured | 2026-06-01 | f89910b | [260601-o55-measure-smoothness-axis-fix-impact-on-he](./quick/260601-o55-measure-smoothness-axis-fix-impact-on-he/) |
 
 ---
 
