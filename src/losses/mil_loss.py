@@ -31,21 +31,26 @@ def _sparsity(scores_abn: torch.Tensor, lam: float = 8e-3) -> torch.Tensor:
 
 
 def _smoothness(scores_abn: torch.Tensor, lam: float = 8e-4) -> torch.Tensor:
-    """RTFM-exact L2 smoothness on adjacent-snippet score differences.
+    """L2 smoothness on adjacent-snippet (temporal) score differences.
 
-    Formula (verbatim from RTFM train.py - arr2-shift pattern, NOT np.roll):
+    scores_abn has shape [B_abn, T] where dim 0 = video and dim 1 = time.
+    The smoothness term penalizes differences between TEMPORALLY adjacent
+    snippets within each video (per the paper Eq. at the call site), i.e. the
+    shift is along dim 1, NOT dim 0 (the batch/video axis).
+
+    Formula (temporal-axis shift):
         arr2 = torch.zeros_like(arr)
-        arr2[:-1] = arr[1:]
-        arr2[-1]  = arr[-1]
+        arr2[:, :-1] = arr[:, 1:]
+        arr2[:, -1]  = arr[:, -1]
         loss = torch.sum((arr2 - arr) ** 2)
         return lam * loss
 
-    The boundary `arr2[-1] = arr[-1]` makes the final position's diff = 0,
-    preventing an artificial penalty at the bag boundary.
+    The boundary `arr2[:, -1] = arr[:, -1]` makes each video's final temporal
+    position's diff = 0, preventing an artificial penalty at the time-axis edge.
     """
     arr2 = torch.zeros_like(scores_abn)
-    arr2[:-1] = scores_abn[1:]
-    arr2[-1] = scores_abn[-1]
+    arr2[:, :-1] = scores_abn[:, 1:]
+    arr2[:, -1] = scores_abn[:, -1]
     return lam * torch.sum((arr2 - scores_abn) ** 2)
 
 

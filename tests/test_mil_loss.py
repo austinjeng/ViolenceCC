@@ -18,10 +18,15 @@ def _rtfm_sparsity_ref(arr: torch.Tensor, lam: float) -> torch.Tensor:
 
 
 def _rtfm_smooth_ref(arr: torch.Tensor, lam: float) -> torch.Tensor:
-    """RTFM's smoothness formula copied verbatim from upstream train.py."""
+    """RTFM smoothness reference, shifting the TEMPORAL axis (dim 1).
+
+    Corrected by quick task 260601-o55: the prior version shifted dim 0 (the
+    batch/video axis), matching the implementation bug rather than the intended
+    adjacent-snippet (temporal) smoothness.
+    """
     arr2 = torch.zeros_like(arr)
-    arr2[:-1] = arr[1:]
-    arr2[-1] = arr[-1]
+    arr2[:, :-1] = arr[:, 1:]
+    arr2[:, -1] = arr[:, -1]
     return lam * torch.sum((arr2 - arr) ** 2)
 
 
