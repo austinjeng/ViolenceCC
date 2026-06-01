@@ -105,6 +105,13 @@ def _parse_args(argv=None):
         "--xd-results-glob", default="results/xd_*",
         help="Glob (relative to project root) for XD run dirs",
     )
+    ap.add_argument(
+        "--write", action="store_true", default=False,
+        help="Overwrite canonical UCF artifacts (eval_metrics.json, "
+             "eval_scores.npz, results-index.csv ucf_* rows) AFTER the gate "
+             "passes. Backs up each to *.pre_h1.bak first (idempotent). "
+             "Default off: byte-for-byte read-only behavior.",
+    )
     return ap.parse_args(argv)
 
 
@@ -142,21 +149,35 @@ def _recompute_ucf_run(
 ) -> dict | None:
     """Recompute full-length AUC/AP for one UCF run. Returns a CSV row dict.
 
-    READ-ONLY: only loads run_dir/eval_scores.npz + run_dir/eval_metrics.json.
+    Loads the per-snippet scores + original metrics. To stay idempotent after a
+    prior --write run (which overwrites eval_scores.npz with full-length arrays
+    that are NO LONGER pure per-snippet repeats, and eval_metrics.json with the
+    full-length auc/ap), this prefers the .pre_h1.bak copies when present so the
+    recompute always operates on the original pre-H1 source data and reproduces
+    identical numbers on every run.
     """
     scores_npz = run_dir / "eval_scores.npz"
     metrics_json = run_dir / "eval_metrics.json"
     if not (scores_npz.exists() and metrics_json.exists()):
         return None
 
+    # Source-of-truth = the pre-H1 backup if it exists (set by a prior --write),
+    # else the live file (first run, still the original per-snippet-repeat data).
+    scores_src = scores_npz.with_name(scores_npz.name + ".pre_h1.bak")
+    if not scores_src.exists():
+        scores_src = scores_npz
+    metrics_src = metrics_json.with_name(metrics_json.name + ".pre_h1.bak")
+    if not metrics_src.exists():
+        metrics_src = metrics_json
+
     block = snippet_window * upsample_factor
 
-    with open(metrics_json, "r", encoding="utf-8") as f:
+    with open(metrics_src, "r", encoding="utf-8") as f:
         old_metrics = json.load(f)
     old_auc = float(old_metrics.get("auc"))
     old_ap = float(old_metrics.get("ap"))
 
-    npz = np.load(scores_npz)
+    npz = np.load(scores_src)
     per_video_scores: dict = {}
     per_video_labels: dict = {}
     per_video_category: dict = {}
@@ -213,9 +234,13 @@ def _recompute_ucf_run(
         "n_frames_new": int(new_metrics["n_frames"]),
         "n_skipped": len(skipped_videos),
     }
-    # Stash the recompute result for downstream per-category emission.
+    # Stash the recompute result for downstream per-category emission and (when
+    # --write is set) canonical overwrite. These underscore keys are dropped by
+    # _write_csv (extrasaction="ignore"), so the comparison CSV is unaffected.
     row["_new_metrics"] = new_metrics
     row["_old_metrics"] = old_metrics
+    row["_per_video_scores"] = per_video_scores
+    row["_skipped_videos"] = skipped_videos
     if skipped_videos:
         print(
             f"  [{run_dir.name}] skipped {len(skipped_videos)} videos with no "
@@ -251,6 +276,129 @@ def _write_giant_per_category(row: dict, path: Path) -> None:
                 o.get("ap", ""),
                 n.get("ap", ""),
             ])
+
+
+def _backup_once(path: Path) -> None:
+    """Write path -> path.pre_h1.bak ONLY if the .bak does not already exist.
+
+    Idempotent: never clobbers the original pre-H1 backup on a re-run.
+    """
+    bak = path.with_name(path.name + ".pre_h1.bak")
+    if path.exists() and not bak.exists():
+        with open(path, "rb") as src, open(bak, "wb") as dst:
+            dst.write(src.read())
+        print(f"  backup: {bak.name}")
+
+
+def _write_metrics_json(run_dir: Path, new_metrics: dict) -> None:
+    """Overwrite ONLY auc/ap/n_frames/per_category in eval_metrics.json.
+
+    Every other key (checkpoint_sha, config_hash, dataset, seed, split, git_sha,
+    snippet_auc, video_auc, n_videos, eval_*, wandb_run_id, ...) is preserved
+    verbatim. Backup-before-overwrite; atomic .tmp -> os.replace.
+    """
+    metrics_json = run_dir / "eval_metrics.json"
+    with open(metrics_json, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    _backup_once(metrics_json)
+    data["auc"] = float(new_metrics["auc"])
+    data["ap"] = float(new_metrics["ap"])
+    data["n_frames"] = int(new_metrics["n_frames"])
+    data["per_category"] = new_metrics.get("per_category", {})
+    tmp = metrics_json.with_name(metrics_json.name + ".tmp")
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+    os.replace(tmp, metrics_json)
+
+
+def _write_scores_npz(run_dir: Path, per_video_scores: dict,
+                      skipped_videos: list) -> None:
+    """Overwrite eval_scores.npz with full-length tail-padded per-video arrays.
+
+    per_video_scores maps video_id -> 1-D float32 frame array (true full length,
+    tail-padded). Skipped videos (no boundary JSON) are OMITTED rather than
+    written truncated; this should be empty (n_skipped=0 across all 29 runs).
+    Backup-before-overwrite; atomic .tmp -> os.replace.
+    """
+    scores_npz = run_dir / "eval_scores.npz"
+    if skipped_videos:
+        # Per CLAUDE.md: extraction/coverage gaps log at WARNING, not DEBUG.
+        print(
+            f"  WARNING [{run_dir.name}] {len(skipped_videos)} videos lack "
+            f"boundary JSON and are OMITTED from the rewritten npz "
+            f"(e.g. {skipped_videos[:3]})"
+        )
+    _backup_once(scores_npz)
+    arrays = {vid: np.asarray(arr, dtype=np.float32)
+              for vid, arr in per_video_scores.items()}
+    # np.savez auto-appends ".npz" unless the path already ends in ".npz", so
+    # the tmp name MUST end in ".npz" or the saved file lands at a different
+    # path than os.replace expects. Use eval_scores.tmp.npz.
+    tmp = scores_npz.with_name("eval_scores.tmp.npz")
+    np.savez(tmp, **arrays)
+    os.replace(tmp, scores_npz)
+
+
+def _write_results_index(rows: list) -> None:
+    """Update auc/ap/n_frames for ucf_* rows ONLY in results-index.csv.
+
+    Matches by run_name against the recomputed rows. Leaves every xd_* row,
+    every {source_only,tent,sar} method row, every corruption row, and every
+    other column untouched. Preserves header order. Backup-before-overwrite;
+    atomic .tmp -> os.replace.
+    """
+    index_path = _PROJECT_ROOT / "results" / "results-index.csv"
+    if not index_path.exists():
+        sys.exit(f"H1 --write: results-index.csv not found at {index_path}")
+
+    updates = {
+        r["run_name"]: r["_new_metrics"]
+        for r in rows
+        if r["run_name"].startswith("ucf_")
+    }
+
+    with open(index_path, "r", newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        fieldnames = reader.fieldnames
+        out_rows = list(reader)
+
+    n_updated = 0
+    for row in out_rows:
+        nm = updates.get(row.get("run_name"))
+        if nm is None:
+            continue
+        # Defensive: only ucf_* keys land in `updates`, but never touch a row
+        # that is not actually a ucf_* run.
+        if not row["run_name"].startswith("ucf_"):
+            continue
+        row["auc"] = repr(float(nm["auc"]))
+        row["ap"] = repr(float(nm["ap"]))
+        row["n_frames"] = str(int(nm["n_frames"]))
+        n_updated += 1
+
+    _backup_once(index_path)
+    tmp = index_path.with_name(index_path.name + ".tmp")
+    with open(tmp, "w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=fieldnames)
+        w.writeheader()
+        w.writerows(out_rows)
+    os.replace(tmp, index_path)
+    print(f"  results-index.csv: updated {n_updated} ucf_* rows")
+
+
+def _write_canonical(rows: list) -> None:
+    """Overwrite canonical UCF artifacts for every recomputed ucf_* run.
+
+    Invoked ONLY after the hard gate passes and ONLY when --write is set.
+    """
+    print("--write: overwriting canonical UCF artifacts (backup-before-overwrite)")
+    for row in rows:
+        run_dir = _PROJECT_ROOT / "results" / row["run_name"]
+        _write_metrics_json(run_dir, row["_new_metrics"])
+        _write_scores_npz(
+            run_dir, row["_per_video_scores"], row.get("_skipped_videos", [])
+        )
+    _write_results_index(rows)
 
 
 def _run_ucf(args, out_dir: Path) -> None:
@@ -308,6 +456,32 @@ def _run_ucf(args, out_dir: Path) -> None:
             f"(tol {GATE_TOL}). No paper-facing CSV written."
         )
     print(f"GATE PASS: {gate_line}")
+
+    # Canonical overwrite (only with --write). Happens AFTER GATE PASS so a
+    # failed gate never touches paper-facing artifacts.
+    if getattr(args, "write", False):
+        _write_canonical(rows)
+        # Re-assert the gate FROM DISK so the on-disk eval_metrics.json is the
+        # thing we verified, not the in-memory recompute.
+        giant_json = (
+            _PROJECT_ROOT / "results" / GIANT_RUN / "eval_metrics.json"
+        )
+        with open(giant_json, "r", encoding="utf-8") as f:
+            disk = json.load(f)
+        disk_auc = float(disk["auc"])
+        disk_ap = float(disk["ap"])
+        print(
+            f"POST-WRITE GATE {GIANT_RUN} (on-disk): "
+            f"auc={disk_auc:.6f} ap={disk_ap:.6f}"
+        )
+        if (abs(disk_auc - GATE_AUC) > GATE_TOL
+                or abs(disk_ap - GATE_AP) > GATE_TOL):
+            sys.exit(
+                f"H1 POST-WRITE GATE FAIL: on-disk {GIANT_RUN} "
+                f"auc={disk_auc:.6f} ap={disk_ap:.6f} vs expected "
+                f"auc~{GATE_AUC} ap~{GATE_AP} (tol {GATE_TOL}). STOP."
+            )
+        print(f"POST-WRITE GATE PASS: {GIANT_RUN} on disk within tol.")
 
     # Finalize via os.replace (gate passed) — write .tmp first then atomically move.
     out_csv = out_dir / "ucf_fulllength_comparison.csv"
