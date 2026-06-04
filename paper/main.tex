@@ -172,16 +172,16 @@ where $\odot$ denotes element-wise multiplication and $\text{LN}_s$, $\text{LN}_
 
 \subsection{MIL Training with Ranking Loss}
 
-We adopt the MIL ranking loss formulation from Sultani et al.~\cite{sultani2018ucfcrime} with the refinements introduced by RTFM~\cite{tian2021rtfm}. Each training batch consists of paired normal and anomalous video bags. For each bag, snippet-level anomaly scores are computed by the classifier head, and the top-$k$ scoring snippets are selected. The ranking loss encourages the highest-scoring snippet in the anomalous bag to exceed the highest-scoring snippet in the normal bag by a margin:
+We adopt the MIL ranking loss formulation from Sultani et al.~\cite{sultani2018ucfcrime} with the refinements introduced by RTFM~\cite{tian2021rtfm}. Each training batch consists of paired normal and anomalous video bags. For each bag, snippet-level anomaly scores are computed by the classifier head, and the top-$k$ scoring snippets are selected. The ranking loss encourages the mean of the top-$k$ scores in the anomalous bag to exceed that of the normal bag by a margin:
 \begin{equation}
-    \mathcal{L}_{\text{rank}} = \max\left(0, 1 - \max_{i \in \mathcal{A}_k} a_i + \max_{j \in \mathcal{N}_k} a_j\right)
+    \mathcal{L}_{\text{rank}} = \max\left(0,\; 1 - \frac{1}{k}\sum_{i \in \mathcal{A}_k} a_i + \frac{1}{k}\sum_{j \in \mathcal{N}_k} a_j\right)
 \end{equation}
 where $\mathcal{A}_k$ and $\mathcal{N}_k$ are the top-$k$ snippet indices in the anomalous and normal bags, respectively, and $a$ denotes the predicted anomaly score. The total loss includes sparsity and temporal smoothness regularization terms:
 \begin{equation}
-    \mathcal{L} = \mathcal{L}_{\text{rank}} + \lambda_1 \sum_i a_i + \lambda_2 \sum_i (a_i - a_{i+1})^2
+    \mathcal{L} = \mathcal{L}_{\text{rank}} + \frac{\lambda_1}{T}\sum_{t=1}^{T} \left\| \mathbf{a}_t \right\|_2 + \lambda_2 \sum_i (a_i - a_{i+1})^2
     \label{eq:loss}
 \end{equation}
-The sparsity term encourages most snippets to receive low anomaly scores, reflecting the prior that anomalous events occupy a small fraction of each video's duration. The smoothness term penalizes rapid fluctuations in adjacent snippet scores, encouraging temporally coherent predictions. We set the sparsity weight $\lambda_1 = 8 \times 10^{-3}$; the smoothness weight $\lambda_2$ is dataset-dependent, as detailed in Section~\ref{sec:impl}.
+Here $\mathbf{a}_t$ is the vector of abnormal-bag anomaly scores at snippet position $t$ across the batch, so the sparsity term---following the feature-magnitude formulation of RTFM~\cite{tian2021rtfm}---is the mean over snippet positions of the per-position $\ell_2$ norm, computed over the abnormal bag. The sparsity term encourages most snippets to receive low anomaly scores, reflecting the prior that anomalous events occupy a small fraction of each video's duration. The smoothness term penalizes rapid fluctuations in adjacent snippet scores, encouraging temporally coherent predictions. We set the sparsity weight $\lambda_1 = 8 \times 10^{-3}$; the smoothness weight $\lambda_2$ is dataset-dependent, as detailed in Section~\ref{sec:impl}.
 
 During training, each batch consists of paired normal and anomalous video bags, with the training loader shuffling pairs to prevent class-ordering bias. The validation loader also uses shuffled batches to avoid single-class batch bias, which is important because the MIL ranking loss requires both normal and anomalous samples within each batch to compute the ranking gradient.
 
