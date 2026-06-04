@@ -252,6 +252,12 @@ def run_tta_evaluation(
     if feature_root is None:
         feature_root = Path("E:/features/ucf")
 
+    # Determinism (D-12): with dropout disabled in configure_model the forward is
+    # already deterministic; pin the RNG anyway so any residual stochasticity is
+    # reproducible across re-runs.
+    torch.manual_seed(0)
+    np.random.seed(0)
+
     device = "cuda" if torch.cuda.is_available() else "cpu"
     t0 = time.time()
 

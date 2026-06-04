@@ -7,7 +7,7 @@ Key adaptations from original TENT (Wang et al. 2021) / SAR repo:
   1. ``collect_params`` targets ``nn.LayerNorm`` (not ``nn.BatchNorm2d``)
   2. ``binary_entropy`` replaces softmax entropy (D-05)
   3. Per-video episodic reset via state_dict restore (D-07)
-  4. Dropout explicitly set to eval after model.train() (Pitfall 6)
+  4. ALL Dropout modules set to eval after model.train() (Pitfall 6)
 
 The adaptation surface is the 1536 LN affine parameters (3 LN modules x
 256-d weight + 256-d bias) in GatedFusion.
@@ -47,9 +47,14 @@ def configure_model(model: nn.Module) -> nn.Module:
     for m in model.modules():
         if isinstance(m, nn.LayerNorm):
             m.requires_grad_(True)
-    # Pitfall 6: disable dropout during TTA
-    if hasattr(model, "dropout"):
-        model.dropout.eval()
+    # Pitfall 6: disable ALL dropout during TTA. model.train() (needed for LN
+    # gradient flow) turns every dropout on; disabling only the top-level
+    # GatedFusion.dropout left MILHead's two nn.Dropout layers (head.mlp.2,
+    # head.mlp.5) in train mode, making every TTA score stochastic. Loop over
+    # all modules so no dropout is missed.
+    for m in model.modules():
+        if isinstance(m, nn.Dropout):
+            m.eval()
     return model
 
 

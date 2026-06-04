@@ -10,6 +10,7 @@ from copy import deepcopy
 
 import pytest
 import torch
+import torch.nn as nn
 
 from src.models.gated_fusion import GatedFusion
 from src.tta.tent import (
@@ -83,6 +84,54 @@ def test_configure_model_sets_dropout_eval(gated_model):
     assert (
         gated_model.dropout.training is False
     ), "Dropout must be in eval mode (Pitfall 6)"
+
+
+def test_configure_model_disables_all_dropout():
+    """Regression (260604-w2a): NO nn.Dropout may stay in train mode.
+
+    model.train() turns every dropout on; configure_model must disable ALL of
+    them, including MILHead's two nn.Dropout layers (head.mlp.2, head.mlp.5),
+    not just the top-level GatedFusion.dropout.
+    """
+    torch.manual_seed(0)
+    model = GatedFusion(clip_dim=1024)
+    configure_model(model)
+
+    assert model.training is True, "Model must be in train mode for LN gradients"
+
+    train_mode_dropouts = [
+        name
+        for name, m in model.named_modules()
+        if isinstance(m, nn.Dropout) and m.training
+    ]
+    assert train_mode_dropouts == [], (
+        f"All nn.Dropout must be in eval mode, but these are in train mode: "
+        f"{train_mode_dropouts}"
+    )
+
+
+def test_tta_forward_is_deterministic():
+    """Regression (260604-w2a): two forwards on the same input are bit-identical.
+
+    With every nn.Dropout disabled (LayerNorm is mode-invariant), the TTA
+    forward is exact, so max(|pass1 - pass2|) must be exactly 0.
+    """
+    torch.manual_seed(0)
+    model = GatedFusion(clip_dim=1024)
+    configure_model(model)
+
+    skel = torch.randn(1, 32, 256)
+    clip = torch.randn(1, 32, 1024)
+
+    with torch.no_grad():
+        pass1 = model(skel=skel, clip=clip)
+        pass2 = model(skel=skel, clip=clip)
+
+    max_abs_diff = (pass1 - pass2).abs().max().item()
+    assert max_abs_diff == 0.0, (
+        f"TTA forward must be deterministic with dropout disabled, "
+        f"but max abs diff was {max_abs_diff}"
+    )
 
 
 def test_binary_entropy_values():
