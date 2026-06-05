@@ -29,6 +29,7 @@ from src.models.registry import build_model
 from src.tta.evaluate_tta import (
     SKELETON_REEXTRACT_TYPES,
     _SourceOnlyAdaptor,
+    _adapt_one_video,
     _load_test_video_features,
     parse_args,
     run_tta_evaluation,
@@ -346,6 +347,40 @@ def test_per_video_reset_verified():
         assert torch.allclose(reset_state2[name], source_state[name]), (
             f"After second reset, {name} should match source state"
         )
+
+
+class _ResetCountingAdaptor:
+    """Fake adaptor counting reset() calls; returns fixed zeros for scoring."""
+
+    def __init__(self):
+        self.reset_count = 0
+
+    def reset(self):
+        self.reset_count += 1
+
+    def score_only(self, skel, clip):
+        return torch.zeros(1, skel.shape[1])
+
+    def adapt_and_score(self, skel, clip):
+        return torch.zeros(1, skel.shape[1])
+
+
+def test_adapt_one_video_reset_flag_controls_reset():
+    """_adapt_one_video calls adaptor.reset() iff reset=True (continual vs episodic)."""
+    skel = np.zeros((5, 256), dtype=np.float32)
+    clip = np.zeros((5, 1024), dtype=np.float32)
+
+    # reset=False (continual): reset must NOT be called.
+    adaptor = _ResetCountingAdaptor()
+    scores = _adapt_one_video(adaptor, skel, clip, "tent", "cpu", reset=False)
+    assert adaptor.reset_count == 0, "reset=False must not call adaptor.reset()"
+    assert scores.shape == (5,)
+
+    # reset=True (episodic): reset must be called exactly once.
+    adaptor2 = _ResetCountingAdaptor()
+    scores2 = _adapt_one_video(adaptor2, skel, clip, "tent", "cpu", reset=True)
+    assert adaptor2.reset_count == 1, "reset=True must call adaptor.reset() once"
+    assert scores2.shape == (5,)
 
 
 def test_parse_args_validates_choices():

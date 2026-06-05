@@ -88,6 +88,10 @@ def parse_args(argv=None):
                     help="Output directory for eval_metrics.json + eval_scores.npz + .done")
     ap.add_argument("--feature-root", type=str, default="E:/features/ucf",
                     help="Root directory for corruption feature caches")
+    ap.add_argument("--protocol", type=str, default="episodic",
+                    choices=["episodic", "continual"],
+                    help="episodic (per-video reset, default) or continual "
+                         "(one stream-level reset, adapt across all test videos)")
     return ap.parse_args(argv)
 
 
@@ -147,13 +151,15 @@ def _adapt_one_video(
     method: str,
     device: str,
     T: int = 32,
+    reset: bool = True,
 ) -> np.ndarray:
     """Adapt and collect scores for one video.
 
     Chunks features into T=32-snippet batches per TTA-07.
     Returns snippet scores as 1D numpy array.
     """
-    adaptor.reset()
+    if reset:
+        adaptor.reset()
     n_snippets = skel_feat.shape[0]
     all_scores = []
 
@@ -235,6 +241,7 @@ def run_tta_evaluation(
     output_dir: Path,
     feature_root: Path | None = None,
     backbone: str = "clip-vit-b-16",
+    protocol: str = "episodic",
 ):
     """Full TTA evaluation for one configuration.
 
@@ -248,6 +255,9 @@ def run_tta_evaluation(
         output_dir: Directory for eval_metrics.json + eval_scores.npz + .done.
         feature_root: Root directory for corruption feature caches.
         backbone: Vision backbone key for feature subdirectory routing.
+        protocol: 'episodic' (per-video reset, default) or 'continual' (one
+                  stream-level reset, adapt across all test videos with no
+                  per-video reset; TENT/SAR native -C setup).
     """
     if feature_root is None:
         feature_root = Path("E:/features/ucf")
@@ -286,6 +296,13 @@ def run_tta_evaluation(
         # source_only: use _SourceOnlyAdaptor that has a no-op reset
         adaptor = _SourceOnlyAdaptor(model, source_state)
 
+    # Continual-online protocol (TENT/SAR native -C setup): one stream-level
+    # reset, then adapt continuously across the whole corruption-condition test
+    # stream with no per-video reset. Episodic (default) resets per video.
+    per_video_reset = protocol != "continual"
+    if not per_video_reset:
+        adaptor.reset()
+
     # 4. Load test video list
     test_split = _PROJECT_ROOT / "data" / "splits" / "ucf_test.txt"
     video_ids = [line.strip() for line in test_split.read_text().splitlines()
@@ -301,7 +318,7 @@ def run_tta_evaluation(
         if skel is None:
             n_skipped += 1
             continue  # skip sub-64-frame videos or missing features
-        scores = _adapt_one_video(adaptor, skel, clip, method, device)
+        scores = _adapt_one_video(adaptor, skel, clip, method, device, reset=per_video_reset)
         per_video_snippet_scores[vid] = scores
 
     # 6. Frame expansion + metrics (reuse Phase 4 infrastructure)
@@ -335,6 +352,7 @@ def run_tta_evaluation(
         "lr": lr,
         "rho": rho if method == "sar" else None,
         "backbone": backbone,
+        "protocol": protocol,
         "source_run": str(source_run.name),
         "n_adapted_params": n_adapted_params,
         "n_videos_evaluated": len(per_video_snippet_scores),
@@ -405,6 +423,7 @@ def main(argv=None) -> int:
         output_dir=Path(args.output_dir).resolve(),
         feature_root=Path(args.feature_root),
         backbone=args.backbone,
+        protocol=args.protocol,
     )
     return 0
 
