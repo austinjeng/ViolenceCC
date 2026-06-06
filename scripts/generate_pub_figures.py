@@ -419,103 +419,44 @@ def fig_gating_distribution():
 # =============================================================================
 
 def fig_tta_comparison():
-    """Figure 5: TTA method comparison across 4 backbones."""
-    print("\n[Fig 5] TTA Comparison")
+    """Figure: discriminative-reliability reweighting (Ours) vs source-only across
+    4 backbones. 3-seed (42,123,2024) mean AUC; entropy TTA (TENT/SAR) is omitted as
+    it is indistinguishable from source-only (<=0.004 pp). Data: results/_coral_derisk/
+    r1full_*.json (s42) + variants/v_*_{s123,s2024}_test.json (TTA-boost study, 2026-06-07)."""
+    print("\n[Fig] TTA Comparison (disc_reweight vs source, 3-seed)")
 
-    csv_path = RESULTS_DIR / "tta_backbone" / "summary.csv"
-    if not csv_path.exists():
-        print(f"  [WARN] summary.csv not found -- skipping TTA comparison figure; "
-              f"run Plan 01 Task 2 first")
-        return False
-
-    df = pd.read_csv(csv_path)
-
-    # Pivot: one row per backbone, columns for source/tent/sar AUC
-    backbones = df["backbone"].unique()
-    methods = ["source_only", "tent", "sar"]
-    method_labels = {"source_only": "Source Only", "tent": "TENT", "sar": "SAR"}
-    method_colors = {"source_only": "#7f8c8d", "tent": "#2c3e50", "sar": "#e74c3c"}
-
-    # Readable backbone names
-    bb_display = {
-        "clip-vit-b-16": "CLIP\nViT-B/16",
-        "siglip2-base": "SigLIP2\nBase",
-        "siglip2-so400m": "SigLIP2\nSO400M",
-        "siglip2-giant": "SigLIP2\nGiant",
-    }
+    bbs = ["CLIP\nViT-B/16", "SigLIP2\nBase", "SigLIP2\nSO400M", "SigLIP2\nGiant"]
+    source_mean = [63.71, 57.01, 58.87, 62.83]
+    source_std = [0.25, 1.40, 1.78, 0.53]
+    ours_mean = [64.38, 58.50, 61.11, 63.25]
+    ours_std = [0.13, 0.27, 1.58, 0.58]
+    delta_mean = [0.67, 1.50, 2.24, 0.42]
 
     fig, ax = plt.subplots(figsize=(ACM_COL_WIDTH, 2.0))
+    x = np.arange(len(bbs))
+    width = 0.34
 
-    x = np.arange(len(backbones))
-    n_methods = len(methods)
-    width = 0.22
+    ax.bar(x - width / 2, source_mean, width, yerr=source_std, capsize=2,
+           label="Source-Only", color="#7f8c8d", edgecolor="white", linewidth=0.3,
+           error_kw=dict(lw=0.6))
+    ax.bar(x + width / 2, ours_mean, width, yerr=ours_std, capsize=2,
+           label="Ours", color="#e74c3c", edgecolor="white", linewidth=0.3,
+           error_kw=dict(lw=0.6))
 
-    for mi, method in enumerate(methods):
-        vals = []
-        for bb in backbones:
-            row = df[(df["backbone"] == bb) & (df["method"] == method)]
-            if not row.empty:
-                vals.append(float(row["mean_auc"].iloc[0]) * 100)
-            else:
-                vals.append(0)
-
-        offset = (mi - (n_methods - 1) / 2) * width
-        bars = ax.bar(
-            x + offset, vals, width * 0.9,
-            label=method_labels[method],
-            color=method_colors[method],
-            edgecolor="white",
-            linewidth=0.3,
-        )
-
-        # Value labels
-        for bar, val in zip(bars, vals):
-            if val > 0:
-                ax.text(
-                    bar.get_x() + bar.get_width() / 2,
-                    bar.get_height() + 0.15,
-                    f"{val:.1f}",
-                    ha="center", va="bottom",
-                    fontsize=FONT_ANNOTATION,
-                )
-
-    # Delta annotations (best TTA - source)
-    for bi, bb in enumerate(backbones):
-        src_row = df[(df["backbone"] == bb) & (df["method"] == "source_only")]
-        if src_row.empty:
-            continue
-        src_auc = float(src_row["mean_auc"].iloc[0]) * 100
-
-        best_tta = src_auc
-        best_method = ""
-        for method in ["tent", "sar"]:
-            row = df[(df["backbone"] == bb) & (df["method"] == method)]
-            if not row.empty:
-                v = float(row["mean_auc"].iloc[0]) * 100
-                if v > best_tta:
-                    best_tta = v
-                    best_method = method.upper()
-
-        if best_method:
-            delta = best_tta - src_auc
-            ax.annotate(
-                f"+{delta:.1f}%",
-                xy=(bi + width, best_tta),
-                xytext=(bi + width + 0.15, best_tta + 1.5),
-                fontsize=FONT_ANNOTATION,
-                color="#e74c3c",
-                arrowprops=dict(arrowstyle="-", color="#e74c3c", linewidth=0.4),
-            )
+    for xi, (s, o, dm) in enumerate(zip(source_mean, ours_mean, delta_mean)):
+        ax.text(xi - width / 2, s + 0.25, f"{s:.1f}", ha="center", va="bottom",
+                fontsize=FONT_ANNOTATION)
+        ax.text(xi + width / 2, o + 0.25, f"{o:.1f}", ha="center", va="bottom",
+                fontsize=FONT_ANNOTATION)
+        ax.annotate(f"+{dm:.2f}", xy=(xi + width / 2, o), xytext=(xi + width / 2, o + 1.7),
+                    ha="center", fontsize=FONT_ANNOTATION, color="#e74c3c")
 
     ax.set_ylabel("Mean AUC (%)")
-    ax.set_title("TTA Methods Across Backbones (20 Corruptions)")
+    ax.set_title("Reweighting vs Source-Only (3 seeds, 20 corruptions)")
     ax.set_xticks(x)
-    ax.set_xticklabels([bb_display.get(bb, bb) for bb in backbones])
-    ax.legend(loc="upper right", framealpha=0.9, edgecolor="gray")
-
-    # Y-axis range
-    all_vals = df["mean_auc"].values * 100
-    ax.set_ylim(max(0, all_vals.min() - 5), all_vals.max() + 5)
+    ax.set_xticklabels(bbs)
+    ax.legend(loc="upper left", framealpha=0.9, edgecolor="gray")
+    ax.set_ylim(54, 67)
 
     fig.tight_layout(pad=0.3)
     out_path = OUT_DIR / "fig_tta_comparison.pdf"
