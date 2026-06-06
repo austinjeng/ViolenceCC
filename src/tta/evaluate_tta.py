@@ -39,6 +39,13 @@ from src.eval.metrics import compute_frame_metrics
 from src.eval.snippet_to_frame import snippet_to_frame
 from src.eval.ucf_annotations import VideoAnnotation, frame_labels, parse_annotations
 from src.models.registry import build_model
+from src.tta.disc_reweight import (
+    accumulate,
+    clip_only_std,
+    compute_w,
+    mean_abs_z,
+    w_scaled_forward,
+)
 from src.tta.sam import SAM
 from src.tta.sar import SarAdaptor
 from src.tta.tent import TentAdaptor, collect_params, configure_model
@@ -78,7 +85,8 @@ def parse_args(argv=None):
                     help="Source model run dir (contains config_snapshot.json + best_model.pth)")
     ap.add_argument("--corruption", required=True, choices=CORRUPTION_TYPES)
     ap.add_argument("--severity", required=True, type=int, choices=[1, 2, 3, 4, 5])
-    ap.add_argument("--method", required=True, choices=["source_only", "tent", "sar"])
+    ap.add_argument("--method", required=True,
+                    choices=["source_only", "tent", "sar", "disc_reweight"])
     ap.add_argument("--lr", type=float, default=1e-3)
     ap.add_argument("--rho", type=float, default=0.05, help="SAR only: SAM rho")
     ap.add_argument("--backbone", type=str, default="clip-vit-b-16",
@@ -285,6 +293,27 @@ def run_tta_evaluation(
     params, param_names = collect_params(model)
     n_adapted_params = sum(p.numel() for p in params)
 
+    # disc_reweight: separate two-pass transductive path. Dispatched BEFORE the
+    # tent/sar/source_only adaptor construction so those branches are untouched.
+    # It is label-free + tuning-free: lr / rho / protocol are ignored (no
+    # gradient adaptation, no per-video reset semantics — w is a per-condition
+    # scalar derived from the whole condition's own features + unlabeled clean refs).
+    if method == "disc_reweight":
+        _run_disc_reweight(
+            model=model,
+            source_run=source_run,
+            corruption_type=corruption_type,
+            severity=severity,
+            feature_root=feature_root,
+            backbone=backbone,
+            protocol=protocol,
+            n_adapted_params=n_adapted_params,
+            device=device,
+            output_dir=output_dir,
+            t0=t0,
+        )
+        return
+
     # 3. Create adaptor based on method
     if method == "tent":
         optimizer = torch.optim.SGD(params, lr=lr)
@@ -372,6 +401,204 @@ def run_tta_evaluation(
     logger.info(
         "[evaluate_tta] %s %s sev=%d method=%s lr=%.1e => AUC=%.4f AP=%.4f",
         corruption_type, method, severity, method, lr, auc, ap,
+    )
+
+
+# ---------------------------------------------------------------------------
+# disc_reweight: R1 discriminative-reliability routing (quick-260607-42h)
+# ---------------------------------------------------------------------------
+
+
+def _load_condition_videos(corruption_type, severity, feature_root, backbone):
+    """Load the corrupted condition's (skel, clip) feats for all test videos.
+
+    Mirrors scripts/_tmp_tta_harness.py:load_condition but inline (no
+    SimpleNamespace). Skips sub-64-frame / missing videos. Returns
+    (skels, clips, vids).
+    """
+    test_split = _PROJECT_ROOT / "data" / "splits" / "ucf_test.txt"
+    video_ids = [line.strip() for line in test_split.read_text().splitlines()
+                 if line.strip()]
+    skels, clips, vids = {}, {}, []
+    for vid in video_ids:
+        sk, cl = _load_test_video_features(
+            vid, corruption_type, severity, feature_root, backbone=backbone
+        )
+        if sk is None:
+            continue
+        skels[vid] = sk
+        clips[vid] = cl
+        vids.append(vid)
+    return skels, clips, vids
+
+
+def _load_clean_split(split_name, feature_root, backbone):
+    """Load CLEAN clip + skeleton feats over a split (test or train).
+
+    clip: feature_root/{prefix}/{vid}.npy ; skel: feature_root/skeleton/{vid}.npy.
+    Skips videos missing either stream. Returns (skels, clips, vids).
+    """
+    prefix = BACKBONE_FEATURE_PREFIX[backbone]
+    split_path = _PROJECT_ROOT / "data" / "splits" / split_name
+    ids = [line.strip() for line in split_path.read_text().splitlines()
+           if line.strip()]
+    skels, clips, vids = {}, {}, []
+    clip_dir = feature_root / prefix
+    skel_dir = feature_root / "skeleton"
+    for vid in ids:
+        cp = clip_dir / f"{vid}.npy"
+        sp = skel_dir / f"{vid}.npy"
+        if not cp.exists() or not sp.exists():
+            continue
+        clips[vid] = np.load(str(cp))
+        skels[vid] = np.load(str(sp))
+        vids.append(vid)
+    return skels, clips, vids
+
+
+def _run_disc_reweight(
+    model,
+    source_run: Path,
+    corruption_type: str,
+    severity: int,
+    feature_root: Path,
+    backbone: str,
+    protocol: str,
+    n_adapted_params: int,
+    device: str,
+    output_dir: Path,
+    t0: float,
+):
+    """Two-pass transductive disc_reweight scoring for one (corruption, severity).
+
+    The canonical entry point is one-condition-per-call (the 20-condition sweep is
+    the caller's job, matching how source_only/tent/sar are invoked). The
+    transductive whole-condition stats are computed over that single condition's
+    loaded videos.
+
+    Pass 1: derive clip_std_test + skelZ over the loaded condition -> compute w.
+    Pass 2: score every video with w_scaled_forward(w).
+    Clean refs (clip_std_clean, skelZ_floor) + clean-train skel stats: computed once.
+    """
+    # --- Clean-train skeleton stats (computed once; clean cache, skeleton stream).
+    train_split = _PROJECT_ROOT / "data" / "splits" / "ucf_train.txt"
+    train_ids = [line.strip() for line in train_split.read_text().splitlines()
+                 if line.strip()]
+    skel_dir = feature_root / "skeleton"
+
+    def _load_clean_skel(vid):
+        p = skel_dir / f"{vid}.npy"
+        return np.load(str(p)) if p.exists() else None
+
+    mu_train_skel, C_train_skel, _ = accumulate(train_ids, _load_clean_skel)
+
+    # --- Clean-test references (computed once).
+    clean_skels, clean_clips, clean_vids = _load_clean_split(
+        "ucf_test.txt", feature_root, backbone
+    )
+    clip_std_clean = clip_only_std(model, clean_skels, clean_clips, clean_vids)
+    mu_cleantest_skel, C_cleantest_skel, _ = accumulate(
+        clean_vids, lambda v: clean_skels[v]
+    )
+    skelZ_floor = mean_abs_z(
+        mu_train_skel, C_train_skel, mu_cleantest_skel, C_cleantest_skel
+    )
+
+    # --- Load the corrupted condition's features.
+    skels, clips, vids = _load_condition_videos(
+        corruption_type, severity, feature_root, backbone
+    )
+
+    # --- PASS 1: retained VL spread + skeleton reliability -> routing scalar w.
+    clip_std_test = clip_only_std(model, skels, clips, vids)
+    mu_cond_skel, C_cond_skel, _ = accumulate(vids, lambda v: skels[v])
+    skelZ = mean_abs_z(mu_train_skel, C_train_skel, mu_cond_skel, C_cond_skel)
+    w, w_vl, skel_rel = compute_w(clip_std_test, clip_std_clean, skelZ, skelZ_floor)
+
+    # --- PASS 2: score every video with the w-scaled forward (chunked T=32, no_grad).
+    forward_fn = w_scaled_forward(w)
+    T = 32
+    per_video_snippet_scores = {}
+    with torch.no_grad():
+        for vid in vids:
+            n = skels[vid].shape[0]
+            chunks = []
+            for start in range(0, n, T):
+                end = min(start + T, n)
+                sk = torch.from_numpy(
+                    skels[vid][start:end].astype(np.float32)
+                ).unsqueeze(0).to(device)
+                cl = torch.from_numpy(
+                    clips[vid][start:end].astype(np.float32)
+                ).unsqueeze(0).to(device)
+                sc = forward_fn(model, sk, cl)
+                chunks.append(sc.squeeze(0).cpu().numpy())
+            per_video_snippet_scores[vid] = np.concatenate(chunks)
+
+    # n_skipped = (#test_ids) - (#loaded); _load_condition_videos already excluded
+    # sub-64-frame / missing videos. Recompute from the split for the JSON payload.
+    test_split = _PROJECT_ROOT / "data" / "splits" / "ucf_test.txt"
+    n_total = len([l for l in test_split.read_text().splitlines() if l.strip()])
+    n_skipped = n_total - len(vids)
+
+    # --- Frame expansion + metrics (same convention as the source_only path).
+    ann_path = _PROJECT_ROOT / "data" / "annotations" / "ucf_temporal.txt"
+    annos = parse_annotations(ann_path)
+    frames_map, labels_map, cats_map = {}, {}, {}
+    for vid, scores in per_video_snippet_scores.items():
+        n_frames = len(scores) * 64 * 10
+        frames_map[vid] = snippet_to_frame(
+            scores, n_frames, snippet_window=64, upsample_factor=10,
+        )
+        if vid in annos:
+            labels_map[vid] = frame_labels(annos[vid], n_frames)
+            cats_map[vid] = annos[vid].category
+        else:
+            labels_map[vid] = np.zeros(n_frames, dtype=np.int64)
+            cats_map[vid] = "Normal"
+
+    metrics = compute_frame_metrics(frames_map, labels_map, cats_map)
+    eval_duration_s = float(time.time() - t0)
+
+    # --- Write outputs (D-31 pattern: metrics -> scores -> .done last).
+    output_dir.mkdir(parents=True, exist_ok=True)
+    payload = {
+        **metrics,
+        "method": "disc_reweight",
+        "corruption_type": corruption_type,
+        "severity": severity,
+        "lr": None,
+        "rho": None,
+        "backbone": backbone,
+        "protocol": protocol,
+        "source_run": str(source_run.name),
+        "n_adapted_params": n_adapted_params,
+        "n_videos_evaluated": len(per_video_snippet_scores),
+        "n_videos_skipped": n_skipped,
+        "eval_duration_s": round(eval_duration_s, 3),
+        "eval_timestamp": datetime.now().isoformat(timespec="seconds"),
+        # Routing diagnostics (traceability for the eventual Table 3 rewrite).
+        "disc_w": w,
+        "disc_w_vl": w_vl,
+        "disc_skel_rel": skel_rel,
+        "clip_std_test": clip_std_test,
+        "clip_std_clean": clip_std_clean,
+        "skelZ": skelZ,
+        "skelZ_floor": skelZ_floor,
+    }
+    _write_json_atomic(payload, output_dir / "eval_metrics.json")
+    np.savez_compressed(
+        output_dir / "eval_scores.npz",
+        **{k: v.astype(np.float32) for k, v in frames_map.items()},
+    )
+    _mark_done(output_dir)
+
+    auc = metrics.get("auc", float("nan"))
+    ap = metrics.get("ap", float("nan"))
+    logger.info(
+        "[evaluate_tta] %s disc_reweight sev=%d w=%.3f (w_vl=%.3f skel_rel=%.3f) "
+        "=> AUC=%.4f AP=%.4f",
+        corruption_type, severity, w, w_vl, skel_rel, auc, ap,
     )
 
 
