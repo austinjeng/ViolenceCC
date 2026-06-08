@@ -337,16 +337,9 @@ This improves mean AUC on all four backbones across the three seeds (Table~\ref{
 %%
 \section{Discussion}
 
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=\textwidth]{figures/fig_gating_distribution.pdf}
-  \caption{Gating weight distributions by anomaly category. Left: UCF-Crime. Right: XD-Violence. A mean gate value $\bar{g} > 0.5$ indicates stronger skeleton weighting. Categories involving distinctive human motion patterns (e.g., Fighting, Assault) tend to show higher skeleton weighting compared to scene-level events (e.g., Explosion, Arson).}
-  \label{fig:gating-distribution}
-\end{figure*}
-
 Our results reveal several patterns that merit discussion beyond the per-section analysis.
 
-\textbf{The complementarity argument.} Despite achieving only 71.8\% AUC in isolation on UCF-Crime, the skeleton modality consistently improves gated fusion performance over visual-only baselines. This gap between standalone and fusion performance suggests that skeleton features provide \emph{orthogonal} information---motion dynamics not captured by appearance-based vision-language models---rather than redundant signals. Figure~\ref{fig:gating-distribution} provides supporting evidence: the learned gating mechanism assigns higher skeleton weights to categories with distinctive motion patterns (e.g., Fighting, Assault) and lower weights to scene-level events better captured by visual semantics (e.g., Explosion, Arson). This category-adaptive behavior would not emerge if skeleton features were merely noisy duplicates of visual information.
+\textbf{The complementarity argument.} Despite achieving only 71.8\% AUC in isolation on UCF-Crime, the skeleton modality consistently improves gated fusion performance over visual-only baselines. This gap between standalone and fusion performance suggests that skeleton features provide \emph{orthogonal} information---motion dynamics not captured by appearance-based vision-language models---rather than redundant signals. The gated mechanism's large advantage over fixed equal-weight late fusion on XD-Violence (raising CLIP AP from 64.4\% to 76.5\%, a 12.1-point gap; Table~\ref{tab:xd-ablation}) indicates that the network extracts usable signal from the skeleton stream through input-dependent weighting, which a redundant or pure-noise modality could not provide.
 
 \textbf{Dataset-specific backbone preferences.} The divergence between UCF-Crime and XD-Violence in optimal backbone selection (Giant for UCF-Crime, SO400M for XD-Violence visual-only) has practical implications for system deployment. UCF-Crime consists of fixed-camera surveillance footage where the larger Giant backbone's richer representations may better disambiguate fine-grained anomaly categories. XD-Violence draws from heterogeneous sources including movies, sports broadcasts, and news footage, where SO400M's training on a broader data distribution (400M+ samples) may provide better domain coverage. This finding cautions against selecting a visual backbone based on general-purpose benchmarks alone and suggests that dataset-specific evaluation is essential.
 
@@ -386,7 +379,7 @@ Our study has several limitations that should be considered when interpreting th
 
 We have presented a dual-modal fusion framework for weakly supervised video anomaly detection that combines frozen skeleton dynamics from CTR-GCN with frozen vision-language features through a learned gated mechanism trained with MIL ranking loss. Our systematic study across four visual backbones---CLIP ViT-B/16 and three SigLIP2 variants---on UCF-Crime and XD-Violence yields three main findings.
 
-First, skeleton features provide complementary motion information that consistently improves gated fusion performance over visual-only baselines, despite the skeleton modality's substantially lower standalone performance (71.8\% AUC on UCF-Crime). The gated mechanism learns category-adaptive modality weighting, assigning higher skeleton weights to motion-intensive anomaly types.
+First, skeleton features provide complementary motion information that consistently improves gated fusion performance over visual-only baselines, despite the skeleton modality's substantially lower standalone performance (71.8\% AUC on UCF-Crime). Learned input-dependent gating substantially outperforms fixed equal-weight late fusion on XD-Violence---by more than 10 AP points on every backbone---confirming the value of weighting modalities per input rather than with a static mix.
 
 Second, backbone choice interacts with dataset characteristics in non-trivial ways. SigLIP2 Giant achieves the best UCF-Crime results (82.5\% AUC with gated fusion, 83.0\% with mean-only pooling), while SigLIP2 SO400M leads on XD-Violence (77.2\% visual-only AP and 78.7\% gated fusion AP). These dataset-specific preferences underscore the importance of multi-backbone evaluation for VAD system design.
 
