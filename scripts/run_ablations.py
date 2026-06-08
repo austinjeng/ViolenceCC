@@ -279,6 +279,29 @@ QUEUES = {
     ],
 }
 
+# M7 (2026-06-09): matched-seed visual-only baselines. Gated fusion already has
+# 3 seeds {42,123,2024}; visual-only (clip_only) was single-seed (42). Run seeds
+# {123,2024} for all 4 backbones x 2 datasets so the gated-vs-visual
+# complementarity margins have 3-seed error bars on BOTH sides. 16 runs.
+QUEUES["m7_visual_seeds"] = [
+    RunSpec("ucf", "clip_only", 123,  "configs/clip_only.yaml"),
+    RunSpec("ucf", "clip_only", 2024, "configs/clip_only.yaml"),
+    RunSpec("xd",  "clip_only", 123,  "configs/clip_only_xd.yaml"),
+    RunSpec("xd",  "clip_only", 2024, "configs/clip_only_xd.yaml"),
+    RunSpec("ucf", "clip_only", 123,  "configs/clip_only_siglip2.yaml", "siglip2"),
+    RunSpec("ucf", "clip_only", 2024, "configs/clip_only_siglip2.yaml", "siglip2"),
+    RunSpec("xd",  "clip_only", 123,  "configs/clip_only_xd_siglip2.yaml", "siglip2"),
+    RunSpec("xd",  "clip_only", 2024, "configs/clip_only_xd_siglip2.yaml", "siglip2"),
+    RunSpec("ucf", "clip_only", 123,  "configs/clip_only_so400m.yaml", "so400m"),
+    RunSpec("ucf", "clip_only", 2024, "configs/clip_only_so400m.yaml", "so400m"),
+    RunSpec("xd",  "clip_only", 123,  "configs/clip_only_xd_so400m.yaml", "so400m"),
+    RunSpec("xd",  "clip_only", 2024, "configs/clip_only_xd_so400m.yaml", "so400m"),
+    RunSpec("ucf", "clip_only", 123,  "configs/clip_only_giant.yaml", "giant"),
+    RunSpec("ucf", "clip_only", 2024, "configs/clip_only_giant.yaml", "giant"),
+    RunSpec("xd",  "clip_only", 123,  "configs/clip_only_xd_giant.yaml", "giant"),
+    RunSpec("xd",  "clip_only", 2024, "configs/clip_only_xd_giant.yaml", "giant"),
+]
+
 
 # ----------------------------------------------------------------------
 # Phase 7 hyperparameter sweep queue definitions (D-01, D-02, D-03)
