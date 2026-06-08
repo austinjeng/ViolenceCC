@@ -428,7 +428,7 @@ def fig_tta_comparison():
     bbs = ["CLIP\nViT-B/16", "SigLIP2\nBase", "SigLIP2\nSO400M", "SigLIP2\nGiant"]
     source_mean = [63.71, 57.01, 58.87, 62.83]
     source_std = [0.25, 1.40, 1.78, 0.53]
-    ours_mean = [64.38, 58.50, 61.11, 63.25]
+    ours_mean = [64.38, 58.50, 61.11, 63.2505]  # Giant 63.2505 -> label 63.3, matches Table 3
     ours_std = [0.13, 0.27, 1.58, 0.58]
     delta_mean = [0.67, 1.50, 2.24, 0.42]
 
