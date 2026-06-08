@@ -293,7 +293,12 @@ def _bench_rtmpose(args: argparse.Namespace) -> None:
     print(f"[RTMPose] Benchmarking ({args.num_bench} frames)...")
     latencies = []
     for _ in range(args.num_bench):
-        # Fresh random frame each iteration (realistic)
+        # NOTE: np.random uint8 frames contain no people, so YOLOX (score_thr=0.7) detects ~0
+        # boxes and RTMPose falls back to a single full-frame pose pass. This therefore measures
+        # isolated inference latency on empty frames, NOT real extraction throughput: real video
+        # frames run one pose pass per detected person, so end-to-end extraction is slower
+        # (~46 ms/frame = 21.6 FPS on 1-person scenes, ~15 FPS multi-person; see
+        # .planning/phases/02-feature-extraction-pipeline/02-UAT.md). The paper reports 21.6 FPS.
         frame = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
         t0 = time.perf_counter()
         _ = model(frame)

@@ -123,7 +123,7 @@ We extract 2D human pose keypoints from video frames using RTMPose-m~\cite{jiang
 
 We retain the top-2 persons per frame ranked by detection confidence to maintain a fixed spatial dimension across all inputs. When fewer than 2 persons are detected, the remaining slots are zero-padded. The raw pixel coordinates are normalized to the $[-1, 1]$ range about the image center via the PreNormalize2D transformation, matching the input convention of the NTU-pretrained CTR-GCN encoder.
 
-The extracted skeletons are organized as tensors of shape $(T, M, V, C)$ where $T$ is the number of frames, $M=2$ is the maximum person count, $V=17$ is the number of joints, and $C=3$ includes the $(x, y)$ coordinates and a keypoint confidence score. The extraction runs at approximately 21.6 FPS on a single RTX 4090 using ONNX Runtime with CUDA acceleration.
+The extracted skeletons are organized as tensors of shape $(T, M, V, C)$ where $T$ is the number of frames, $M=2$ is the maximum person count, $V=17$ is the number of joints, and $C=3$ includes the $(x, y)$ coordinates and a keypoint confidence score. The extraction runs at approximately 21.6 FPS on single-person scenes (about 15 FPS with multiple persons) on a single RTX 4090 using ONNX Runtime with CUDA acceleration.
 
 \subsection{CTR-GCN Feature Extraction}
 
@@ -269,7 +269,7 @@ GF Mean-Only & 76.8 & 74.7 & \textbf{79.9} & 76.2 & $\uparrow$+3.1 \\
   \label{fig:temporal-scores}
 \end{figure}
 
-\textbf{Late fusion can degrade performance.} A notable finding is that late fusion sometimes performs worse than the visual-only baseline. On UCF-Crime, CLIP late fusion (78.6\%) falls below CLIP visual-only (81.1\%), a drop of 2.5 percentage points. This suggests that the fixed equal weighting lets the weaker skeleton signal drag down every fused score, with no input-dependent mechanism to reduce its weight relative to the stronger visual stream. The gated mechanism resolves this by learning to modulate each modality's contribution.
+\textbf{Late fusion can degrade performance.} A notable finding is that late fusion sometimes performs worse than the visual-only baseline. On UCF-Crime, CLIP late fusion (78.6\%) falls below CLIP visual-only (81.2\%), a drop of 2.6 percentage points. This suggests that the fixed equal weighting lets the weaker skeleton signal drag down every fused score, with no input-dependent mechanism to reduce its weight relative to the stronger visual stream. The gated mechanism resolves this by learning to modulate each modality's contribution.
 
 Figure~\ref{fig:temporal-scores} illustrates the temporal behavior of our gated fusion model on a representative test video, demonstrating sharper anomaly score peaks compared to single-modality baselines.
 
@@ -297,18 +297,18 @@ A key finding of our study is that \emph{backbone choice interacts with dataset 
 
 % Table 3: TTA Results on UCF-Crime-C
 \begin{table}[t]
-\caption{Test-time adaptation on UCF-Crime-C, mean AUC (\%) over 20 corruption conditions (4 types $\times$ 5 severities). Source-Only and our discriminative-reliability reweighting (Ours) are reported as the mean over three seeds $\{42,123,2024\}$; $\Delta$ is the paired per-seed gain of Ours over Source-Only (mean$\pm$std). TENT and SAR change AUC by $<0.1$ pp (measured on seed 42, seed-insensitive), so their entries equal Source-Only to the displayed precision. Best per backbone in \textbf{bold}.}
+\caption{Test-time adaptation on UCF-Crime-C, mean AUC (\%) over 20 corruption conditions (4 types $\times$ 5 severities). Source-Only and our discriminative-reliability reweighting (Ours) are reported as the mean over three seeds $\{42,123,2024\}$; $\Delta$ is the paired per-seed gain of Ours over Source-Only (mean$\pm$std). Best per backbone in \textbf{bold}.}
 \label{tab:tta}
-\begin{tabular}{l c c c c c}
+\begin{tabular}{l c c c}
 \toprule
-Backbone & Source-Only & TENT & SAR & Ours & $\Delta_{\text{Ours}}$ \\
+Backbone & Source-Only & Ours & $\Delta_{\text{Ours}}$ \\
 \midrule
-CLIP ViT-B/16 & 63.7 & 63.7 & 63.7 & \textbf{64.4} & +0.67{\footnotesize\,$\pm$0.23} \\
-SigLIP2 Base & 57.0 & 57.0 & 57.0 & \textbf{58.5} & +1.50{\footnotesize\,$\pm$1.14} \\
-SigLIP2 SO400M & 58.9 & 58.9 & 58.9 & \textbf{61.1} & +2.24{\footnotesize\,$\pm$0.24} \\
-SigLIP2 Giant & 62.8 & 62.8 & 62.8 & \textbf{63.3} & +0.42{\footnotesize\,$\pm$0.12} \\
+CLIP ViT-B/16 & 63.7 & \textbf{64.4} & +0.67{\footnotesize\,$\pm$0.23} \\
+SigLIP2 Base & 57.0 & \textbf{58.5} & +1.50{\footnotesize\,$\pm$1.14} \\
+SigLIP2 SO400M & 58.9 & \textbf{61.1} & +2.24{\footnotesize\,$\pm$0.24} \\
+SigLIP2 Giant & 62.8 & \textbf{63.3} & +0.42{\footnotesize\,$\pm$0.12} \\
 \midrule
-Mean & 60.6 & 60.6 & 60.6 & \textbf{61.8} & +1.21 \\
+Mean & 60.6 & \textbf{61.8} & +1.21 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -324,7 +324,7 @@ We evaluate test-time adaptation on UCF-Crime-C, a corruption benchmark construc
 
 TENT~\cite{wang2021tent} and SAR~\cite{niu2023sar} adapt only the LayerNorm affine parameters ($\gamma,\beta$) of the gated fusion head---three LN layers totaling fewer than 4{,}000 parameters---under a deterministic, continual-online protocol that adapts across the entire corruption stream (TENT: $\text{lr}=10^{-3}$; SAR: $\text{lr}=10^{-3}$, $\rho=0.05$). All TTA results are means over three training seeds $\{42,123,2024\}$. Table~\ref{tab:tta} and Figure~\ref{fig:tta-comparison} present the results.
 
-\textbf{Entropy minimization gives no benefit.} Under the deterministic protocol, TENT and SAR change mean AUC by less than $0.1$ percentage points on every backbone (Table~\ref{tab:tta})---effectively zero. This is not a tuning artifact: with the gate and MIL head frozen, only the LayerNorm affine parameters adapt, and the resulting updates are far too small to reorder the pooled snippet scores on which the rank-based AUC depends. The corruption-induced shift lives upstream in the frozen backbone features, which affine adaptation of the fusion head cannot reach.
+\textbf{Entropy minimization gives no benefit.} Under the deterministic protocol, TENT and SAR change mean AUC by less than $0.1$ percentage points on every backbone---effectively zero. This is not a tuning artifact: with the gate and MIL head frozen, only the LayerNorm affine parameters adapt, and the resulting updates are far too small to reorder the pooled snippet scores on which the rank-based AUC depends. The corruption-induced shift lives upstream in the frozen backbone features, which affine adaptation of the fusion head cannot reach.
 
 \textbf{Feature-statistic restoration is rank-disruptive.} Aligning the corrupted test features' first- and second-order statistics to the clean-training statistics (NORM/CORAL-style) does reach the feature space, but degrades AUC: per-channel whitening reorders the discriminative directions for the SigLIP2 backbones, and the sign of the effect flips across backbones, so no single operating point selected without test labels is net-positive across the four backbones. The corruption shift is not correctable by a label-free affine or covariance map on the features.
 
