@@ -130,6 +130,9 @@ Targets from PRD v2.3:
 | XD-Violence benefits from tuning (+3.72pp), UCF does not (+0.14pp) | 198-config sweep across both datasets; XD winner lr=1e-3/k=2 (AP=74.69%); UCF hyperparameter-insensitive |
 | Decimal LR encoding uses 'p' separator | 6.5e-4 encoded as '6p5e4' in run_name via _fmt_lr(); avoids dots in filesystem paths |
 | Sweep grid expanded from 20 to 99 configs | 3 progressive extension rounds: base 20, +18, +28, +33 chasing peak at grid edges |
+| Never compare a 3-seed metric to a 1-seed baseline (esp. XD) | XD visual-only AP is seed-unstable (std ±1.5–2.2 vs UCF ±0.1–0.5). 2026-06-09 matched-seed runs (260609-cpr) showed the apparent "SigLIP2-Base/XD fusion regression" (−2.3) and "SO400M leads XD visual-only" were BOTH single-seed (s42) artifacts that vanish at 3 seeds. Always replicate both sides before claiming a margin |
+| Skeleton complementarity is small + consistent, not large | gated ≥ visual-only in 8/8 backbone×dataset configs (mean +0.6pp, sign test p≈0.008), with NO per-cell significance at n=3; largest on XD (CLIP +1.9, SO400M +2.1). Paper claims/tables must not overstate it; SO400M leads XD only under gated fusion (78.7, robust) |
+| Adversarially pre-check exact-number LaTeX/paper edits before applying | 2026-06-09 skeptic workflows caught, pre-edit: 2 dangling \ref{tab:tta}, a stale 81.1→81.2 / 2.5→2.6pp number a prior edit introduced, a wrong "21.6 FPS is unbacked" rationale (it is a real 02-UAT.md measurement), and a T-symbol collision (frame-count vs bag) — none shipped |
 
 ### Roadmap Evolution
 
