@@ -16,10 +16,14 @@ PROVENANCE (exact recipe that reproduces main.tex Table 3):
   The seed-42 disc_reweight math (per-condition w / w_vl / skel_rel columns) is the
   committed implementation in src/tta/disc_reweight.py + src/tta/evaluate_tta.py.
 
-  TENT / SAR = results/_tta_rerun_continual/summary.json (deterministic continual
-  protocol, TENT lr=1e-3, SAR lr=1e-3 rho=0.05, seed 42). Their AUC change vs
-  Source-Only is <0.1 pp on every backbone, so they equal Source-Only at the
-  table's 1-decimal display precision.
+  TENT / SAR = results/_tta_rerun_continual/summary_3seed.json (deterministic
+  continual protocol, TENT lr=1e-3, SAR lr=1e-3 rho=0.05, seeds {42,123,2024};
+  per-condition eval_metrics under _tta_rerun_continual/<bb>/{source,tent,sar}
+  for seed 42 and {source_only,tent,sar}_s<seed> for seeds 123/2024, aggregated
+  by scripts/run_tta_seeds_m2.py). Their 3-seed-mean AUC change vs Source-Only is
+  <0.1 pp on every backbone (worst 0.082 pp, SigLIP2-Base), so they equal
+  Source-Only at the table's 1-decimal display precision. (The legacy seed-42-only
+  summary.json is retained for back-compat.)
 
   The 4 variants/v_<tag>_s42_train.json files are the clean-reference robustness
   check (clip_std_clean computed on clean-TRAIN instead of clean-TEST) backing the
@@ -37,7 +41,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DERISK = ROOT / "results" / "_coral_derisk"
-CONTINUAL = ROOT / "results" / "_tta_rerun_continual" / "summary.json"
+CONTINUAL_DIR = ROOT / "results" / "_tta_rerun_continual"
+CONTINUAL_3SEED = CONTINUAL_DIR / "summary_3seed.json"
+CONTINUAL = CONTINUAL_DIR / "summary.json"  # legacy seed-42-only (back-compat)
 
 # (display name, tag used in artifact filenames, continual-summary key)
 BACKBONES = [
@@ -61,8 +67,20 @@ def _seed_summaries(tag: str) -> list[dict]:
     ]
 
 
+def _continual_delta(ckey: str) -> tuple[float, float, int]:
+    """(tent_d, sar_d, n_seeds) entropy change vs Source-Only for a backbone.
+
+    Prefers the 3-seed summary; falls back to the legacy seed-42-only summary.json.
+    """
+    if CONTINUAL_3SEED.exists():
+        m = json.loads(CONTINUAL_3SEED.read_text())[ckey]["mean"]
+        return m["dTENT"], m["dSAR"], m["n_seeds"]
+    c = json.loads(CONTINUAL.read_text())[ckey]
+    return c["tent"] - c["source"], c["sar"] - c["source"], 1
+
+
 def main() -> None:
-    continual = json.loads(CONTINUAL.read_text())
+    n_seeds_entropy = 3 if CONTINUAL_3SEED.exists() else 1
 
     print(f"{'Backbone':16} {'Source':>7} {'TENT':>7} {'SAR':>7} {'Ours':>7} "
           f"{'D_Ours':>14}   {'TENT_d':>7} {'SAR_d':>7}")
@@ -82,9 +100,7 @@ def main() -> None:
         src_all.append(source)
         ours_all.append(ours_m)
 
-        c = continual[ckey]
-        tent_d = c["tent"] - c["source"]
-        sar_d = c["sar"] - c["source"]
+        tent_d, sar_d, _ = _continual_delta(ckey)
         # TENT/SAR equal Source-Only at 1-dp display (entropy change < 0.1 pp).
         tent = source
         sar = source
@@ -98,8 +114,11 @@ def main() -> None:
     print(f"{'Mean':16} {mean_src:7.1f} {mean_src:7.1f} {mean_src:7.1f} {mean_ours:7.1f} "
           f"{'+%.2f' % (mean_ours - mean_src):>7}")
     print()
-    print("TENT/SAR entropy change vs Source-Only is <0.1 pp on every backbone "
-          "(continual, seed 42); see results/_tta_rerun_continual/summary.json.")
+    src = "summary_3seed.json" if n_seeds_entropy == 3 else "summary.json"
+    print(f"TENT/SAR entropy change vs Source-Only is <0.1 pp on every backbone "
+          f"(continual, {n_seeds_entropy}-seed mean "
+          f"{'{42,123,2024}' if n_seeds_entropy == 3 else '{42}'}); "
+          f"see results/_tta_rerun_continual/{src}.")
 
 
 if __name__ == "__main__":
