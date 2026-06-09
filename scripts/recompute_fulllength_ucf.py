@@ -130,14 +130,34 @@ def _recover_snippet_scores(arr: np.ndarray, block: int) -> np.ndarray:
     return flat.reshape(n_snip, block)[:, 0].astype(np.float32)
 
 
+# M3: committed fallback manifest so full-length recompute works from git alone
+# (built by scripts/build_ucf_frames_manifest.py from the off-repo boundary JSONs).
+_MANIFEST_PATH = Path(__file__).resolve().parent.parent / "data" / "ucf_total_frames.json"
+_MANIFEST = None
+
+
+def _frames_manifest() -> dict:
+    """Committed {video_id: total_frames}; cached. {} if absent."""
+    global _MANIFEST
+    if _MANIFEST is None:
+        try:
+            _MANIFEST = json.loads(_MANIFEST_PATH.read_text())
+        except FileNotFoundError:
+            _MANIFEST = {}
+    return _MANIFEST
+
+
 def _load_boundaries_total_frames(boundaries_dir: Path, vid: str):
-    """Return total_frames int from {vid}_boundaries.json, or None if missing."""
+    """Return total_frames from {vid}_boundaries.json; else the committed manifest;
+    else None. The off-repo boundary JSON takes precedence when present."""
     bpath = boundaries_dir / f"{vid}_boundaries.json"
-    if not bpath.exists():
-        return None
-    with open(bpath, "r", encoding="utf-8") as f:
-        data = json.load(f)
-    return int(data["total_frames"])
+    if bpath.exists():
+        with open(bpath, "r", encoding="utf-8") as f:
+            return int(json.load(f)["total_frames"])
+    m = _frames_manifest()
+    if vid in m:
+        return int(m[vid])
+    return None
 
 
 def _recompute_ucf_run(
@@ -403,11 +423,14 @@ def _write_canonical(rows: list) -> None:
 
 def _run_ucf(args, out_dir: Path) -> None:
     boundaries_dir = Path(args.boundaries_dir)
-    # Startup guard: fail loudly if UCF boundaries dir is absent.
-    if not boundaries_dir.exists():
+    # Startup guard (M3): proceed if EITHER the off-repo boundaries dir exists OR
+    # the committed manifest (data/ucf_total_frames.json) is available — either can
+    # supply true full-length frame counts. Abort only if neither is present.
+    if not boundaries_dir.exists() and not _frames_manifest():
         sys.exit(
-            f"H1 recompute: boundaries dir {boundaries_dir} not found; cannot "
-            f"produce correct full-length numbers"
+            f"H1 recompute: boundaries dir {boundaries_dir} not found and no "
+            f"committed manifest at {_MANIFEST_PATH}; cannot produce correct "
+            f"full-length numbers"
         )
 
     ann_path = _PROJECT_ROOT / "data" / "annotations" / "ucf_temporal.txt"

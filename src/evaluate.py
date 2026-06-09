@@ -36,6 +36,23 @@ _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
+# M3: committed fallback manifest of true per-video UCF frame counts. Lets the
+# full-length headline (82.5% AUC) reproduce from git alone when the off-repo
+# snippet-boundaries dir is absent. Built by scripts/build_ucf_frames_manifest.py.
+_UCF_FRAMES_MANIFEST_PATH = _PROJECT_ROOT / "data" / "ucf_total_frames.json"
+_UCF_FRAMES_MANIFEST = None  # lazily loaded {video_id: total_frames}
+
+
+def _load_ucf_frames_manifest() -> dict:
+    """Return the committed {video_id: total_frames} manifest (cached; {} if absent)."""
+    global _UCF_FRAMES_MANIFEST
+    if _UCF_FRAMES_MANIFEST is None:
+        try:
+            _UCF_FRAMES_MANIFEST = json.loads(_UCF_FRAMES_MANIFEST_PATH.read_text())
+        except FileNotFoundError:
+            _UCF_FRAMES_MANIFEST = {}
+    return _UCF_FRAMES_MANIFEST
+
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
@@ -285,6 +302,9 @@ def _build_frame_arrays(cfg: dict, per_video_snippet_scores: dict):
     # this is non-breaking: runs without the cfg key behave exactly as before
     # (plus one warning).
     boundaries_dir = cfg.get("paths", {}).get("snippet_boundaries_dir")
+    # M3: committed manifest fallback so full-length frames are recovered from git
+    # even when boundaries_dir is unset (the common case for the released snapshots).
+    frames_manifest = _load_ucf_frames_manifest()
     _warned_truncated = False
 
     frames_map: dict = {}
@@ -298,14 +318,18 @@ def _build_frame_arrays(cfg: dict, per_video_snippet_scores: dict):
                 with open(bpath, "r", encoding="utf-8") as f:
                     total_frames = int(json.load(f)["total_frames"])
                 n_frames = total_frames * upsample_factor  # H1 TRUE full length
+        if n_frames is None and vid in frames_manifest:
+            # M3 fallback: true full length from the committed manifest.
+            n_frames = int(frames_manifest[vid]) * upsample_factor
         if n_frames is None:
             # CLAUDE.md eval-stub convention: warn ONCE that the live eval is
-            # using the truncated snippet-grid length (H1).
+            # using the truncated snippet-grid length (H1) — only reached when
+            # neither the boundaries dir nor the committed manifest has the video.
             if not _warned_truncated:
                 warnings.warn(
                     "UCF eval uses the snippet-grid (truncated) length; set "
-                    "paths.snippet_boundaries_dir to use true full-length "
-                    "frames (H1)."
+                    "paths.snippet_boundaries_dir or commit the video to "
+                    "data/ucf_total_frames.json to use true full-length frames (H1)."
                 )
                 _warned_truncated = True
             n_frames = len(scores) * snippet_window * upsample_factor
