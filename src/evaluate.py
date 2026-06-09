@@ -214,7 +214,10 @@ def _build_frame_arrays(cfg: dict, per_video_snippet_scores: dict):
         annos = parse_xd_annotations(ann_path) if ann_path.exists() else {}
 
         # D-08: I3D stride=16, annotation-fps = video-fps (no upsample needed).
-        # Verified bit-identical to XDVioDet gt.npy (2,330,384 frames).
+        # This xd_i3d (stride-16) path is verified bit-identical to XDVioDet
+        # gt.npy (2,330,384 frames). NOTE: the separate xd FUSION path below uses
+        # snippet_window=64 and yields 2,313,024 frames (~0.74% shorter); that
+        # 'bit-identical' claim applies ONLY to this stride-16 path.
         snippet_window = 16
         upsample_factor = 1
 
@@ -257,6 +260,12 @@ def _build_frame_arrays(cfg: dict, per_video_snippet_scores: dict):
         # XD fusion: skeleton+CLIP extraction uses 64-frame snippet windows
         # (same as UCF), but XD video frames are native FPS (no PNG 10x
         # upsample). So snippet_window=64, upsample_factor=1.
+        # NOTE: n_frames = len(scores)*64 drops each video's trailing partial
+        # 64-frame window, giving 2,313,024 frames vs the canonical 2,330,384
+        # (~0.74% short). Scores and labels share this truncated grid so AP is
+        # internally consistent; impact on the 78.7% AP headline is negligible.
+        # (Unlike UCF, there is no full-length boundary correction for XD; a
+        # symmetric XD total_frames manifest could close this if desired.)
         snippet_window = 64
         upsample_factor = 1
 

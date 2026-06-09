@@ -2,7 +2,9 @@
 
 Design: minimum-viable reproduction per CONTEXT.md Claude's Discretion.
   - NO MTN temporal module (no dilated conv, no non-local block)
-  - FM head = L2 norm of features; top-k selection handled in loss
+  - NO explicit feature-magnitude (L2-norm) head: the forward is just
+    LayerNorm(self.ln_i3d) + the standard sigmoid MILHead; top-k is handled in
+    the MIL loss (mil_loss.py) on the sigmoid scores, not via an FM-magnitude head
   - Standard MILHead reused (same as other variants, MOD-03..06)
   - Named LN (self.ln_i3d) for TTA parameter collection (D-07, Phase 5)
 

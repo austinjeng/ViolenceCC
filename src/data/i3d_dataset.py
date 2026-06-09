@@ -57,7 +57,7 @@ class I3DFeatureDataset(Dataset):
         all_ids = [
             i.strip()
             for i in Path(split_file).read_text(encoding="utf-8").splitlines()
-            if i.strip()
+            if i.strip() and not i.strip().startswith("#")
         ]
         self.video_ids: List[str] = [
             vid for vid in all_ids if self._has_at_least_one_crop(vid)
@@ -132,9 +132,11 @@ class I3DFeatureDataset(Dataset):
                 ]
             )
         # N < T: sample-with-replacement (matches RTFM upsampling behavior
-        # documented in src/data/dataset.py D-10-revised comment).
-        rng = np.random.default_rng(0)  # deterministic for reproducibility
-        idxs = np.sort(rng.integers(0, N, size=self.T))
+        # documented in src/data/dataset.py D-10-revised comment). Draw from the
+        # global RNG (like MILFeatureDataset) so the sampling varies per epoch and
+        # per crop instead of repeating one fixed index set; still reproducible via
+        # the train-time global seed (src/utils/seed.set_deterministic).
+        idxs = np.sort(np.random.randint(0, N, size=self.T))
         return feat[idxs]
 
     # ---------------------------------------------------------------- Dataset
