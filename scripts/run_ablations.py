@@ -303,6 +303,71 @@ QUEUES["m7_visual_seeds"] = [
 ]
 
 
+# Pri-1 (2026-06-10 review): 3-seed the 26 ablation rows that exist only at
+# seed=42 -- Late Fusion, GF 2-Person, GF Mean-Only (clip_mean), and Skeleton
+# Only across the 4 backbones / 2 datasets. Cloned verbatim from the
+# phase4/4c/8/9/10 main+pooling specs above with seed 42 -> {123, 2024}. seed=42
+# already covered by the source queues; not duplicated (D-27/D-28). 52 runs.
+QUEUES["pri1_ablations_seeds"] = [
+    # Late Fusion (4 backbones x 2 datasets)
+    RunSpec("ucf", "late_fusion", 123,  "configs/late_fusion.yaml"),
+    RunSpec("ucf", "late_fusion", 2024, "configs/late_fusion.yaml"),
+    RunSpec("xd",  "late_fusion", 123,  "configs/late_fusion_xd.yaml"),
+    RunSpec("xd",  "late_fusion", 2024, "configs/late_fusion_xd.yaml"),
+    RunSpec("ucf", "late_fusion", 123,  "configs/late_fusion_siglip2.yaml",     "siglip2"),
+    RunSpec("ucf", "late_fusion", 2024, "configs/late_fusion_siglip2.yaml",     "siglip2"),
+    RunSpec("xd",  "late_fusion", 123,  "configs/late_fusion_xd_siglip2.yaml",  "siglip2"),
+    RunSpec("xd",  "late_fusion", 2024, "configs/late_fusion_xd_siglip2.yaml",  "siglip2"),
+    RunSpec("ucf", "late_fusion", 123,  "configs/late_fusion_so400m.yaml",      "so400m"),
+    RunSpec("ucf", "late_fusion", 2024, "configs/late_fusion_so400m.yaml",      "so400m"),
+    RunSpec("xd",  "late_fusion", 123,  "configs/late_fusion_xd_so400m.yaml",   "so400m"),
+    RunSpec("xd",  "late_fusion", 2024, "configs/late_fusion_xd_so400m.yaml",   "so400m"),
+    RunSpec("ucf", "late_fusion", 123,  "configs/late_fusion_giant.yaml",       "giant"),
+    RunSpec("ucf", "late_fusion", 2024, "configs/late_fusion_giant.yaml",       "giant"),
+    RunSpec("xd",  "late_fusion", 123,  "configs/late_fusion_xd_giant.yaml",    "giant"),
+    RunSpec("xd",  "late_fusion", 2024, "configs/late_fusion_xd_giant.yaml",    "giant"),
+    # GF 2-Person (4 backbones x 2 datasets)
+    RunSpec("ucf", "gated_fusion", 123,  "configs/gated_fusion_2person.yaml",            "2person"),
+    RunSpec("ucf", "gated_fusion", 2024, "configs/gated_fusion_2person.yaml",            "2person"),
+    RunSpec("xd",  "gated_fusion", 123,  "configs/gated_fusion_xd_2person.yaml",         "2person"),
+    RunSpec("xd",  "gated_fusion", 2024, "configs/gated_fusion_xd_2person.yaml",         "2person"),
+    RunSpec("ucf", "gated_fusion", 123,  "configs/gated_fusion_siglip2_2person.yaml",    "siglip2_2person"),
+    RunSpec("ucf", "gated_fusion", 2024, "configs/gated_fusion_siglip2_2person.yaml",    "siglip2_2person"),
+    RunSpec("xd",  "gated_fusion", 123,  "configs/gated_fusion_xd_siglip2_2person.yaml", "siglip2_2person"),
+    RunSpec("xd",  "gated_fusion", 2024, "configs/gated_fusion_xd_siglip2_2person.yaml", "siglip2_2person"),
+    RunSpec("ucf", "gated_fusion", 123,  "configs/gated_fusion_so400m_2person.yaml",     "so400m_2person"),
+    RunSpec("ucf", "gated_fusion", 2024, "configs/gated_fusion_so400m_2person.yaml",     "so400m_2person"),
+    RunSpec("xd",  "gated_fusion", 123,  "configs/gated_fusion_xd_so400m_2person.yaml",  "so400m_2person"),
+    RunSpec("xd",  "gated_fusion", 2024, "configs/gated_fusion_xd_so400m_2person.yaml",  "so400m_2person"),
+    RunSpec("ucf", "gated_fusion", 123,  "configs/gated_fusion_giant_2person.yaml",      "giant_2person"),
+    RunSpec("ucf", "gated_fusion", 2024, "configs/gated_fusion_giant_2person.yaml",      "giant_2person"),
+    RunSpec("xd",  "gated_fusion", 123,  "configs/gated_fusion_xd_giant_2person.yaml",   "giant_2person"),
+    RunSpec("xd",  "gated_fusion", 2024, "configs/gated_fusion_xd_giant_2person.yaml",   "giant_2person"),
+    # GF Mean-Only (4 backbones x 2 datasets)
+    RunSpec("ucf", "gated_fusion", 123,  "configs/gated_fusion_clip_mean.yaml",            "clip_mean"),
+    RunSpec("ucf", "gated_fusion", 2024, "configs/gated_fusion_clip_mean.yaml",            "clip_mean"),
+    RunSpec("xd",  "gated_fusion", 123,  "configs/gated_fusion_xd_clip_mean.yaml",         "clip_mean"),
+    RunSpec("xd",  "gated_fusion", 2024, "configs/gated_fusion_xd_clip_mean.yaml",         "clip_mean"),
+    RunSpec("ucf", "gated_fusion", 123,  "configs/gated_fusion_siglip2_clip_mean.yaml",    "siglip2_clip_mean"),
+    RunSpec("ucf", "gated_fusion", 2024, "configs/gated_fusion_siglip2_clip_mean.yaml",    "siglip2_clip_mean"),
+    RunSpec("xd",  "gated_fusion", 123,  "configs/gated_fusion_xd_siglip2_clip_mean.yaml", "siglip2_clip_mean"),
+    RunSpec("xd",  "gated_fusion", 2024, "configs/gated_fusion_xd_siglip2_clip_mean.yaml", "siglip2_clip_mean"),
+    RunSpec("ucf", "gated_fusion", 123,  "configs/gated_fusion_so400m_clip_mean.yaml",     "so400m_clip_mean"),
+    RunSpec("ucf", "gated_fusion", 2024, "configs/gated_fusion_so400m_clip_mean.yaml",     "so400m_clip_mean"),
+    RunSpec("xd",  "gated_fusion", 123,  "configs/gated_fusion_xd_so400m_clip_mean.yaml",  "so400m_clip_mean"),
+    RunSpec("xd",  "gated_fusion", 2024, "configs/gated_fusion_xd_so400m_clip_mean.yaml",  "so400m_clip_mean"),
+    RunSpec("ucf", "gated_fusion", 123,  "configs/gated_fusion_giant_clip_mean.yaml",      "giant_clip_mean"),
+    RunSpec("ucf", "gated_fusion", 2024, "configs/gated_fusion_giant_clip_mean.yaml",      "giant_clip_mean"),
+    RunSpec("xd",  "gated_fusion", 123,  "configs/gated_fusion_xd_giant_clip_mean.yaml",   "giant_clip_mean"),
+    RunSpec("xd",  "gated_fusion", 2024, "configs/gated_fusion_xd_giant_clip_mean.yaml",   "giant_clip_mean"),
+    # Skeleton Only (2 datasets; no visual backbone)
+    RunSpec("ucf", "skeleton_only", 123,  "configs/skeleton_only.yaml"),
+    RunSpec("ucf", "skeleton_only", 2024, "configs/skeleton_only.yaml"),
+    RunSpec("xd",  "skeleton_only", 123,  "configs/skeleton_only_xd.yaml"),
+    RunSpec("xd",  "skeleton_only", 2024, "configs/skeleton_only_xd.yaml"),
+]  # 52 runs (26 configs x seeds {123, 2024})
+
+
 # ----------------------------------------------------------------------
 # Phase 7 hyperparameter sweep queue definitions (D-01, D-02, D-03)
 # 5 lr x 4 k_topk = 20 runs at seed=42
