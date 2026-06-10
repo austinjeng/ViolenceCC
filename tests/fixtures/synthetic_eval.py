@@ -39,18 +39,25 @@ def make_synthetic_ucf(tmp_path: Path, n_videos: int = 10, seed: int = 0) -> dic
     anno_dir = root / "annotations"
     anno_dir.mkdir()
 
-    # 5 normal + 5 anomaly, varied snippet counts in [4, 12]
+    # 5 normal + 5 anomaly, varied snippet counts in [4, 12].
+    # NOTE: ALL video IDs are SYNTHETIC (Synth*) and MUST NOT match real UCF
+    # video IDs. evaluate.py's M3 full-length fallback keys off the video ID
+    # against data/ucf_total_frames.json; real IDs (e.g. "Abuse028",
+    # "Normal_Videos_003") hijack n_frames from the manifest and break the
+    # synthetic snippet->frame grid (regression introduced by commit 4ddda56).
+    # Category comes from the annotation column below, not the ID, so the rename
+    # is label-safe.
     specs = [
-        ("Normal_Videos_001", "Normal", -1, -1, -1, -1),
-        ("Normal_Videos_002", "Normal", -1, -1, -1, -1),
-        ("Normal_Videos_003", "Normal", -1, -1, -1, -1),
-        ("Normal_Videos_004", "Normal", -1, -1, -1, -1),
-        ("Normal_Videos_005", "Normal", -1, -1, -1, -1),
-        ("Abuse028", "Abuse", 165, 240, -1, -1),
-        ("Arson011", "Arson", 150, 420, 680, 1267),
-        ("Fighting003", "Fighting", 80, 160, -1, -1),
-        ("Assault010", "Assault", 100, 250, -1, -1),
-        ("Shooting007", "Shooting", 200, 340, -1, -1),
+        ("SynthNormal001", "Normal", -1, -1, -1, -1),
+        ("SynthNormal002", "Normal", -1, -1, -1, -1),
+        ("SynthNormal003", "Normal", -1, -1, -1, -1),
+        ("SynthNormal004", "Normal", -1, -1, -1, -1),
+        ("SynthNormal005", "Normal", -1, -1, -1, -1),
+        ("SynthAbuse900", "Abuse", 165, 240, -1, -1),
+        ("SynthArson901", "Arson", 150, 420, 680, 1267),
+        ("SynthFighting902", "Fighting", 80, 160, -1, -1),
+        ("SynthAssault903", "Assault", 100, 250, -1, -1),
+        ("SynthShooting904", "Shooting", 200, 340, -1, -1),
     ]
     vids = []
     anno_lines = []

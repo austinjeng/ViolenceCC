@@ -108,7 +108,7 @@ def test_tta_skip_if_done(tmp_path, capsys):
     }
 
 
-def test_tta_total_runs_is_500():
-    """D-09: total TTA runs = 20 + 80 + 400 = 500."""
+def test_tta_total_runs_is_680():
+    """Total TTA runs = 20 + 80 + 400 (CLIP grids) + 3x60 (backbone source/tent/sar) = 680."""
     total = sum(len(q) for q in TTA_QUEUES.values())
-    assert total == 500, f"expected 500 total TTA runs, got {total}"
+    assert total == 680, f"expected 680 total TTA runs, got {total}"

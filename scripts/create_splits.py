@@ -46,6 +46,17 @@ UCF_CATEGORIES = [
     "Stealing", "Vandalism",
 ]
 
+# XD-Violence train-split exclusions, applied AFTER the seed=42 stratified split.
+# Both videos are enumerated from E:/XD_Violence/train and assigned to the TRAIN
+# split, then removed; encoding them here (with the original comment header, in
+# this order) lets `--verify` regenerate xd_train.txt byte-identically. xd_val and
+# xd_test are unaffected (neither excluded video lands there).
+# See data/splits/xd_train.txt and paper main.tex:134 (3,952 of 3,954 used).
+XD_TRAIN_EXCLUSIONS = {
+    "v=8cTqh9tMz_I__#1_label_A": "corrupt MP4, missing moov atom",
+    "v=Gm73TwtUyGY__#1_label_G-0-0": "34 frames, below 64-frame window",
+}
+
 
 # ---------------------------------------------------------------------------
 # UCF-Crime helpers
@@ -197,7 +208,20 @@ def generate_xd_splits(output_dir: pathlib.Path) -> tuple[list[str], list[str], 
           f"Val: {len(val_ids)} ({sum(val_labels)} anomalous)  "
           f"(val fraction: {len(val_ids)/(len(train_ids)+len(val_ids)):.3f})")
 
-    write_split_file(output_dir / "xd_train.txt", train_ids)
+    # Apply documented exclusions and emit the same comment header so the committed
+    # xd_train.txt regenerates byte-identically (see XD_TRAIN_EXCLUSIONS).
+    train_ids = [v for v in train_ids if v not in XD_TRAIN_EXCLUSIONS]
+    n_excl = len(train_idx) - len(train_ids)
+    if n_excl:
+        print(f"  Excluded {n_excl} documented train video(s): "
+              f"{', '.join(XD_TRAIN_EXCLUSIONS)}")
+    xd_train_path = output_dir / "xd_train.txt"
+    xd_train_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(xd_train_path, "w", newline="\n") as f:
+        for _vid, _reason in XD_TRAIN_EXCLUSIONS.items():
+            f.write(f"# Excluded: {_vid} ({_reason})\n")
+        for vid in sorted(train_ids):
+            f.write(vid + "\n")
     write_split_file(output_dir / "xd_val.txt", val_ids)
 
     print("[XD-Violence] Enumerating test videos...")

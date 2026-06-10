@@ -286,6 +286,12 @@ def test_no_test_split_access():
     strict_bad = []     # Layer 1+2+3 -> failure
     heuristic_bad = []  # Layer 4 -> warning
     for py in src_root.rglob("*.py"):
+        # Evaluation- and TTA-side modules legitimately load the *_test.txt split
+        # (they run inference/adaptation ON the test set). This guard targets
+        # TRAINING-side leakage only, so scope it to non-eval/non-tta modules.
+        rel = py.relative_to(src_root).as_posix()
+        if rel.startswith("eval/") or rel.startswith("tta/"):
+            continue
         raw = py.read_text(encoding="utf-8")
         # Layer 1 -- plain substring supplementary check
         if "_test.txt" in raw:

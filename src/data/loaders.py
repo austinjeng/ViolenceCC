@@ -343,7 +343,9 @@ def build_dataloaders_i3d(cfg: dict) -> Tuple[Tuple[DataLoader, DataLoader], Dat
         pin_memory=pin_memory,
         persistent_workers=persistent,
         drop_last=False,
-        shuffle=False,
+        shuffle=True,  # val loaders MUST shuffle: validate() skips single-class
+                       # batches, so an unshuffled val set biases MIL val loss
+                       # (project convention; mirrors fusion-path fix 0999033)
         generator=g_val,
         collate_fn=collate_i3d_train,
     )
