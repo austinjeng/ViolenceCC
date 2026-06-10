@@ -24,6 +24,8 @@
 \usepackage{booktabs}
 \usepackage{multirow}
 \usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,fit,calc}
 
 \begin{document}
 
@@ -110,8 +112,8 @@ Test-time adaptation seeks to improve model robustness to distribution shift wit
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{figures/fig_architecture.png}
-  \caption{Overview of the dual-modal fusion pipeline. Videos are processed through two parallel streams: (1)~skeleton extraction via RTMPose followed by CTR-GCN feature encoding, and (2)~visual-language feature extraction via a frozen backbone (CLIP or SigLIP2 variants). The resulting 256-d skeleton features and visual features are combined through either late fusion (equal-weight score averaging) or gated fusion (learned modality weighting with LayerNorm). The fused representation is scored by a snippet-level anomaly classifier trained with MIL ranking loss.}
+  \resizebox{\textwidth}{!}{\input{figures/fig_architecture}}
+  \caption{Overview of the dual-modal fusion pipeline. Two parallel \emph{frozen} streams extract complementary snippet features: RTMPose keypoints (top-2 persons) are encoded by a frozen CTR-GCN into 256-d skeleton features, while frames sampled at ${\sim}1$~FPS are embedded by a frozen vision-language backbone (CLIP ViT-B/16 or a SigLIP2 variant) and aggregated by concatenated mean+max pooling into a $2d$-dimensional (1024--3072-d) visual feature. The gated fusion module---together with the MIL head, the only trained component---projects each modality to a shared 256-d space (per-modality LayerNorm), blends them with a per-dimension learned gate, and retains both projected modalities through a residual connection followed by a third LayerNorm; the late-fusion baseline instead averages the two single-modality scores with equal weights. The dashed annotation marks the test-time reliability reweighting that scales the visual stream by $w$ under corruption (Sec.~\ref{sec:disc}). The MIL head scores each snippet and is trained with the MIL ranking loss.}
   \label{fig:architecture}
 \end{figure*}
 
