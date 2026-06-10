@@ -30,6 +30,10 @@ from sklearn.model_selection import StratifiedShuffleSplit
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
+# D-16 nit: these are machine-specific absolute paths for the original RTX 4090
+# workstation (D: project drive, E: dataset drive). Override by editing the
+# constants below if running on a different machine. Not refactored to config by
+# design — this is a one-shot split-generation utility, not a deployed pipeline.
 PROJECT_ROOT = pathlib.Path("D:/ViolenceCC")
 SPLITS_DIR = PROJECT_ROOT / "data" / "splits"
 
@@ -75,6 +79,13 @@ def enumerate_ucf_videos(split_root: pathlib.Path) -> list[tuple[str, str]]:
         if not cat_dir.exists():
             continue
         seen: set[str] = set()
+        # D-14 reproducibility note: this enumeration order follows iterdir()'s
+        # filesystem ordering, which is NOT guaranteed identical across machines or
+        # OSes. The "byte-reproducible (seed=42)" guarantee therefore holds only on
+        # the original machine that produced the committed splits. The split files
+        # under data/splits/ are the SOURCE OF TRUTH; --verify regenerates against
+        # them. DO NOT add sorting here: sorting the iterator would change the order
+        # videos enter the stratified split and thus CHANGE the published splits.
         for png in cat_dir.iterdir():
             if not png.suffix == ".png":
                 continue

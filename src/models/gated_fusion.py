@@ -19,10 +19,19 @@ m1 mitigation (PITFALLS.md m1 - gate saturation early in training):
   at step 0 for random inputs.
 """
 from __future__ import annotations
+import logging
+
 import torch
 import torch.nn as nn
 
 from src.models.mil_head import MILHead
+
+logger = logging.getLogger(__name__)
+
+# D-15: keys that legitimately ride along in a model config block (e.g. from a
+# config_snapshot replay) but are NOT constructor args; allow-listed so the
+# unexpected-kwarg warning stays silent during normal replay.
+_KNOWN_EXTRA_KWARGS = frozenset({"variant", "strategy", "cache_variant", "backbone"})
 
 
 class GatedFusion(nn.Module):
@@ -43,6 +52,16 @@ class GatedFusion(nn.Module):
         **unused,
     ) -> None:
         super().__init__()
+
+        # D-15: warn (never raise) about unknown kwargs swallowed by **unused, so a
+        # typo'd hyperparameter does not silently fall back to a default. Known
+        # replay-only keys are skipped to keep config_snapshot replay quiet.
+        _unexpected = [k for k in unused if k not in _KNOWN_EXTRA_KWARGS]
+        if _unexpected:
+            logger.warning(
+                "GatedFusion: unexpected kwargs %s ignored (possible typo?)",
+                sorted(_unexpected),
+            )
 
         # Modality projections into shared_dim
         self.skel_proj = nn.Linear(skel_dim, shared_dim)

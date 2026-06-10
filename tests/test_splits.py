@@ -15,6 +15,8 @@ import tempfile
 
 import pytest
 
+# D-16 nit: machine-specific absolute path for the original workstation; override
+# here if running these tests elsewhere. Not refactored to config by design.
 PROJECT_ROOT = pathlib.Path("D:/ViolenceCC")
 SPLITS_DIR = PROJECT_ROOT / "data" / "splits"
 

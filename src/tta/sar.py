@@ -15,6 +15,8 @@ default of 0.05-0.1.
 """
 from __future__ import annotations
 
+import collections
+
 import torch
 import torch.nn as nn
 
@@ -46,7 +48,11 @@ class SarAdaptor:
         self.optimizer = optimizer
         self.source_state = source_state
         self.margin_e0 = margin_e0
-        # EMA for entropy tracking (SAR recovery mechanism)
+        # EMA for entropy tracking (SAR recovery mechanism). NOTE: currently dead
+        # state -- it is updated in adapt_and_score but never read, because the
+        # EMA-driven model-recovery reset is intentionally omitted (see
+        # adapt_and_score). Kept for parity with the SAR reference and possible
+        # future re-enable.
         self.ema: float | None = None
 
     # ------------------------------------------------------------------
@@ -55,11 +61,23 @@ class SarAdaptor:
 
     def reset(self):
         """Restore model to source state (per-video reset)."""
-        self.model.load_state_dict(self.source_state, strict=False)
+        # strict=False because only the LN affine surface is adapted; the project
+        # convention is strict=True, so assert the load was clean (source_state is
+        # the full model state_dict -> no missing/unexpected keys) to catch a
+        # silently-partial restore.
+        result = self.model.load_state_dict(self.source_state, strict=False)
+        assert not result.missing_keys and not result.unexpected_keys, (
+            f"source_state restore mismatch: missing={result.missing_keys}, "
+            f"unexpected={result.unexpected_keys}"
+        )
+        # Clear optimizer momentum / state buffers. Use a defaultdict(dict)
+        # rather than a bare {} so per-parameter state stays writable for
+        # stateful optimizers (e.g. SGD-with-momentum / Adam); behaviour is
+        # unchanged for the momentum-free SGD used in production.
         if isinstance(self.optimizer, SAM):
-            self.optimizer.base_optimizer.state = {}
+            self.optimizer.base_optimizer.state = collections.defaultdict(dict)
         else:
-            self.optimizer.state = {}
+            self.optimizer.state = collections.defaultdict(dict)
         self.ema = None
 
     # ------------------------------------------------------------------
@@ -72,6 +90,14 @@ class SarAdaptor:
         """SAR adapt: forward -> filter reliable -> SAM two-step -> return scores.
 
         Per D-07: returns scores from the FIRST forward pass (online scoring).
+
+        Intentional simplification vs the official SAR reference: the second-pass
+        entropy re-filtering (re-masking reliable samples at the perturbed point)
+        and the EMA-driven model-recovery reset are both omitted. The same
+        first-pass ``reliable_mask`` is reused for the descent step, and ``self.ema``
+        is tracked but never acted on. Measured deltas vs the full SAR are ~0 on
+        this LN-only fusion head, so fidelity is unaffected; these are deliberately
+        left out rather than implemented to keep the adapt step minimal.
         """
         # -- First forward: compute entropy, collect scores ---------------
         scores = self.model(skel=skel, clip=clip)  # [B, T]

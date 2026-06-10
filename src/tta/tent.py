@@ -14,6 +14,8 @@ The adaptation surface is the 1536 LN affine parameters (3 LN modules x
 """
 from __future__ import annotations
 
+import collections
+
 import torch
 import torch.nn as nn
 
@@ -99,9 +101,20 @@ class TentAdaptor:
 
     def reset(self):
         """Restore LN params to source-trained values (per-video reset per D-07)."""
-        self.model.load_state_dict(self.source_state, strict=False)
-        # Clear optimizer momentum / state buffers
-        self.optimizer.state = {}
+        # strict=False because only the LN affine surface is adapted; the project
+        # convention is strict=True, so assert the load was clean (source_state is
+        # the full model state_dict -> no missing/unexpected keys) to catch a
+        # silently-partial restore.
+        result = self.model.load_state_dict(self.source_state, strict=False)
+        assert not result.missing_keys and not result.unexpected_keys, (
+            f"source_state restore mismatch: missing={result.missing_keys}, "
+            f"unexpected={result.unexpected_keys}"
+        )
+        # Clear optimizer momentum / state buffers. Use a defaultdict(dict)
+        # rather than a bare {} so per-parameter state stays writable for
+        # stateful optimizers (e.g. SGD-with-momentum / Adam); behaviour is
+        # unchanged for the momentum-free SGD used in production.
+        self.optimizer.state = collections.defaultdict(dict)
 
     def adapt_and_score(
         self, skel: torch.Tensor, clip: torch.Tensor

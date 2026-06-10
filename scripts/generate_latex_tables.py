@@ -15,6 +15,22 @@ import statistics
 ROOT = Path(__file__).resolve().parent.parent
 RESULTS = ROOT / "results"
 
+# tables_generated.tex is a STALE artifact NOT \input by main.tex (tables are
+# inlined there). Re-running this script regenerates the superseded TENT/SAR
+# Table 3, so we always re-emit the disclaimer banner at the top of the output
+# to prevent a silent clobber of the warning (least-surprising: warn, don't block).
+STALE_BANNER = (
+    "%% ============================================================\n"
+    "%% STALE AUTO-GENERATED ARTIFACT -- DO NOT USE / DO NOT \\input\n"
+    "%% This file is NOT \\input by main.tex (tables are inlined there,\n"
+    "%% which is the canonical source). The Table 3 below is the OLD\n"
+    "%% TENT/SAR format, superseded in main.tex (Source-Only/Ours/\n"
+    "%% Delta_Ours, disc_reweight, 3-seed). scripts/generate_latex_tables.py\n"
+    "%% was never updated for disc_reweight, so re-running it regenerates\n"
+    "%% this STALE Table 3 -- do not trust this file.\n"
+    "%% ============================================================\n"
+)
+
 
 def read_csv(path):
     with open(path, newline="") as f:
@@ -315,7 +331,7 @@ def main():
 
     out_path = ROOT / "paper" / "tables_generated.tex"
     with open(out_path, "w", encoding="utf-8") as f:
-        f.write(output + "\n")
+        f.write(STALE_BANNER + "\n" + output + "\n")
 
     print(f"\n% Written to {out_path}", file=sys.stderr)
 

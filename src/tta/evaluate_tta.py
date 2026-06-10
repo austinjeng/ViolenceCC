@@ -94,6 +94,8 @@ def parse_args(argv=None):
                     help="Vision backbone for feature loading (default: clip-vit-b-16)")
     ap.add_argument("--output-dir", required=True,
                     help="Output directory for eval_metrics.json + eval_scores.npz + .done")
+    # D-16 nit: machine-specific default (E: dataset drive on the original
+    # workstation); override with --feature-root on other machines.
     ap.add_argument("--feature-root", type=str, default="E:/features/ucf",
                     help="Root directory for corruption feature caches")
     ap.add_argument("--protocol", type=str, default="episodic",
@@ -268,6 +270,8 @@ def run_tta_evaluation(
                   per-video reset; TENT/SAR native -C setup).
     """
     if feature_root is None:
+        # D-16 nit: machine-specific fallback (E: dataset drive on the original
+        # workstation); pass feature_root explicitly on other machines.
         feature_root = Path("E:/features/ucf")
 
     # Determinism (D-12): with dropout disabled in configure_model the forward is
@@ -399,8 +403,8 @@ def run_tta_evaluation(
     auc = metrics.get("auc", float("nan"))
     ap = metrics.get("ap", float("nan"))
     logger.info(
-        "[evaluate_tta] %s %s sev=%d method=%s lr=%.1e => AUC=%.4f AP=%.4f",
-        corruption_type, method, severity, method, lr, auc, ap,
+        "[evaluate_tta] %s backbone=%s sev=%d method=%s lr=%.1e => AUC=%.4f AP=%.4f",
+        corruption_type, backbone, severity, method, lr, auc, ap,
     )
 
 
@@ -621,7 +625,15 @@ class _SourceOnlyAdaptor:
 
     def reset(self):
         """Restore model to source state (per-video reset)."""
-        self.model.load_state_dict(self.source_state, strict=False)
+        # strict=False keeps the LN-only restore path uniform with Tent/Sar; the
+        # project convention is strict=True, so assert the load was clean
+        # (source_state is the full model state_dict -> no missing/unexpected
+        # keys) to catch a silently-partial restore.
+        result = self.model.load_state_dict(self.source_state, strict=False)
+        assert not result.missing_keys and not result.unexpected_keys, (
+            f"source_state restore mismatch: missing={result.missing_keys}, "
+            f"unexpected={result.unexpected_keys}"
+        )
 
     def adapt_and_score(self, skel, clip):
         """Source-only has no adaptation; delegates to score_only."""

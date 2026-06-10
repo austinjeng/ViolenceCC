@@ -6,7 +6,16 @@ plan execution does not break collection — each variant becomes available
 as Plans 04/05 land.
 """
 from __future__ import annotations
+import inspect
+import logging
 from typing import Callable, Dict
+
+logger = logging.getLogger(__name__)
+
+# D-15: keys that legitimately ride along in a model config block (e.g. from a
+# config_snapshot replay) but are NOT constructor args. These are allow-listed so
+# the unexpected-kwarg warning stays silent during normal replay.
+_KNOWN_EXTRA_KWARGS = frozenset({"variant", "strategy", "cache_variant", "backbone"})
 
 # Lazy factories: import the class on first call. This avoids ImportError
 # when Plans 04/05 have not yet populated the implementation files.
@@ -53,4 +62,31 @@ def build_model(variant: str, **kwargs):
             f"Unknown variant '{variant}'. Valid: {list(MODEL_REGISTRY)}"
         )
     cls = MODEL_REGISTRY[variant]()
+
+    # D-15: warn (never raise) about kwargs the constructor does not declare, so a
+    # typo'd hyperparameter does not silently fall back to a default via **unused.
+    # Known replay-only keys (variant/strategy/cache_variant/backbone) are skipped
+    # to keep config_snapshot replay quiet; this is non-fatal so replay still works.
+    try:
+        sig = inspect.signature(cls.__init__)
+        has_var_kw = any(
+            p.kind is inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()
+        )
+        if has_var_kw:
+            declared = set(sig.parameters) - {"self"}
+            unexpected = [
+                k for k in kwargs
+                if k not in declared and k not in _KNOWN_EXTRA_KWARGS
+            ]
+            if unexpected:
+                logger.warning(
+                    "build_model(%r): unexpected kwargs %s not declared by %s; "
+                    "they will be swallowed by **kwargs and IGNORED (possible typo?)",
+                    variant, sorted(unexpected), cls.__name__,
+                )
+    except (ValueError, TypeError):
+        # Signature introspection failed (exotic __init__); skip the check rather
+        # than break model construction.
+        pass
+
     return cls(**kwargs)

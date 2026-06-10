@@ -421,7 +421,8 @@ def fig_gating_distribution():
 def fig_tta_comparison():
     """Figure: discriminative-reliability reweighting (Ours) vs source-only across
     4 backbones. 3-seed (42,123,2024) mean AUC; entropy TTA (TENT/SAR) is omitted as
-    it is indistinguishable from source-only (<=0.004 pp). Data: results/_coral_derisk/
+    it changes AUC by <0.1 pp vs source-only (validated 3-seed finding; the earlier
+    "<=0.004 pp" bound was retracted). Data: results/_coral_derisk/
     r1full_*.json (s42) + variants/v_*_{s123,s2024}_test.json (TTA-boost study, 2026-06-07)."""
     print("\n[Fig] TTA Comparison (disc_reweight vs source, 3-seed)")
 

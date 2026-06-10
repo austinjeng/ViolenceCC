@@ -71,6 +71,8 @@ RESULTS_INDEX_COLUMNS = [
     "severity",
     "lr",
     "rho",
+    # Phase 11 multi-backbone TTA: visual backbone id (empty for non-TTA rows)
+    "backbone",
 ]
 
 
