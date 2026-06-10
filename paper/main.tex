@@ -148,7 +148,7 @@ For each 64-frame snippet, we extract frame-level features at approximately 1~FP
 
 \subsection{Fusion Mechanisms}
 
-We investigate two fusion strategies for combining skeleton features $\mathbf{s} \in \mathbb{R}^{256}$ with visual features $\mathbf{v} \in \mathbb{R}^{d_v}$:
+We investigate two fusion strategies for combining skeleton features $\mathbf{s} \in \mathbb{R}^{256}$ with visual features $\mathbf{v} \in \mathbb{R}^{d_v}$, where $d_v = 2d$ is the dimension of the concatenated mean--max visual representation (with $d$ the backbone embedding dimension):
 
 \textbf{Late Fusion.} The simplest approach scores each modality independently and averages the two snippet-level anomaly scores. Each modality is passed through its own classifier head---$h_s(\cdot)$ for the skeleton stream and $h_v(\cdot)$ for the visual stream---and the resulting per-snippet scores are combined with a fixed equal weight:
 \begin{equation}
@@ -218,7 +218,7 @@ For all fusion variants we report mean and standard deviation over three random 
 
 \subsection{Ablation Study}
 
-Tables~\ref{tab:ucf-ablation} and~\ref{tab:xd-ablation} present the ablation results on UCF-Crime and XD-Violence, respectively, comparing six fusion variants across all four visual backbones.
+Tables~\ref{tab:ucf-ablation} and~\ref{tab:xd-ablation} present the ablation results on UCF-Crime and XD-Violence, respectively, comparing six fusion variants across all four visual backbones. Two of these are gated-fusion configurations that differ only in their visual aggregation: \textbf{GF Mean-Only} uses mean-only visual pooling in place of the default concatenated mean+max pooling, and \textbf{GF 2-Person} uses the 2-person skeleton aggregation in place of the default single-person aggregation.
 
 % Table 1: UCF-Crime Ablation Results (AUC)
 \begin{table*}[t]
@@ -297,7 +297,7 @@ A key finding of our study is that \emph{backbone choice interacts with dataset 
 
 % Table 3: TTA Results on UCF-Crime-C
 \begin{table}[t]
-\caption{Test-time adaptation on UCF-Crime-C, mean AUC (\%) over 20 corruption conditions (4 types $\times$ 5 severities). Source-Only and our discriminative-reliability reweighting (Ours) are reported as the mean over three seeds $\{42,123,2024\}$; $\Delta$ is the paired per-seed gain of Ours over Source-Only (mean$\pm$std). Best per backbone in \textbf{bold}.}
+\caption{Test-time adaptation on UCF-Crime-C, mean AUC (\%) over 20 corruption conditions (4 types $\times$ 5 severities). Source-Only and our discriminative-reliability reweighting (Ours) are reported as the mean over three seeds $\{42,123,2024\}$; $\Delta$ is the paired per-seed gain of Ours over Source-Only (mean$\pm$std). Best per backbone in \textbf{bold}. AUCs here are computed on the truncated snippet-aligned frame grid (a whole number of 64-frame windows) and are thus internally consistent within this table but not directly comparable in absolute terms to the full-length frame-grid numbers in Tables~\ref{tab:ucf-ablation}--\ref{tab:xd-ablation}.}
 \label{tab:tta}
 \begin{tabular}{l c c c}
 \toprule
@@ -322,7 +322,7 @@ Mean & 60.6 & \textbf{61.8} & +1.21 \\
 
 We evaluate test-time adaptation on UCF-Crime-C, a corruption benchmark constructed by applying four corruption types (Gaussian noise, motion blur, JPEG compression, and brightness shift) at five severity levels to the UCF-Crime test set, yielding 20 corruption conditions in total. These corruptions simulate common real-world distribution shifts encountered in surveillance deployment: sensor noise from low-light cameras, motion blur from camera shake or moving objects, compression artifacts from bandwidth-limited transmission, and illumination changes from varying lighting conditions.
 
-TENT~\cite{wang2021tent} and SAR~\cite{niu2023sar} adapt only the LayerNorm affine parameters ($\gamma,\beta$) of the gated fusion head---three LN layers totaling 1{,}536 parameters---under a deterministic, continual-online protocol that adapts across the entire corruption stream (TENT: $\text{lr}=10^{-3}$; SAR: $\text{lr}=10^{-3}$, $\rho=0.05$). All TTA results are means over three training seeds $\{42,123,2024\}$. Table~\ref{tab:tta} and Figure~\ref{fig:tta-comparison} present the results.
+TENT~\cite{wang2021tent} and SAR~\cite{niu2023sar} adapt only the LayerNorm affine parameters ($\gamma,\beta$) of the gated fusion head---three LN layers totaling 1{,}536 parameters---under a deterministic, continual-online protocol that adapts across each per-condition corruption stream (TENT: $\text{lr}=10^{-3}$; SAR: $\text{lr}=10^{-3}$, $\rho=0.05$). All TTA results are means over three training seeds $\{42,123,2024\}$. Table~\ref{tab:tta} and Figure~\ref{fig:tta-comparison} present the results.
 
 \textbf{Entropy minimization gives no benefit.} Under the deterministic protocol, TENT and SAR change mean AUC by less than $0.1$ percentage points on every backbone---effectively zero. This is not a tuning artifact: with the gate and MIL head frozen, only the LayerNorm affine parameters adapt, and the resulting updates are far too small to reorder the pooled snippet scores on which the rank-based AUC depends. The corruption-induced shift lives upstream in the frozen backbone features, which affine adaptation of the fusion head cannot reach.
 
@@ -369,7 +369,7 @@ Our results reveal several patterns that merit discussion beyond the per-section
 
 \textbf{TTA and the LayerNorm barrier.} Our TTA results are an informative negative finding with implications beyond VAD. Entropy-minimization methods such as TENT and SAR were designed for BatchNorm networks, where adaptation recalibrates the running mean and variance statistics that summarize the source distribution~\cite{wang2021tent}. Our fusion head normalizes with LayerNorm, which keeps no such running statistics---normalization is computed per sample---so on each batch these methods can only nudge the LayerNorm affine parameters ($\gamma$, $\beta$; 1{,}536 scalars in our head). With the visual-language backbone, the gate, and the detection head all frozen, the corruption-induced shift lives upstream in the frozen features, and affine updates of this size are far too small to reorder a rank-based AUC---leaving the metric essentially unchanged ($<0.1$ points). Forcing the features back toward the clean statistics directly (NORM/CORAL-style) does reach the right space but is rank-disruptive, with an effect whose sign flips across backbones. The lesson is not that the corruptions are benign, but that adaptation confined to LayerNorm affine parameters cannot move a frozen, rank-based detector. What does work here is to change \emph{which} modality the frozen fusion trusts: our label-free discriminative-reliability reweighting routes the gated fusion toward the corruption-robust skeleton stream when the visual-language stream's discriminative signal collapses, recovering corrupted-AUC on all four backbones without any parameter updates. This suggests that robustness for frozen LayerNorm-based fusion heads is better pursued through reliability-aware routing---or, more broadly, prompt- or adapter-based mechanisms that alter the features themselves---than through affine test-time adaptation.
 
-\textbf{Computational efficiency.} Our frozen-backbone design yields a lightweight trainable component: the gated fusion head contains 0.50M (CLIP) to 1.02M (SigLIP2 Giant) trainable parameters, scaling with the visual feature dimension $d_v$, as only the projection and gating layers are learned. Training completes in under 5 minutes per configuration on a single RTX 4090. This efficiency enables the comprehensive multi-backbone evaluation presented here, which would be infeasible with end-to-end backbone fine-tuning.
+\textbf{Computational efficiency.} Our frozen-backbone design yields a lightweight trainable component: the gated fusion head contains 0.50M (CLIP) to 1.02M (SigLIP2 Giant) trainable parameters, scaling with the visual feature dimension $d_v$, as only the projection, gating, and MIL detection-head layers are learned. Training completes in under 5 minutes per configuration on a single RTX 4090. This efficiency enables the comprehensive multi-backbone evaluation presented here, which would be infeasible with end-to-end backbone fine-tuning.
 
 %%
 %% Section 6: Limitations and Future Work
