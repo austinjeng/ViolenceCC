@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The TTA Post-Mortem — ViolenceCC</title>
+<!--
+  One-time-use knowledge artifact. Self-contained: no required network access
+  (web fonts degrade gracefully to system stacks). Compiled 2026-06-11 from
+  .planning/STATE.md, .planning/HANDOVER-tta-investigation-2026-06-06.md,
+  paper/main.tex and the quick-task records 260604-w2a → 260611-66v.
+-->
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,440;9..144,640;9..144,900&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;600&display=swap');
+
+:root {
+  --paper:      #f7f3ea;
+  --paper-deep: #efe8d9;
+  --ink:        #1d1a14;
+  --ink-soft:   #57503f;
+  --rule:       #d8cfba;
+  --artifact:   #a31621;  /* the bug / dead-end thread */
+  --artifact-bg:#f6e3e1;
+  --protocol:   #9a6a14;  /* the protocol-fix thread */
+  --protocol-bg:#f3e9d2;
+  --neutral:    #4b5563;  /* the honest-negative thread */
+  --neutral-bg: #e8e6df;
+  --valid:      #1f6f43;  /* the validated thread */
+  --valid-bg:   #e2eee2;
+  --mono: "JetBrains Mono", "Cascadia Code", Consolas, "Courier New", monospace;
+  --serif: "Source Serif 4", "Palatino Linotype", Palatino, Georgia, serif;
+  --display: "Fraunces", "Palatino Linotype", Georgia, serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 17px;
+  line-height: 1.62;
+  /* faint paper grain */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.025 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.sheet { max-width: 880px; margin: 0 auto; padding: 0 28px 90px; }
+
+/* ---------- masthead ---------- */
+header { padding: 64px 0 36px; border-bottom: 3px double var(--ink); }
+.kicker {
+  font-family: var(--mono); font-size: 12px; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--artifact); display: flex;
+  justify-content: space-between; flex-wrap: wrap; gap: 6px;
+}
+h1 {
+  font-family: var(--display); font-weight: 900; font-size: clamp(40px, 7vw, 68px);
+  line-height: 1.02; margin: 18px 0 10px; letter-spacing: -0.015em;
+}
+h1 em { font-style: italic; font-weight: 640; color: var(--valid); }
+.deck {
+  font-size: 20px; color: var(--ink-soft); max-width: 64ch; margin-top: 10px;
+  font-style: italic;
+}
+.byline {
+  margin-top: 22px; font-family: var(--mono); font-size: 12.5px; color: var(--ink-soft);
+  display: flex; gap: 18px; flex-wrap: wrap;
+}
+.byline b { color: var(--ink); font-weight: 600; }
+
+/* ---------- tl;dr ---------- */
+.tldr {
+  margin: 38px 0 8px; padding: 24px 26px; background: var(--ink); color: var(--paper);
+  border-radius: 2px; position: relative;
+}
+.tldr::before {
+  content: "TL;DR"; position: absolute; top: -11px; left: 18px;
+  background: var(--artifact); color: #fff; font-family: var(--mono);
+  font-size: 11px; letter-spacing: .14em; padding: 3px 10px; border-radius: 2px;
+}
+.tldr p { margin: 0; font-size: 17.5px; line-height: 1.6; }
+.tldr b { color: #f0c9a8; font-weight: 600; }
+
+/* ---------- section scaffolding ---------- */
+section { margin-top: 64px; }
+h2 {
+  font-family: var(--display); font-weight: 640; font-size: 30px;
+  display: flex; align-items: baseline; gap: 14px; margin-bottom: 18px;
+}
+h2 .no {
+  font-family: var(--mono); font-size: 13px; font-weight: 600;
+  color: var(--artifact); letter-spacing: .1em;
+}
+h3 { font-family: var(--display); font-weight: 640; font-size: 20px; margin: 26px 0 8px; }
+p + p { margin-top: 12px; }
+.prose { max-width: 70ch; }
+.prose a { color: var(--artifact); }
+strong { font-weight: 600; }
+code, .mono { font-family: var(--mono); font-size: 0.86em; }
+code { background: var(--paper-deep); padding: 1px 5px; border-radius: 3px; white-space: nowrap; }
+
+/* ---------- primer cards ---------- */
+.primer { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-top: 18px; }
+.primer .card {
+  border: 1px solid var(--rule); border-top: 3px solid var(--ink);
+  background: #fffdf8; padding: 16px 18px; border-radius: 2px;
+}
+.primer .card h4 { font-family: var(--mono); font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 8px; }
+.primer .card p { font-size: 15px; line-height: 1.55; }
+
+details.gloss {
+  margin-top: 16px; border: 1px dashed var(--rule); border-radius: 2px;
+  background: #fffdf8; padding: 12px 18px; font-size: 15px;
+}
+details.gloss summary { cursor: pointer; font-family: var(--mono); font-size: 12.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+details.gloss dl { margin-top: 12px; display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+details.gloss dt { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--artifact); }
+details.gloss dd { color: var(--ink-soft); }
+
+/* ---------- timeline ---------- */
+.timeline { position: relative; margin-top: 30px; }
+.timeline::before {
+  content: ""; position: absolute; left: 7px; top: 8px; bottom: 8px;
+  width: 2px; background: repeating-linear-gradient(var(--ink) 0 6px, transparent 6px 11px);
+  opacity: .35;
+}
+.stage { position: relative; padding: 0 0 38px 44px; }
+.stage:last-child { padding-bottom: 0; }
+.stage::before {
+  content: ""; position: absolute; left: 0; top: 6px; width: 16px; height: 16px;
+  border-radius: 50%; border: 3px solid var(--ink); background: var(--paper);
+}
+.stage.s-artifact::before { border-color: var(--artifact); background: var(--artifact-bg); }
+.stage.s-protocol::before { border-color: var(--protocol); background: var(--protocol-bg); }
+.stage.s-neutral::before  { border-color: var(--neutral);  background: var(--neutral-bg); }
+.stage.s-valid::before    { border-color: var(--valid);    background: var(--valid-bg); }
+
+.stage-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.stage-head h3 { margin: 0; font-size: 22px; }
+.badge {
+  font-family: var(--mono); font-size: 10.5px; font-weight: 600; letter-spacing: .12em;
+  text-transform: uppercase; padding: 3px 9px; border-radius: 2px; white-space: nowrap;
+}
+.b-artifact { background: var(--artifact-bg); color: var(--artifact); border: 1px solid currentColor; }
+.b-protocol { background: var(--protocol-bg); color: var(--protocol); border: 1px solid currentColor; }
+.b-neutral  { background: var(--neutral-bg);  color: var(--neutral);  border: 1px solid currentColor; }
+.b-valid    { background: var(--valid-bg);    color: var(--valid);    border: 1px solid currentColor; }
+
+.stage-meta { font-family: var(--mono); font-size: 12px; color: var(--ink-soft); margin: 6px 0 10px; }
+.stage-meta b { color: var(--ink); }
+.stage .prose { font-size: 16.5px; }
+
+.pull {
+  margin: 14px 0 4px; padding: 12px 16px; border-left: 3px solid var(--ink);
+  background: #fffdf8; font-size: 15.5px; color: var(--ink-soft); font-style: italic;
+}
+.stage.s-artifact .pull { border-color: var(--artifact); }
+.stage.s-protocol .pull { border-color: var(--protocol); }
+.stage.s-valid .pull    { border-color: var(--valid); }
+
+/* ---------- formulas ---------- */
+.formula {
+  margin: 18px 0; padding: 18px 22px; background: #fffdf8;
+  border: 1px solid var(--rule); border-radius: 2px; overflow-x: auto;
+}
+.formula .eq {
+  font-family: var(--mono); font-size: 15.5px; line-height: 2; white-space: nowrap;
+}
+.formula .eq b { color: var(--artifact); font-weight: 600; }
+.formula .why { font-size: 14.5px; color: var(--ink-soft); margin-top: 10px; border-top: 1px dashed var(--rule); padding-top: 10px; }
+var { font-style: italic; font-family: var(--serif); }
+sub, sup { font-size: .7em; }
+
+/* ---------- tables ---------- */
+.tablewrap { overflow-x: auto; margin: 18px 0; }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; background: #fffdf8; }
+caption {
+  caption-side: top; text-align: left; font-family: var(--mono); font-size: 12px;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft);
+  padding-bottom: 8px;
+}
+th, td { padding: 8px 12px; border-bottom: 1px solid var(--rule); text-align: right; font-variant-numeric: tabular-nums; }
+th { font-family: var(--mono); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); border-bottom: 2px solid var(--ink); }
+th:first-child, td:first-child { text-align: left; }
+td.up { color: var(--valid); font-weight: 600; }
+td.down { color: var(--artifact); }
+td.zero { color: var(--ink-soft); }
+tr.total td { border-top: 2px solid var(--ink); border-bottom: none; font-weight: 600; }
+
+/* ---------- diagram ---------- */
+.diagram { margin: 22px 0; background: #fffdf8; border: 1px solid var(--rule); border-radius: 2px; padding: 14px; }
+.diagram svg { width: 100%; height: auto; display: block; }
+.figcap { font-size: 13.5px; color: var(--ink-soft); margin-top: 10px; padding: 0 6px; }
+.figcap b { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
+
+/* ---------- caveats ---------- */
+.caveats { border: 2px solid var(--artifact); border-radius: 2px; background: var(--artifact-bg); padding: 20px 24px; }
+.caveats h3 { margin-top: 0; color: var(--artifact); }
+.caveats ul { margin: 8px 0 0 20px; }
+.caveats li { margin-bottom: 8px; font-size: 15.5px; }
+
+/* ---------- pointers ---------- */
+.pointers { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; }
+.pointers .card { border: 1px solid var(--rule); background: #fffdf8; padding: 16px 18px; border-radius: 2px; }
+.pointers h4 { font-family: var(--mono); font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--valid); margin-bottom: 10px; }
+.pointers ul { list-style: none; }
+.pointers li { font-family: var(--mono); font-size: 12.8px; padding: 4px 0; border-bottom: 1px dotted var(--rule); }
+.pointers li:last-child { border-bottom: none; }
+.pointers .note { font-family: var(--serif); color: var(--ink-soft); font-size: 13px; }
+
+footer {
+  margin-top: 80px; padding-top: 18px; border-top: 3px double var(--ink);
+  font-family: var(--mono); font-size: 12px; color: var(--ink-soft);
+  display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+}
+
+/* ---------- reveal motion ---------- */
+.reveal { opacity: 0; transform: translateY(14px); transition: opacity .6s ease, transform .6s ease; }
+.reveal.in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+}
+
+@media print {
+  body { background: #fff; font-size: 12px; }
+  .reveal { opacity: 1; transform: none; }
+  .tldr { background: #eee; color: #000; }
+}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+<header class="reveal in">
+  <div class="kicker">
+    <span>ViolenceCC · Research Post-Mortem № 1</span>
+    <span>CGW '26 · Dual-Modal VAD</span>
+  </div>
+  <h1>The bug, the zero,<br>and the <em>reroute</em>.</h1>
+  <p class="deck">How this paper's test-time adaptation story went from "TENT/SAR helps a little" to "entropy minimization provably does nothing — so we route between modalities instead."</p>
+  <div class="byline">
+    <span>Window <b>2026-06-04 → 06-11</b></span>
+    <span>Benchmark <b>UCF-Crime-C</b> (4 corruptions × 5 severities)</span>
+    <span>Verdict <b>+1.21pp mean corrupted-AUC, 3 seeds, 4/4 backbones</b></span>
+  </div>
+</header>
+
+<div class="tldr reveal">
+  <p>The original TENT/SAR "improvement" was a <b>dropout bug</b>, not adaptation. After making TTA deterministic and fixing a protocol that silently never adapted anything, the honest result is that entropy minimization moves corrupted-AUC by <b>&lt; 0.1 percentage points</b> on every backbone — a structural limit of a frozen, rank-scored architecture. Feature-statistics restoration (CORAL-style) also failed: it reaches the right space but scrambles rankings. The replacement, <b>discriminative-reliability reweighting</b>, adapts <b>zero parameters</b>: it detects when the visual stream can no longer separate snippets and routes the gated fusion toward the corruption-robust skeleton stream. Validated over three seeds: <b>+1.21pp mean</b>, positive on all four backbones on every seed, up to <b>+13.2pp</b> where it matters most.</p>
+</div>
+
+<!-- ============================================================ -->
+<section class="reveal">
+  <h2><span class="no">00</span>Sixty seconds of context</h2>
+  <div class="prose">
+    <p>The system detects violent anomalies in surveillance video. Two <strong>frozen</strong> encoders — a CTR-GCN over human skeletons (256-d) and a vision-language backbone over frames (1024–3072-d after pooling) — feed a small <strong>trainable gated fusion head</strong> plus MIL scorer (the only learned parts, 0.5–1.0M parameters). The question behind all TTA work: when deployment video is corrupted (sensor noise, blur, compression, lighting), can the model adapt <em>at test time</em>, with no labels?</p>
+  </div>
+  <div class="primer">
+    <div class="card">
+      <h4>The metric is a ranking</h4>
+      <p>AUC only cares about the <em>order</em> of frame scores (anomalous above normal). Any adaptation that shifts scores without reordering them changes nothing. This single fact explains most of this story.</p>
+    </div>
+    <div class="card">
+      <h4>Almost everything is frozen</h4>
+      <p>Backbones, fusion gate, and MIL head stay fixed at test time. Entropy-TTA may only touch the fusion head's three LayerNorms — <span class="mono">1,536</span> affine scalars (γ, β). The corruption damage lives upstream, in the frozen features.</p>
+    </div>
+    <div class="card">
+      <h4>Two streams, unequal damage</h4>
+      <p>Pixel corruptions hit the visual-language stream hard. The skeleton stream is often untouched — for Gaussian noise and brightness the pipeline reuses the clean skeleton cache. Asymmetry is an asset.</p>
+    </div>
+  </div>
+  <details class="gloss">
+    <summary>Glossary — expand if any term is unfamiliar</summary>
+    <dl>
+      <dt>TTA</dt><dd>Test-time adaptation: adjusting a model at inference, using only unlabeled test data.</dd>
+      <dt>TENT / SAR</dt><dd>Entropy-minimization TTA methods (ICLR '21 / '23). They sharpen prediction confidence by updating normalization-layer parameters per test batch.</dd>
+      <dt>LayerNorm (LN)</dt><dd>Per-sample normalization. Unlike BatchNorm it keeps no running dataset statistics — there is less for TTA to recalibrate.</dd>
+      <dt>CORAL / NORM</dt><dd>Aligning test-feature mean/covariance to clean-training statistics; a label-free "undo the shift" attempt.</dd>
+      <dt>UCF-Crime-C</dt><dd>The UCF-Crime test set under 4 synthetic corruptions (Gaussian noise, motion blur, JPEG, brightness) × 5 severities = 20 conditions.</dd>
+      <dt>Transductive</dt><dd>Statistics pooled over a whole corruption condition at once (batch access), rather than streaming frame-by-frame.</dd>
+      <dt>pp</dt><dd>Percentage points of AUC.</dd>
+    </dl>
+  </details>
+</section>
+
+<!-- ============================================================ -->
+<section class="reveal">
+  <h2><span class="no">01</span>Five stages, four reversals</h2>
+
+  <div class="timeline">
+
+    <div class="stage s-artifact">
+      <div class="stage-head">
+        <h3>The original claim collapses</h3>
+        <span class="badge b-artifact">Artifact</span>
+      </div>
+      <p class="stage-meta">2026-06-04 · task <b>260604-w2a</b> · commit <b>83b8927</b></p>
+      <div class="prose">
+        <p>The early draft reported a small TENT/SAR gain ("+0.6% CLIP SAR"). Audit found that <code>configure_model</code> set the LayerNorms to train mode but left the MIL head's <code>nn.Dropout</code> layers <em>active at test time</em>. TTA scores were stochastic — ~1.07pp per-condition AUC noise, 0.24pp on the 20-condition mean. The reported gain was dropout luck.</p>
+      </div>
+      <p class="pull">Fix: disable all dropout during TTA + seed everything. Re-run twice, get bit-identical AUC. The "+0.6%" evaporated.</p>
+    </div>
+
+    <div class="stage s-protocol">
+      <div class="stage-head">
+        <h3>The corrected zero was also fake</h3>
+        <span class="badge b-protocol">Protocol fix</span>
+      </div>
+      <p class="stage-meta">2026-06-06 · task <b>260606-3hc</b> · commit <b>1ed2d16</b></p>
+      <div class="prose">
+        <p>Deterministic re-runs gave exactly +0.000pp everywhere — <em>too</em> clean. Root cause: under the episodic per-video protocol, 98.4% of UCF test videos fit in a single chunk, so the adapted parameters never touched a scored output. The model was being graded on an exam it never sat.</p>
+        <p>We switched to TENT/SAR's native <strong>continual-online</strong> protocol: one reset per corruption stream, then adapt across the whole condition. A sanity probe confirmed adaptation now bites (+0.24pp on a single condition) — so the next zero would be a real zero.</p>
+      </div>
+    </div>
+
+    <div class="stage s-neutral">
+      <div class="stage-head">
+        <h3>The real negative result</h3>
+        <span class="badge b-neutral">Honest zero</span>
+      </div>
+      <p class="stage-meta">validated 3-seed on 2026-06-09 · task <b>260610-46n</b> · commit <b>a5e3f73</b> · 477 runs</p>
+      <div class="prose">
+        <p>Under the valid protocol, TENT and SAR change mean corrupted-AUC by <strong>less than 0.1pp on every backbone</strong> (worst 3-seed |Δ| = 0.082pp). And the mechanism is structural, not a tuning issue: with backbone, gate, and head frozen, entropy descent can only nudge 1,536 LN affine scalars, while the corruption shift lives upstream in frozen features. Nudges that small cannot reorder snippet rankings — and AUC is purely a ranking.</p>
+      </div>
+      <p class="pull">This became a publishable claim instead of an embarrassment: entropy-TTA's failure here is a property of frozen LayerNorm heads + rank metrics, which nobody had pinned down for VAD.</p>
+    </div>
+
+    <div class="stage s-artifact">
+      <div class="stage-head">
+        <h3>The obvious alternative dead-ends</h3>
+        <span class="badge b-artifact">Dead end</span>
+      </div>
+      <p class="stage-meta">2026-06-06 → 06-07 · CORAL/NORM de-risking · <span class="mono">results/_coral_derisk/</span></p>
+      <div class="prose">
+        <p>If parameters can't be adapted, restore the <em>features</em>: align corrupted test statistics to clean-training statistics (NORM/CORAL-style). Exploratory covariance-CORAL looked promising (~+0.9pp on 3 of 4 backbones). Held-out validation killed it: per-channel whitening reorders the discriminative directions on the SigLIP2 backbones, the effect's <strong>sign flips across backbones</strong>, and leave-one-condition-out scored −1.62 with 0/4 backbones positive. No label-free operating point survives.</p>
+      </div>
+      <p class="pull">Diagnosis sharpened: the failure is not "wrong statistics," it is rank disruption. Whatever works must preserve the score ordering the model already produces.</p>
+    </div>
+
+    <div class="stage s-valid">
+      <div class="stage-head">
+        <h3>The reroute: discriminative-reliability reweighting</h3>
+        <span class="badge b-valid">Breakthrough</span>
+      </div>
+      <p class="stage-meta">2026-06-07 · 6-strategy search → R1 · task <b>260607-42h</b> · commit <b>def88d5</b></p>
+      <div class="prose">
+        <p>Both failures pointed at the same opening: don't adapt parameters, don't move features — change <strong>which modality the frozen fusion trusts</strong>. A six-strategy parallel search (shift-gated, channel-selection, projection-space, fusion-gate, skeleton-blend, open-ended) produced R1: estimate visual-stream reliability from the <em>spread of its own solo anomaly scores</em>, and when that spread collapses — i.e., the stream can no longer tell snippets apart — scale the visual contribution down so the fusion leans on the corruption-robust skeleton.</p>
+        <p>Label-free, tuning-free, zero parameter updates. Production check: CLIP @ Gaussian severity 5 went 57.70 → 62.53 (+4.83), reproducing the search result exactly.</p>
+      </div>
+    </div>
+
+    <div class="stage s-valid">
+      <div class="stage-head">
+        <h3>Adversarial validation, then the rewrite</h3>
+        <span class="badge b-valid">Validated &amp; published</span>
+      </div>
+      <p class="stage-meta">2026-06-07 · paper rewrite commit <b>12cd95f</b> · figure modernized 2026-06-11 (<b>3e9c492</b>)</p>
+      <div class="prose">
+        <p>Before touching the paper ("serious academic work — confirm valid + real first"): a 6-auditor adversarial review (no label leakage; <var>w</var>=1 reproduces the source model byte-identically; the mechanism is real, not an artifact), an 11/11 exact production reproduction, a full 3-seed sweep — <strong>positive on all four backbones on every seed</strong> — and a check that a clean-<em>training</em> reference works as well as clean-test (no oracle needed). Only then: Table 3 rebuilt, §3.6 added, the honest caveats written in, and — last loose end — Figure 1's stale TENT/SAR blocks replaced by the reweighting annotation.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section class="reveal">
+  <h2><span class="no">02</span>How the mechanism works</h2>
+  <div class="prose">
+    <p>Three scalars per corruption condition, all computed from unlabeled data:</p>
+  </div>
+
+  <div class="formula">
+    <div class="eq">
+      <b>w<sub>vl</sub></b> = min(1, σ(s<sub>clip</sub><sup>test</sup>) / σ(s<sub>clip</sub><sup>clean</sup>)) &nbsp;&nbsp;— visual reliability
+    </div>
+    <p class="why">σ(·) is the spread of the visual stream's <em>solo</em> anomaly scores (skeleton zeroed). Corruption that destroys the stream's ability to separate snippets collapses this spread. It is a <strong>discriminative</strong> signal — about score separation — not a distributional one. That distinction is precisely what CORAL got wrong.</p>
+  </div>
+
+  <div class="formula">
+    <div class="eq">
+      <b>s</b> = min(1, max(0, (2z<sub>0</sub> − z<sub>skel</sub>) / z<sub>0</sub>)) &nbsp;&nbsp;— skeleton-trust gate
+    </div>
+    <p class="why">z<sub>skel</sub> measures how shifted the skeleton features are vs. clean training; z<sub>0</sub> is the natural clean-train→clean-test shift. If the skeleton is itself corrupted (motion blur, JPEG re-extract poses from degraded frames), s → 0 and no rerouting happens. Under our corruptions s saturates to {0, 1}, so the anchor "2" is never load-bearing.</p>
+  </div>
+
+  <div class="formula">
+    <div class="eq">
+      <b>w</b> = 1 − (1 − w<sub>vl</sub>) · s &nbsp;&nbsp;— applied to the projected visual features (after LN) in both gated and residual terms
+    </div>
+    <p class="why">Reroute toward the skeleton exactly when the visual stream collapses <em>and</em> the skeleton is still clean. If either condition fails, w → 1 and the model is bit-identical to source. The method can only act where it is safe to act.</p>
+  </div>
+
+  <div class="diagram">
+    <svg viewBox="0 0 820 270" font-family="JetBrains Mono, Consolas, monospace" aria-label="Routing diagram">
+      <defs>
+        <marker id="arr" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+          <polygon points="0 0, 9 3.5, 0 7" fill="#1d1a14"/>
+        </marker>
+        <marker id="arrG" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+          <polygon points="0 0, 9 3.5, 0 7" fill="#1f6f43"/>
+        </marker>
+      </defs>
+
+      <!-- skeleton stream -->
+      <rect x="20" y="40" width="200" height="56" rx="4" fill="#e2eee2" stroke="#1f6f43" stroke-width="2"/>
+      <text x="120" y="64" text-anchor="middle" font-size="14" fill="#1f6f43" font-weight="600">Skeleton stream</text>
+      <text x="120" y="84" text-anchor="middle" font-size="11" fill="#57503f">robust under pixel corruption</text>
+
+      <!-- visual stream -->
+      <rect x="20" y="160" width="200" height="56" rx="4" fill="#f6e3e1" stroke="#a31621" stroke-width="2"/>
+      <text x="120" y="184" text-anchor="middle" font-size="14" fill="#a31621" font-weight="600">Visual-language stream</text>
+      <text x="120" y="204" text-anchor="middle" font-size="11" fill="#57503f">score spread collapses under noise</text>
+
+      <!-- w dial -->
+      <rect x="300" y="158" width="120" height="60" rx="4" fill="#fffdf8" stroke="#1d1a14" stroke-width="1.6" stroke-dasharray="6 3"/>
+      <text x="360" y="183" text-anchor="middle" font-size="14" font-weight="600" fill="#1d1a14">× w</text>
+      <text x="360" y="203" text-anchor="middle" font-size="10.5" fill="#57503f">w = 1−(1−w_vl)·s</text>
+
+      <!-- fusion -->
+      <rect x="500" y="92" width="170" height="84" rx="6" fill="#fef6e0" stroke="#9a6a14" stroke-width="2.4"/>
+      <text x="585" y="126" text-anchor="middle" font-size="14" font-weight="600" fill="#9a6a14">Gated fusion</text>
+      <text x="585" y="146" text-anchor="middle" font-size="11" fill="#57503f">all weights frozen</text>
+
+      <!-- output -->
+      <rect x="720" y="106" width="80" height="56" rx="4" fill="#e2eee2" stroke="#1f6f43" stroke-width="2"/>
+      <text x="760" y="130" text-anchor="middle" font-size="12" fill="#1f6f43" font-weight="600">AUC</text>
+      <text x="760" y="148" text-anchor="middle" font-size="11" fill="#1f6f43">recovered</text>
+
+      <!-- arrows -->
+      <path d="M 220 68 C 360 68, 420 110 498 120" fill="none" stroke="#1f6f43" stroke-width="2.4" marker-end="url(#arrG)"/>
+      <line x1="220" y1="188" x2="298" y2="188" stroke="#1d1a14" stroke-width="1.8" marker-end="url(#arr)"/>
+      <path d="M 420 188 C 460 188, 470 160 498 150" fill="none" stroke="#1d1a14" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#arr)"/>
+      <line x1="670" y1="134" x2="718" y2="134" stroke="#1d1a14" stroke-width="1.8" marker-end="url(#arr)"/>
+
+      <!-- annotation -->
+      <text x="360" y="142" text-anchor="middle" font-size="11" fill="#a31621" font-style="italic">collapse detected → w shrinks → fusion leans on skeleton</text>
+    </svg>
+    <p class="figcap"><b>Fig. A —</b> No parameter is updated anywhere. The only test-time action is a per-condition scalar on the visual stream's projected features; when both streams are healthy, w = 1 and the model is exactly the source model.</p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section class="reveal">
+  <h2><span class="no">03</span>The evidence</h2>
+
+  <div class="tablewrap">
+    <table>
+      <caption>Paper Table 3 — UCF-Crime-C, mean AUC (%) over 20 conditions, 3 seeds {42, 123, 2024}</caption>
+      <thead>
+        <tr><th>Backbone</th><th>Source-only</th><th>Ours (reweighting)</th><th>Δ (per-seed paired)</th><th>TENT / SAR</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>CLIP ViT-B/16</td><td>63.7</td><td>64.4</td><td class="up">+0.67 ± 0.23</td><td class="zero">|Δ| &lt; 0.1</td></tr>
+        <tr><td>SigLIP2 Base</td><td>57.0</td><td>58.5</td><td class="up">+1.50 ± 1.14</td><td class="zero">|Δ| &lt; 0.1</td></tr>
+        <tr><td>SigLIP2 SO400M</td><td>58.9</td><td>61.1</td><td class="up">+2.24 ± 0.24</td><td class="zero">|Δ| &lt; 0.1</td></tr>
+        <tr><td>SigLIP2 Giant</td><td>62.8</td><td>63.3</td><td class="up">+0.42 ± 0.12</td><td class="zero">|Δ| &lt; 0.1</td></tr>
+        <tr class="total"><td>Mean</td><td>60.6</td><td>61.8</td><td class="up">+1.21</td><td class="zero">≈ 0 (worst 0.082)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <caption>Gain by corruption family — 3-seed mean ΔAUC (pp), averaged over 5 severities</caption>
+      <thead>
+        <tr><th>Backbone</th><th>Gaussian noise</th><th>Motion blur</th><th>JPEG</th><th>Brightness</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>CLIP ViT-B/16</td><td class="up">+2.67</td><td class="zero">0.00</td><td class="zero">0.00</td><td class="zero">+0.01</td></tr>
+        <tr><td>SigLIP2 Base</td><td class="up">+5.99</td><td class="zero">0.00</td><td class="zero">0.00</td><td class="zero">0.00</td></tr>
+        <tr><td>SigLIP2 SO400M</td><td class="up">+8.95</td><td class="zero">0.00</td><td class="zero">0.00</td><td class="zero">0.00</td></tr>
+        <tr><td>SigLIP2 Giant</td><td class="up">+1.69</td><td class="zero">0.00</td><td class="zero">0.00</td><td class="zero">0.00</td></tr>
+        <tr class="total"><td>Average</td><td class="up">+4.83</td><td class="zero">0.00</td><td class="zero">0.00</td><td class="zero">0.00</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="prose">
+    <p>The zeros are not the method failing — they are the gate working. For motion blur and JPEG, the skeleton is re-extracted from degraded frames, so s → 0 and the model stays at source (no harm done). For brightness, the visual stream remains reliable, so w<sub>vl</sub> ≈ 1. The gain is concentrated exactly where one modality dies and the other survives: Gaussian noise, peaking at <strong>+13.2pp</strong> (SO400M, severity 5, 3-seed mean).</p>
+  </div>
+
+  <div class="caveats">
+    <h3>What this does not claim</h3>
+    <ul>
+      <li><strong>It is rescue, not robustness.</strong> The Gaussian gain comes from routing to a skeleton cache the corruption never touched — bounded by the skeleton-fusion ceiling, not evidence the fused features are intrinsically robust.</li>
+      <li><strong>It is transductive.</strong> Statistics are pooled over a whole corruption condition (standard in this benchmark setting); a streaming/causal variant is future work.</li>
+      <li><strong>The proxy can over-route.</strong> On one seed, SigLIP2-Base lost up to 3.2pp at high-severity Gaussian: its visual scores compressed <em>without</em> losing rank, and the spread proxy mistook compression for collapse. (That backbone is still positive on all three seeds on average.)</li>
+      <li><strong>The entropy-TTA zero is empirical</strong> for this frozen-head, rank-metric configuration — stated as an established structural observation, not a universal theorem.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section class="reveal">
+  <h2><span class="no">04</span>Where everything lives</h2>
+  <div class="pointers">
+    <div class="card">
+      <h4>Paper (main.tex)</h4>
+      <ul>
+        <li>§3.6 <span class="note">— method (sec:disc)</span></li>
+        <li>§4.5 + Table 3 <span class="note">— results, 3-seed</span></li>
+        <li>Table 4 <span class="note">— per-corruption breakdown</span></li>
+        <li>§5 <span class="note">— "the LayerNorm barrier"</span></li>
+        <li>Figure 1 <span class="note">— reweighting annotation (TikZ)</span></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Code</h4>
+      <ul>
+        <li>src/tta/disc_reweight.py</li>
+        <li>evaluate_tta.py <span class="note">--method disc_reweight</span></li>
+        <li>scripts/run_tta_seeds_m2.py <span class="note">— 3-seed TENT/SAR</span></li>
+        <li>scripts/aggregate_tta_table.py <span class="note">— Table 3 regen</span></li>
+        <li>scripts/pri5_tta_breakdown.py <span class="note">— Table 4 regen</span></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Records &amp; commits</h4>
+      <ul>
+        <li>.planning/HANDOVER-tta-investigation-2026-06-06.md <span class="note">§10–12</span></li>
+        <li>83b8927 <span class="note">dropout fix</span></li>
+        <li>1ed2d16 <span class="note">continual protocol</span></li>
+        <li>def88d5 <span class="note">disc_reweight ships</span></li>
+        <li>12cd95f <span class="note">paper rewrite</span></li>
+        <li>a5e3f73 <span class="note">3-seed TENT/SAR zero</span></li>
+        <li>3e9c492 <span class="note">Figure 1 TikZ rebuild</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span>ViolenceCC · .knowledge/tta-to-reweighting.html</span>
+  <span>compiled 2026-06-11 · sources: STATE.md, HANDOVER §10–12, main.tex</span>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.querySelectorAll('.reveal').forEach(el => el.classList.add('in'));
+    return;
+  }
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); obs.unobserve(e.target); } });
+  }, { threshold: 0.08 });
+  document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+})();
+</script>
+</body>
+</html>
