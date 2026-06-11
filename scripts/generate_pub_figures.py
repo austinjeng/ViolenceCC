@@ -456,7 +456,8 @@ def fig_tta_comparison():
     ax.set_title("Reweighting vs Source-Only (3 seeds, 20 corruptions)")
     ax.set_xticks(x)
     ax.set_xticklabels(bbs)
-    ax.legend(loc="upper left", framealpha=0.9, edgecolor="gray")
+    ax.legend(loc="upper center", ncol=2, framealpha=0.9, edgecolor="gray",
+              columnspacing=1.0, handletextpad=0.5)
     ax.set_ylim(54, 67)
 
     fig.tight_layout(pad=0.3)
