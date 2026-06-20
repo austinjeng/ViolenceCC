@@ -382,6 +382,29 @@ Our study has several limitations that should be considered when interpreting th
 
 \textbf{Performance gaps.} Our best UCF-Crime result (82.5\% AUC with SigLIP2 Giant) falls below the published performance of methods that use end-to-end fine-tuned backbones or temporal modeling specifically designed for anomaly detection. This gap reflects our architectural choice to freeze all backbone encoders, which prioritizes computational efficiency and modularity over peak performance. Unfreezing selected backbone layers or incorporating temporal transformers could improve absolute numbers but would increase training cost substantially on our single-GPU setup.
 
+Table~\ref{tab:comparison} places our numbers next to representative published results, with a \emph{Setting} column that makes the operating regime of each method explicit. The comparison is not a bare head-to-head: the strongest numbers are obtained under heavier budgets---a learnable vision-language text-alignment branch (VadCLIP~\cite{wu2024vadclip}, DSANet~\cite{yin2026dsanet}) or auxiliary training-time modalities (PI-VAD~\cite{majhi2025pivad})---whereas our system trains only a lightweight fusion head on frozen skeleton and visual-language features with no text branch. Read within the comparable band of frozen-feature, no-text, visual(+skeleton) methods, our 78.7\% XD-Violence AP is on par with RTFM~\cite{tian2021rtfm} (77.81\%), the I3D variant of MGFN~\cite{chen2023mgfn} (79.19\%), and Light-WVAD~\cite{wang2024lightwvad} (77.3\%), and our 82.5\% UCF-Crime AUC exceeds the founding Sultani et al.~\cite{sultani2018ucfcrime} baseline (75.41\%) by roughly seven points while trailing CLIP-visual methods such as CLIP-TSA~\cite{joo2023cliptsa} (87.58\%) and UR-DMU~\cite{zhou2023urdmu} (86.97\%); the residual gap to CLIP-TSA, the closest frozen-CLIP analogue, is largely a temporal-attention and multi-crop aggregation gap that our minimal head omits by design.
+
+\begin{table*}[t]
+\caption{Published frame-level results on UCF-Crime (frame ROC-AUC, \%) and XD-Violence (Average Precision, \%) versus this work. The \emph{Setting} column encodes the operating regime so rows are not read as a bare head-to-head; all listed methods use frozen features with only a trainable head. Methods with a text-alignment branch or extra training-time modalities operate under a heavier budget than our frozen, no-text, visual+skeleton head. This-work row in \textbf{bold}; ``---'' denotes a metric not reported by the source under a comparable protocol.}
+\label{tab:comparison}
+\begin{tabular}{l l c c l}
+\toprule
+Method & Venue & UCF AUC & XD AP & Setting \\
+\midrule
+PI-VAD~\cite{majhi2025pivad}     & CVPR 2025          & 90.33 & 85.37 & Frozen I3D; +text, +5 train-time modalities \\
+DSANet~\cite{yin2026dsanet}      & AAAI 2026          & 89.44 & 86.95 & Frozen CLIP; +text alignment \\
+VadCLIP~\cite{wu2024vadclip}     & AAAI 2024          & 88.02 & 84.51 & Frozen CLIP; +text alignment \\
+CLIP-TSA~\cite{joo2023cliptsa}   & ICIP 2023          & 87.58 & 82.19 & Frozen CLIP; no text \\ % RE-VERIFY: CLIP-TSA XD = 82.19 (primary paper); VadCLIP's table lists 82.17 (0.02 drift)
+UR-DMU~\cite{zhou2023urdmu}      & AAAI 2023          & 86.97 & 81.66 & Frozen I3D; no text \\
+MGFN~\cite{chen2023mgfn}         & AAAI 2023          & 86.98 & 79.19 & Frozen I3D; no text \\ % RE-VERIFY: MGFN XD = 79.19 is the I3D variant (NOT the VideoSwin 80.11); UCF 86.98 is I3D
+Light-WVAD~\cite{wang2024lightwvad} & Neurocomp. 2024 & 84.7  & 77.3  & Frozen I3D; no text \\
+RTFM~\cite{tian2021rtfm}         & ICCV 2021          & 84.30 & 77.81 & Frozen I3D; no text \\
+\textbf{This work}               & ---                & \textbf{82.5} & \textbf{78.7} & \textbf{Frozen skeleton+CLIP/SigLIP2; no text} \\
+Sultani et al.~\cite{sultani2018ucfcrime} & CVPR 2018 & 75.41 & ---   & Frozen C3D; no text \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
 \textbf{Seed sensitivity on XD-Violence.} XD-Violence gated fusion shows elevated seed variance only for the highest-capacity backbone (SigLIP2 Giant, 2.8\% AP standard deviation); the other three backbones are stable (near 0.9\%), comparable to UCF-Crime (maximum 0.4\%). As noted in Section~\ref{sec:impl}, this variance is sensitive to the temporal smoothness regularizer, which we disable on XD-Violence; the residual Giant sensitivity suggests that AP's calibration dependence and XD-Violence's imbalanced categories still create a challenging landscape for the largest backbone. Future work should investigate ensemble strategies or variance-reduction techniques for more stable training.
 
 \textbf{TTA scope.} Our test-time method targets the regime where one modality stays robust; its gains are concentrated on corruptions that collapse the visual-language stream (e.g., Gaussian noise) and are near-zero, by construction, where both streams degrade (motion blur, JPEG). It relies on transductive whole-condition statistics and on a discriminative-spread reliability proxy that can over-route on backbones whose visual stream compresses scores without losing rank (SigLIP2-Base at high-severity Gaussian on one seed). Streaming/causal variants, and a label-free signal that distinguishes score compression from rank loss, are left to future work.
