@@ -403,6 +403,19 @@ Plans:
 
 **Total:** 40/40 requirements mapped
 
+### Phase 12: SOTA Comparison and Positioning
+
+**Goal:** The thesis and the CGW '26 paper contain an honest, primary-source-verified comparison against current weakly-supervised VAD SOTA on UCF-Crime (frame AUC) and XD-Violence (AP) — a full annotated comparison table + a fair-subset (frozen-feature / no-text / visual+skeleton / single-GPU) table + positioning prose + a §2 Related-Work number backfill — framed as *orthogonal contribution (skeleton+VL fusion + label-free reliability-routing TTA) + competitiveness within the comparable regime*, with zero SOTA overclaim and no new GPU runs. Added 2026-06-21 after professor review feedback ("thesis lacks SOTA comparison"). Scope decided via brainstorm: published-numbers depth · thesis-full + condensed paper table · orthogonal+fair-subset stance. Grounded in a 40-agent verified-SOTA research artifact (31/34 methods confirmed against primary sources).
+**Requirements**: Closes the related-work / head-to-head comparison gap (no new v1 requirement; thesis-quality enrichment of existing results)
+**Depends on:** Phase 11 (thesis manuscript + paper/main.tex), verified-SOTA research artifact (12-RESEARCH-sota.md)
+**Mode:** writing/analysis — zero-GPU
+**Plans:** 3 plans
+
+Plans:
+- [ ] 12-01-PLAN.md — Standalone thesis artifact: full ~20-method SOTA table + fair-subset table + 5 positioning paragraphs (sota_comparison_full.tex)
+- [ ] 12-02-PLAN.md — Paper edits: §2 number-backfill + condensed comparison table (Setting column, page-budget fallback) + references.bib entries
+- [ ] 12-03-PLAN.md — Final verification: clean rebuild + number-traceability audit + overclaim scan + headline integrity (12-VERIFICATION.md)
+
 ---
 
 *Roadmap created: 2026-03-31*
