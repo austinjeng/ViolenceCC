@@ -259,7 +259,6 @@ Plans:
   3. 3-seed stability runs ({42, 123, 2024}) are completed for Gated Fusion on both datasets with SigLIP2 SO400M features
   4. A three-way comparison table (CLIP vs SigLIP2 ViT-B/16-256 vs SigLIP2 SO400M) exists for all ablation rows on both datasets, suitable for thesis inclusion
 
-
 **Plans:** 4/4 plans complete
 Plans:
 **Wave 1**
@@ -412,8 +411,13 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
+**Wave 1**
+
 - [ ] 12-01-PLAN.md — Standalone thesis artifact: full ~20-method SOTA table + fair-subset table + 5 positioning paragraphs (sota_comparison_full.tex)
 - [ ] 12-02-PLAN.md — Paper edits: §2 number-backfill + condensed comparison table (Setting column, page-budget fallback) + references.bib entries
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 12-03-PLAN.md — Final verification: clean rebuild + number-traceability audit + overclaim scan + headline integrity (12-VERIFICATION.md)
 
 ---
