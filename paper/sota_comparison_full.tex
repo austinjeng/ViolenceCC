@@ -1,0 +1,174 @@
+%% =====================================================================
+%%  sota_comparison_full.tex
+%%  Standalone, drop-in thesis fragment: full-treatment SOTA comparison.
+%% =====================================================================
+%%
+%%  WHAT THIS IS
+%%  ------------
+%%  A self-contained LaTeX fragment for the EXPANDED master's thesis (not the
+%%  CGW '26 workshop paper). It contains, in order:
+%%    (1) the full ~20-method published-numbers SOTA comparison table,
+%%        sorted by UCF-Crime AUC, with a mandatory `Setting' column and
+%%        per-number caveat footnotes;
+%%    (2) the 7-row fair-subset (apples-to-apples) table; and
+%%    (3) the five positioning paragraphs (P1-P5).
+%%
+%%  It is NOT \input by paper/main.tex. main.tex carries a *condensed* table
+%%  (delivered by Plan 02). This fragment is the full-treatment home for the
+%%  analysis, preserved verbatim for later incorporation into the thesis.
+%%
+%%  CITATION STRATEGY (standalone compile, zero bib dependency)
+%%  ----------------------------------------------------------
+%%  To keep this fragment self-contained -- so it compiles in isolation with
+%%  NO references.bib -- every method is referenced by a manual bracketed
+%%  label "[N]" (plain text, NOT \cite), and a small "References" list at the
+%%  end of the file maps each [N] to its citation. There are therefore NO
+%%  \cite commands and NO BibTeX run: unresolved-reference "??" cannot occur.
+%%
+%%  TO REWIRE TO THE REAL references.bib LATER: replace each inline "[N]"
+%%  with the corresponding \cite{key}, drop the manual References list at the
+%%  bottom, and add the proper @article/@inproceedings entries to the thesis
+%%  references.bib. The per-method citation appendix (Section 8 of
+%%  .planning/phases/12-sota-comparison-and-positioning/12-RESEARCH-sota.md)
+%%  holds the full author/venue strings for each [N].
+%%
+%%  SOURCE OF RECORD
+%%  ----------------
+%%  Every number below is transcribed from the VERIFIED research artifact
+%%  .planning/phases/12-sota-comparison-and-positioning/12-RESEARCH-sota.md
+%%  (Section 1 = full table + caveat footnotes; Section 2 = fair subset;
+%%   Section 3 = positioning paragraphs P1-P5; Section 6 = the mandatory
+%%   re-verify list; Section 8 = per-method citation appendix).
+%%  Entries that appear on the Section-6 "numbers to re-verify" list carry an
+%%  inline  % RE-VERIFY: <reason>  comment on their table row, so they are
+%%  flagged for a final personal primary-source check before citation.
+%%
+%%  STANDALONE-COMPILE WRAPPER
+%%  --------------------------
+%%  The preamble + \begin{document}...\end{document} below let this file
+%%  compile on its own (latexmk -pdf sota_comparison_full.tex) for
+%%  verification. When the file is later folded into the thesis body, lift the
+%%  content BETWEEN the "FRAGMENT BODY BEGIN" and "FRAGMENT BODY END" markers
+%%  into the thesis source and discard this wrapper (or keep the file as a
+%%  standalone subfile -- the markers make the boundary explicit).
+%% =====================================================================
+
+\documentclass[border=12pt,varwidth=560pt]{standalone}
+
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{graphicx}
+\usepackage{array}
+
+\begin{document}
+
+%% ----------------------------- FRAGMENT BODY BEGIN -----------------------------
+
+\textbf{\large Comparison with the state of the art}\par\medskip
+
+\noindent\textit{Metric definitions (stated once).}
+On \textbf{UCF-Crime} we report \textbf{frame-level ROC-AUC (\%)}; on
+\textbf{XD-Violence} we report \textbf{Average Precision (AP) / AUPRC (\%)}
+--- \emph{not} ROC-AUC. Several cited papers publish both an XD ROC-AUC and an
+XD AP (e.g.\ EventVAD 87.51 AUC vs 64.04 AP; LAVAD 85.36 AUC vs 62.01 AP); we
+tabulate only the AP. The \textbf{Setting} column encodes, compactly, whether
+the backbone is frozen vs.\ (partly) fine-tuned, whether a learnable text/prompt
+branch is used, whether audio is used, and whether the reported metric is
+frame-level or video-level, so a reader can see at a glance which rows are
+\emph{not} apples-to-apples with a frozen, visual-only, frame-level system.
+We do \emph{not} claim state-of-the-art performance; the honest claim is
+competitiveness within the constrained frozen / visual-only / single-GPU regime
+(Table~\ref{tab:sota-fair}).
+
+\medskip
+
+\begin{table}[t]
+\centering
+\caption{Published-numbers comparison on UCF-Crime (frame-level ROC-AUC, \%)
+and XD-Violence (Average Precision, \%), sorted by UCF AUC descending. The
+\textbf{This work} row is placed at its true position and shown in
+\textbf{bold}; it is never a bare head-to-head, because the \textbf{Setting}
+column makes each row's regime explicit. Numbers are transcribed from the
+verified research artifact; superscripts mark per-number caveats (see notes).
+Rows carrying an inline \texttt{RE-VERIFY} source comment are flagged for a
+final primary-source check before citation.}
+\label{tab:sota-full}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{l c l c c l}
+\toprule
+Method & Year & Venue & UCF AUC & XD AP & Setting \\
+\midrule
+GS-MoE$^{a}$               & 2025 & ICCV'25 (arXiv)   & 91.58 & 82.89 & Frozen feats, no-text, frame; MoE experts \\ % RE-VERIFY: GS-MoE 91.58/82.89 MEDIUM conf, arXiv/ICCV-25 preprint, primary PDF not machine-parsed
+PI-VAD                     & 2025 & CVPR'25           & 90.33 & 85.37 & Frozen I3D + 5 train-only modalities, text(train), frame \\
+Holmes-VAD$^{b}$           & 2024 & arXiv'24          & 89.51 & 90.67 & MLLM LoRA-tuned, text, frame; heavy VRAM \\ % RE-VERIFY: Holmes-VAD 89.51/90.67 arXiv preprint, no peer-reviewed venue; partial MLLM LoRA training (not frozen-feature)
+DSANet                     & 2026 & AAAI'26           & 89.44 & 86.95 & Frozen CLIP + V-L alignment, text, frame \\
+Holmes-VAU$^{c}$           & 2025 & CVPR'25           & 88.96 & 87.68 & LoRA MLLM + sampler, text, \emph{VIDEO-level} \\ % RE-VERIFY: Holmes-VAU 88.96/87.68 are VIDEO-LEVEL (398-sample split), NOT frame-level; disclose or omit from frame-level head-to-head
+STPrompt                   & 2024 & ACM MM'24         & 88.08 & N/A$^{d}$ & Frozen CLIP + ST prompts, text, frame; XD not eval. \\
+FDPN$^{e}$                 & 2025 & WACV'25           & 88.03 & N/A$^{e}$ & I3D RGB, frame; self-report, XD not eval. \\ % RE-VERIFY: FDPN 88.03 LOW conf, niche WACV-25 paper's OWN method (+0.01 over VadCLIP self-report); XD not evaluated -- re-check primary or drop
+VadCLIP                    & 2024 & AAAI'24           & 88.02 & 84.51 & Frozen CLIP + dual-branch, text, frame \\
+TPWNG                      & 2024 & CVPR'24           & 87.79 & 83.68 & CLIP text-proj fine-tuned, text, frame; self-train \\
+CLIP-TSA                   & 2023 & ICIP'23           & 87.58 & 82.19$^{f}$ & Frozen CLIP \emph{visual-only}, no-text, frame \\ % RE-VERIFY: CLIP-TSA XD = 82.19 (primary AUC@PR); VadCLIP table = 82.17 (0.02 drift); NEVER the paper's own 94.02 (non-comparable protocol)
+MGFN                       & 2023 & AAAI'23           & 86.98 & 79.19$^{g}$ & Frozen I3D feats, no-text, frame \\ % RE-VERIFY: MGFN XD = 79.19 is the I3D-RGB AP (NOT 80.11, which is the VideoSwin variant); keep one backbone (I3D)
+UR-DMU                     & 2023 & AAAI'23           & 86.97 & 81.66 & Frozen I3D feats, no-text, frame; single-GPU \\
+PEL4VAD                    & 2024 & IEEE TIP'24       & 86.76 & 85.59 & Frozen I3D + CLIP text prompts, text, frame \\
+PiercingEye$^{h}$          & 2026 & IEEE TPAMI'26     & 86.64 & 88.82 & Frozen I3D+VGGish+text, \emph{audio}+text, frame \\ % RE-VERIFY: PiercingEye XD = 88.82 LOW conf (inferred from relative gains) and is AUDIO+visual+text; UCF 86.64 is visual-only
+AnomalyCLIP$^{i}$          & 2024 & CVIU'24           & 86.36 & 78.51 & Frozen CLIP latent dirs, text, frame \\ % RE-VERIFY: AnomalyCLIP 86.36/78.51 LOW conf (not re-verified from primary table); the ~90.3 leaderboard figure is recognition mAUC, a DIFFERENT task -- do not cite it as detection AUC
+TEVAD$^{j}$                & 2023 & CVPRW'23          & 84.9  & 79.8  & Frozen I3D + caption text, text, frame \\ % RE-VERIFY: TEVAD XD ~= 79.8 MEDIUM precision (headline 79.8, ablation variants 79.3-79.76); disregard '88.28' web misattribution
+Light-WVAD                 & 2024 & Neurocomp.'24     & 84.7  & 77.3  & Frozen I3D, no-text, frame; consumer-GPU head \\
+RTFM                       & 2021 & ICCV'21           & 84.30 & 77.81 & Frozen I3D feats, no-text, frame; lightweight \\
+EventVAD$^{k}$             & 2025 & ACM MM'25         & 82.03 & 64.04 & Training-free 7B MLLM, text, frame; 80GB A800 \\ % RE-VERIFY: EventVAD XD = 64.04 (AP); do NOT cite 87.51 (that is the XD ROC-AUC). Training-free != low-compute
+\textbf{This work (dual-modal fusion)} & \textbf{2026} & \textbf{(thesis)} & \textbf{82.5} & \textbf{78.7} & \textbf{Frozen skel+CLIP/SigLIP2, no-text, frame; 1$\times$RTX 4090} \\
+LAVAD$^{}$                 & 2024 & CVPR'24           & 80.28 & 62.01 & Training-free 13B-LLM pipeline, text, frame \\ % RE-VERIFY: LAVAD XD = 62.01 (AP), NOT 85.36 (its XD ROC-AUC); double-check AP not AUC
+Sultani et al.$^{l}$       & 2018 & CVPR'18           & 75.41 & ---$^{l}$ & Frozen C3D, FC+MIL, no-text, frame; founding baseline \\ % RE-VERIFY: Sultani XD 73.20 is NOT from the 2018 paper -- it is Wu et al. ECCV 2020's re-impl; attribute correctly or omit the XD cell
+HyperVD$^{m}$              & 2024 & Image\,\&\,Vis.\,Comp.'24 & N/A$^{m}$ & 85.67 & Frozen I3D+VGGish, \emph{audio}, frame; UCF not rep. \\ % RE-VERIFY: HyperVD is AUDIO-VISUAL (85.67 AP); visual-only variant = 82.51; UCF not reported -- label modality if compared
+Ghadiya et al.$^{n}$       & 2024 & CVPRW'24 (MULA)   & N/A$^{n}$ & 86.34 & Frozen I3D+VGGish, \emph{audio}, frame; UCF not rep. \\ % RE-VERIFY: Ghadiya 86.34 MEDIUM conf, AUDIO-VISUAL workshop preprint; UCF not reported -- not comparable to visual/skeleton-only
+\bottomrule
+\end{tabular}
+
+\vspace{2pt}
+\footnotesize
+\begin{flushleft}
+\textit{Metric:} UCF AUC $=$ frame-level ROC-AUC (\%); XD AP $=$ Average
+Precision / AUPRC (\%). \textbf{We do not claim state-of-the-art}; rows above
+this work add a learnable text branch, audio, an MLLM, partial fine-tuning, or
+a video-level metric (see Setting / notes), so a bare head-to-head against them
+is not apples-to-apples (Table~\ref{tab:sota-fair}).\par\smallskip
+\textit{Per-number caveats.}
+$^{a}$\,GS-MoE 91.58: MEDIUM confidence; arXiv/ICCV-2025 poster preprint, primary
+PDF not machine-parsable --- treat as preliminary.
+$^{b}$\,Holmes-VAD 89.51/90.67: arXiv preprint (no confirmed peer-reviewed venue);
+MLLM LoRA fine-tuned --- not a frozen-feature head.
+$^{c}$\,Holmes-VAU 88.96/87.68: \textbf{VIDEO-LEVEL} AUC/AP on a 398-sample split,
+\emph{not} frame-level; apples-to-oranges vs.\ all frame-level rows including this
+work --- do not tabulate without disclosing the metric difference.
+$^{d}$\,STPrompt: XD-Violence is \emph{not} evaluated (benchmarks: UCF /
+ShanghaiTech / UBnormal); any XD value would be fabricated.
+$^{e}$\,FDPN 88.03: LOW confidence; the paper's own method, $+0.01$ over VadCLIP
+(a ``narrowly beats'' self-report); XD not evaluated.
+$^{f}$\,CLIP-TSA XD $=$ 82.19 (primary AUC@PR); the 82.17 that circulates is from
+VadCLIP's secondary table; the paper's own 94.02 uses a non-comparable protocol
+--- do not use it.
+$^{g}$\,MGFN XD $=$ 79.19 is the \textbf{I3D-RGB} AP; 80.11 is the VideoSwin
+variant. UCF 86.98 is I3D; we keep a single (I3D) backbone per row.
+$^{h}$\,PiercingEye XD $=$ 88.82 is \textbf{audio$+$visual$+$text}; UCF 86.64 is
+visual-only; LOW confidence (AP inferred/cross-checked).
+$^{i}$\,AnomalyCLIP 86.36/78.51: LOW confidence (detection-task numbers); the
+$\sim$90.3 leaderboard figure is recognition mAUC, a different task.
+$^{j}$\,TEVAD XD $\approx$ 79.8: MEDIUM precision (ablation variants 79.3--79.76);
+the ``88.28'' web snippet is a misattribution.
+$^{k}$\,EventVAD XD $=$ 64.04 is the AP; the paper's XD ROC-AUC is 87.51 (different
+metric); training-free but runs a 7B MLLM on an 80GB A800.
+$^{l}$\,Sultani XD: the 73.20 AP often quoted is \emph{not} from the 2018 paper
+(XD did not exist until 2020); it is Wu et al.'s ECCV-2020 re-implementation ---
+attribute to Wu et al., not Sultani; XD cell omitted here.
+$^{m}$\,HyperVD UCF not reported (XD-focused); XD 85.67 is audio-visual
+(visual-only variant $=$ 82.51).
+$^{n}$\,Ghadiya et al.\ 86.34: MEDIUM confidence, audio-visual workshop preprint;
+UCF not reported --- not comparable to visual/skeleton-only methods.
+\end{flushleft}
+\end{table}
+
+%% ----------------------------- FRAGMENT BODY END -----------------------------
+
+\end{document}
