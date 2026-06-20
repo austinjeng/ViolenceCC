@@ -352,6 +352,7 @@ Plans:
 | 9. SigLIP2-SO400M Backbone Comparison | 4/4 | Complete   | 2026-05-21 |
 | 10. SigLIP2 Giant-opt Backbone Comparison | 0/4 | Executing | - |
 | 11. Thesis Manuscript | 4/4 | Complete | 2026-05-30 |
+| 12. SOTA Comparison and Positioning | 1/3 | Executing | - |
 
 ---
 
@@ -408,12 +409,12 @@ Plans:
 **Requirements**: Closes the related-work / head-to-head comparison gap (no new v1 requirement; thesis-quality enrichment of existing results)
 **Depends on:** Phase 11 (thesis manuscript + paper/main.tex), verified-SOTA research artifact (12-RESEARCH-sota.md)
 **Mode:** writing/analysis — zero-GPU
-**Plans:** 3 plans
+**Plans:** 1/3 plans complete
 
 Plans:
 **Wave 1**
 
-- [ ] 12-01-PLAN.md — Standalone thesis artifact: full ~20-method SOTA table + fair-subset table + 5 positioning paragraphs (sota_comparison_full.tex)
+- [x] 12-01-PLAN.md — Standalone thesis artifact: full ~20-method SOTA table + fair-subset table + 5 positioning paragraphs (sota_comparison_full.tex) — complete 2026-06-21
 - [ ] 12-02-PLAN.md — Paper edits: §2 number-backfill + condensed comparison table (Setting column, page-budget fallback) + references.bib entries
 
 **Wave 2** *(blocked on Wave 1 completion)*

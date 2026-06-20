@@ -114,3 +114,9 @@ None. The fragment is complete: both tables fully populated from verified number
 - `c9c2e22` — feat(12-01): add full ~20-method SOTA comparison table fragment
 - `b240df5` — feat(12-01): add fair-subset table + 5 positioning paragraphs; verify standalone compile
 - `fd6bb0a` — chore(12-01): git-ignore paper/sota_comparison_full.pdf standalone build output
+
+## Self-Check: PASSED
+
+- FOUND: paper/sota_comparison_full.tex
+- FOUND: .planning/phases/12-sota-comparison-and-positioning/12-01-SUMMARY.md
+- FOUND commits: c9c2e22, b240df5, fd6bb0a, 9d1cd01

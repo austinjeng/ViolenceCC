@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 11
-current_plan: 4
+current_phase: 12
+current_plan: 2
 status: executing
-stopped_at: Phase 11 Plan 04 complete
-last_updated: "2026-06-20T21:54:59.143Z"
-last_activity: 2026-06-20
+stopped_at: Phase 12 Plan 01 complete
+last_updated: "2026-06-21T06:15:00.000Z"
+last_activity: 2026-06-21
 progress:
   total_phases: 14
   completed_phases: 13
@@ -36,11 +36,11 @@ Last activity: 2026-06-20
 
 ## Current Position
 
-Phase: 11 (thesis-manuscript) — COMPLETE
-Plan: 4 of 4
-**Current phase:** 11
-**Current plan:** 4
-**Status:** Ready to execute
+Phase: 12 (sota-comparison-and-positioning) — EXECUTING
+Plan: 2 of 3
+**Current phase:** 12
+**Current plan:** 2
+**Status:** Executing Phase 12 (Plan 01 complete)
 
 **Progress:**
 
@@ -80,6 +80,7 @@ Targets from PRD v2.3:
 | Phase 11 P02 | 515 | 2 tasks | 5 files |
 | Phase 11 P03 | 7min | 2 tasks | 7 files |
 | Phase 11 P04 | 13min | 2 tasks | 3 files |
+| Phase 12 P01 | ~14min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -133,6 +134,7 @@ Targets from PRD v2.3:
 | Never compare a 3-seed metric to a 1-seed baseline (esp. XD) | XD visual-only AP is seed-unstable (std ±1.5–2.2 vs UCF ±0.1–0.5). 2026-06-09 matched-seed runs (260609-cpr) showed the apparent "SigLIP2-Base/XD fusion regression" (−2.3) and "SO400M leads XD visual-only" were BOTH single-seed (s42) artifacts that vanish at 3 seeds. Always replicate both sides before claiming a margin |
 | Skeleton complementarity is small + consistent, not large | gated ≥ visual-only in 8/8 backbone×dataset configs (mean +0.6pp, sign test p≈0.008), with NO per-cell significance at n=3; largest on XD (CLIP +1.9, SO400M +2.1). Paper claims/tables must not overstate it; SO400M leads XD only under gated fusion (78.7, robust) |
 | Adversarially pre-check exact-number LaTeX/paper edits before applying | 2026-06-09 skeptic workflows caught, pre-edit: 2 dangling \ref{tab:tta}, a stale 81.1→81.2 / 2.5→2.6pp number a prior edit introduced, a wrong "21.6 FPS is unbacked" rationale (it is a real 02-UAT.md measurement), and a T-symbol collision (frame-count vs bag) — none shipped |
+| SOTA comparison fragment = standalone, manual-[N] cites, zero references.bib dep (Phase 12 P01) | paper/sota_comparison_full.tex is the full-treatment thesis SOTA artifact (NOT \input by main.tex; main.tex gets a condensed table in Plan 02). Uses \documentclass{standalone}+varwidth and manual bracketed labels so it compiles in isolation with no bib → no `??`. FRAGMENT BODY BEGIN/END markers delimit the lift-into-thesis content. Attribution guardrails baked in: MGFN XD 79.19 (I3D, not 80.11), CLIP-TSA 82.19, EventVAD 64.04 AP / LAVAD 62.01 AP, STPrompt/FDPN XD N/A, Sultani XD omitted (Wu 2020), HyperVD/Ghadiya/PiercingEye labeled audio. 15 inline % RE-VERIFY flags. Zero overclaim (only "we do not claim SOTA" negation). Headlines 82.5/78.7 + all single-stream anchors intact. .gitignore extended for the new fragment's PDF |
 
 ### Roadmap Evolution
 
@@ -213,8 +215,8 @@ None currently.
 
 ## Session Continuity
 
-**Stopped at:** Phase 11 Plan 04 complete
-**To resume:** Phase 11 complete. CGW '26 workshop paper draft at paper/main.tex (404 lines, 18 citations, 5 figures, 3 tables). Ready for Overleaf upload and compilation. Submit to advisor by June 1 deadline.
+**Stopped at:** Phase 12 Plan 01 complete
+**To resume:** Phase 12 Plan 01 done — standalone SOTA comparison thesis fragment (paper/sota_comparison_full.tex) committed: full ~20-method table + fair-subset table + 5 positioning paragraphs, compiles standalone, zero overclaim, headlines 82.5/78.7 intact. NEXT: Plan 02 (paper/main.tex §2 number-backfill + condensed comparison table + references.bib entries — owns main.tex/references.bib, does NOT touch the fragment). Then Plan 03 (final verification).
 
 **Files of record:**
 
