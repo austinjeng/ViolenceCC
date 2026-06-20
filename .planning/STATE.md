@@ -4,16 +4,16 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 12
 current_plan: 3
-status: executing
-stopped_at: Phase 12 Plan 02 complete (human-verify approved)
-last_updated: "2026-06-20T22:36:00.000Z"
+status: complete
+stopped_at: Phase 12 Plan 03 complete (final verification PASS)
+last_updated: "2026-06-20T22:43:11.000Z"
 last_activity: 2026-06-21
 progress:
   total_phases: 14
-  completed_phases: 13
+  completed_phases: 14
   total_plans: 59
-  completed_plans: 57
-  percent: 95
+  completed_plans: 58
+  percent: 98
 ---
 
 # State: ViolenceCC
@@ -36,11 +36,11 @@ Last activity: 2026-06-20
 
 ## Current Position
 
-Phase: 12 (sota-comparison-and-positioning) — EXECUTING
+Phase: 12 (sota-comparison-and-positioning) — COMPLETE
 Plan: 3 of 3
 **Current phase:** 12
 **Current plan:** 3
-**Status:** Phase 12 Plan 02 COMPLETE (human-verify approved). Section 2 backfill + bib entries (2885a9a), condensed comparison table (bdf8b72); full 10-row table fit at 11 pages (no fallback); clean build, no undefined citations, zero new overclaim. Next: Plan 03 final verification (number-traceability audit + overclaim scan + headline integrity).
+**Status:** Phase 12 COMPLETE (3/3 plans). Plan 03 final verification PASSED on all four audits (12-VERIFICATION.md): clean build exit 0 / 11 pages / no undefined citations or references; every cited UCF/XD number traces verbatim to 12-RESEARCH-sota.md (0 untraceable, conflicting re-verify numbers % RE-VERIFY-flagged); overclaim scan 0 disallowed hits; headline anchors + Tables 1-3 byte-identical to pre-phase baseline 16f70fd. No paper source patched (report-only gate). Student manual re-checks enumerated: CLIP-TSA 82.19, MGFN 79.19 (I3D), RTFM 77.81 (I3D), Light-WVAD attribution.
 
 **Progress:**
 
@@ -82,6 +82,7 @@ Targets from PRD v2.3:
 | Phase 11 P04 | 13min | 2 tasks | 3 files |
 | Phase 12 P01 | ~14min | 2 tasks | 2 files |
 | Phase 12 P02 | ~13min | 3 tasks | 2 files |
+| Phase 12 P03 | ~9min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -136,6 +137,7 @@ Targets from PRD v2.3:
 | Skeleton complementarity is small + consistent, not large | gated ≥ visual-only in 8/8 backbone×dataset configs (mean +0.6pp, sign test p≈0.008), with NO per-cell significance at n=3; largest on XD (CLIP +1.9, SO400M +2.1). Paper claims/tables must not overstate it; SO400M leads XD only under gated fusion (78.7, robust) |
 | Adversarially pre-check exact-number LaTeX/paper edits before applying | 2026-06-09 skeptic workflows caught, pre-edit: 2 dangling \ref{tab:tta}, a stale 81.1→81.2 / 2.5→2.6pp number a prior edit introduced, a wrong "21.6 FPS is unbacked" rationale (it is a real 02-UAT.md measurement), and a T-symbol collision (frame-count vs bag) — none shipped |
 | SOTA comparison fragment = standalone, manual-[N] cites, zero references.bib dep (Phase 12 P01) | paper/sota_comparison_full.tex is the full-treatment thesis SOTA artifact (NOT \input by main.tex; main.tex gets a condensed table in Plan 02). Uses \documentclass{standalone}+varwidth and manual bracketed labels so it compiles in isolation with no bib → no `??`. FRAGMENT BODY BEGIN/END markers delimit the lift-into-thesis content. Attribution guardrails baked in: MGFN XD 79.19 (I3D, not 80.11), CLIP-TSA 82.19, EventVAD 64.04 AP / LAVAD 62.01 AP, STPrompt/FDPN XD N/A, Sultani XD omitted (Wu 2020), HyperVD/Ghadiya/PiercingEye labeled audio. 15 inline % RE-VERIFY flags. Zero overclaim (only "we do not claim SOTA" negation). Headlines 82.5/78.7 + all single-stream anchors intact. .gitignore extended for the new fragment's PDF |
+| Phase 12 verification gate PASSED — phase COMPLETE (Phase 12 P03) | 12-VERIFICATION.md records all four audits PASS: (1) clean build `build_paper.ps1 -Clean` exit 0, 11 pages, no undefined citations/references, 6 new \cite keys resolve in main.bbl, standalone sota_comparison_full.tex compiles exit 0; (2) number-traceability — every cited UCF/XD value in main.tex (tab:comparison + §2 backfill + §6 prose) AND sota_comparison_full.tex appears verbatim in 12-RESEARCH-sota.md (0 untraceable), conflicting re-verify numbers (CLIP-TSA 82.19, MGFN 79.19 I3D) % RE-VERIFY-flagged; (3) overclaim scan 0 disallowed hits (phase-12 main.tex additions clean; the 2 pre-existing main.tex:265/:429 "outperforms" are internal gated-vs-late ablation, blame 33591ac, outside the phase-12 diff; standalone hits are non-rendered labels/paths or the 2 explicit "we do not claim SOTA" negations); (4) headline integrity — `git diff 16f70fd..HEAD` shows ONLY additive §2-backfill + new-table changes, Tables 1-3 absent from the diff (result cells byte-identical), references.bib +59/−0, anchors 82.5/78.7/68.8/40.8/81.2/74.6/82.4/76.8 all present. Report-only gate: NO paper source patched. Student manual re-checks before camera-ready: CLIP-TSA 82.19, MGFN 79.19(I3D), RTFM 77.81(I3D), Light-WVAD attribution (Wang/Zhou/Guan) |
 | FULL condensed table chosen over mini-table fallback (Phase 12 P02) | Baseline main.tex = 11 pages; adding the 10-row condensed comparison table (tab:comparison, two-column table*) in Section 6 kept it at 11 pages — no overflow, so the documented 3-4-row mini-table fallback was NOT needed. table* (not single-column table) gives the Setting column room and matches the existing Tables 1/2 house style. Setting column mandatory; This-work bolded 82.5/78.7; Sultani XD="---" (no 2018 XD number); MGFN XD=79.19(I3D) + CLIP-TSA 82.19 carry % RE-VERIFY flags; no STPrompt/FDPN/audio-visual rows. Table label renamed tab:sota→tab:comparison to avoid a false-positive \bSOTA\b overclaim-grep hit on the label substring. Build exit 0, no undefined citations/refs, zero overclaim tokens in added prose. HUMAN-VERIFY APPROVED (11 pages within venue limit). Commits 2885a9a (backfill+bib) + bdf8b72 (table). NOTE for Plan 03 audit: the two "outperforms" hits at main.tex:265/:429 are PRE-EXISTING internal gated-vs-late-fusion ablation claims (last touched by 33591ac, not this plan) — known-allowed, not SOTA overclaims |
 
 ### Roadmap Evolution
@@ -217,8 +219,8 @@ None currently.
 
 ## Session Continuity
 
-**Stopped at:** Phase 12 Plan 01 complete
-**To resume:** Phase 12 Plan 01 done — standalone SOTA comparison thesis fragment (paper/sota_comparison_full.tex) committed: full ~20-method table + fair-subset table + 5 positioning paragraphs, compiles standalone, zero overclaim, headlines 82.5/78.7 intact. NEXT: Plan 02 (paper/main.tex §2 number-backfill + condensed comparison table + references.bib entries — owns main.tex/references.bib, does NOT touch the fragment). Then Plan 03 (final verification).
+**Stopped at:** Phase 12 COMPLETE (all 3 plans)
+**To resume:** Phase 12 done — SOTA comparison shipped honestly in both the standalone thesis fragment (paper/sota_comparison_full.tex, Plan 01) and the live CGW '26 paper (§2 number-backfill + condensed tab:comparison + 6 bib entries, Plan 02), with Plan 03 final verification PASSED (12-VERIFICATION.md: clean 11-page build, full number traceability to 12-RESEARCH-sota.md, 0 overclaim, byte-identical headlines). No open work in this phase. Student manual re-checks before camera-ready submission: CLIP-TSA XD 82.19, MGFN XD 79.19 (I3D), RTFM XD 77.81 (I3D), Light-WVAD authors = Wang, Zhou & Guan. (Optional parked: Phase 4d XD hyperparameter sweep + RTFM repro-gap investigation.)
 
 **Files of record:**
 
