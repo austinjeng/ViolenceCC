@@ -40,7 +40,7 @@ Phase: 12 (sota-comparison-and-positioning) — COMPLETE
 Plan: 3 of 3
 **Current phase:** 12
 **Current plan:** 3
-**Status:** Phase 12 COMPLETE (3/3 plans). Plan 03 final verification PASSED on all four audits (12-VERIFICATION.md): clean build exit 0 / 11 pages / no undefined citations or references; every cited UCF/XD number traces verbatim to 12-RESEARCH-sota.md (0 untraceable, conflicting re-verify numbers % RE-VERIFY-flagged); overclaim scan 0 disallowed hits; headline anchors + Tables 1-3 byte-identical to pre-phase baseline 16f70fd. No paper source patched (report-only gate). Student manual re-checks enumerated: CLIP-TSA 82.19, MGFN 79.19 (I3D), RTFM 77.81 (I3D), Light-WVAD attribution.
+**Status:** Phase 12 COMPLETE (3/3 plans). Plan 03 final verification PASSED on all four audits (12-VERIFICATION.md): clean build exit 0 / 11 pages / no undefined citations or references; every cited UCF/XD number traces verbatim to 12-RESEARCH-sota.md (0 untraceable, conflicting re-verify numbers % RE-VERIFY-flagged); overclaim scan 0 disallowed hits; headline anchors + Tables 1-3 byte-identical to pre-phase baseline 16f70fd. No paper source patched (report-only gate). Student manual re-checks enumerated: CLIP-TSA 82.19, MGFN 79.19 (I3D), RTFM 77.81 (I3D), Light-WVAD attribution. Post-completion code-review gate (12-REVIEW.md, standard depth, 3 LaTeX/bib files): 0 critical / 2 warning / 2 info. WR-01 (self-contradicting tab:comparison caption) + IN-01 (empty LAVAD superscript) fixed in b78d0bd (paper rebuilt clean, 11pp, headlines intact); WR-02 + IN-02 (PI-VAD/DSANet bib type + author lists) deferred to the 12-VERIFICATION.md camera-ready re-verify checklist (items 16-17).
 
 **Progress:**
 
