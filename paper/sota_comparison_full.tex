@@ -169,6 +169,153 @@ UCF not reported --- not comparable to visual/skeleton-only methods.
 \end{flushleft}
 \end{table}
 
+\medskip
+
+%% --- Fair-subset (apples-to-apples) table ---
+\begin{table}[t]
+\centering
+\caption{Fair-subset (apples-to-apples) comparison. \textbf{Subset definition:}
+frozen features, no backbone fine-tuning, no learnable text/prompt branch,
+visual-only RGB (or RGB$+$skeleton), and a single-GPU-class feature head. This
+is the regime in which this work's 82.5\% UCF AUC / 78.7\% XD AP is most
+directly comparable; methods with text/prompt branches, audio, MLLMs, partial
+fine-tuning, or video-level evaluation are excluded (reasons in
+Table~\ref{tab:sota-full}). Because \emph{every} row is, by construction, the
+same setting, a per-row Setting column is unnecessary here --- the setting is
+captured once by this caption. \textbf{Metric:} UCF AUC $=$ frame-level ROC-AUC
+(\%); XD AP $=$ Average Precision (\%). \textbf{This work} in \textbf{bold}.}
+\label{tab:sota-fair}
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{l c c c p{0.40\linewidth}}
+\toprule
+Method & Year & UCF AUC & XD AP & Why it qualifies \\
+\midrule
+CLIP-TSA           & 2023 & 87.58 & 82.19 & Frozen CLIP \emph{visual-only}, no text branch --- the closest analogue (CLIP feats, no prompts) \\
+UR-DMU             & 2023 & 86.97 & 81.66 & I3D frozen feats, no text, no fine-tune, RGB-only \\
+MGFN-I3D           & 2023 & 86.98 & 79.19 & I3D frozen feats, no text, RGB-only (I3D XD to keep one backbone) \\
+Light-WVAD         & 2024 & 84.7  & 77.3  & Frozen I3D, lightweight head, no text --- explicit consumer-GPU efficiency play \\
+RTFM               & 2021 & 84.30 & 77.81 & Frozen I3D feats, no text, the canonical MIL anchor \\
+\textbf{This work} & \textbf{2026} & \textbf{82.5} & \textbf{78.7} & Frozen skeleton (CTR-GCN) $+$ frozen CLIP/SigLIP2, gated fusion $+$ MIL head only, no text, single 4090 \\
+Sultani et al.     & 2018 & 75.41 & ---   & Frozen C3D, FC $+$ MIL ranking; founding baseline (XD number is a later re-impl, omitted) \\
+\bottomrule
+\end{tabular}
+
+\vspace{2pt}
+\footnotesize
+\begin{flushleft}
+\textit{Read of the fair subset.} Within this strictly-frozen / no-text /
+RGB($+$skeleton)-only band, this work's \textbf{78.7\% XD AP is essentially on
+par with RTFM (77.81), Light-WVAD (77.3), and MGFN-I3D (79.19)} and clearly
+above the Sultani lineage, while sitting below the CLIP-visual-feature ceiling
+of CLIP-TSA (82.19) and UR-DMU (81.66). On UCF, 82.5\% trails the frozen-feature
+pack (RTFM 84.30, UR-DMU 86.97, CLIP-TSA 87.58) but exceeds Sultani's 75.41
+baseline by $\sim$7 points. The closest single comparator, CLIP-TSA, uses CLIP
+\emph{visual} features with a temporal self-attention module and
+multi-crop-style aggregation that this work deliberately omits; the residual gap
+to it is largely a temporal-modeling / aggregation gap, not a feature-quality
+gap.
+\end{flushleft}
+\end{table}
+
+\medskip
+
+%% --- Positioning paragraphs (P1-P5) ---
+\noindent\textbf{Positioning.}\par\medskip
+
+\noindent\textbf{Scope and the deliberate-constraint frame.}
+Our system reports 82.5\% frame-level AUC on UCF-Crime and 78.7\% AP on
+XD-Violence under a deliberately constrained regime: both the skeleton backbone
+(CTR-GCN, pre-trained on NTU-120) and the vision-language backbone
+(CLIP/SigLIP2) are kept fully frozen, only a gated fusion module and an MIL
+classifier are trained, and no learnable text-prompt branch, no audio stream,
+and no heavy temporal graph are used, all on a single 24\,GB RTX 4090. These are
+not incidental shortcomings but the experimental envelope of the thesis. The
+strongest reported numbers in the field are obtained under materially heavier
+budgets: VadCLIP (88.02\% UCF / 84.51\% XD, AAAI 2024), TPWNG (87.79 / 83.68,
+CVPR 2024) and DSANet (89.44 / 86.95, AAAI 2026) all add a learnable
+vision-language text-alignment branch; PI-VAD (90.33 / 85.37, CVPR 2025) induces
+five auxiliary modalities at training time; and Holmes-VAD/Holmes-VAU fine-tune
+a multimodal LLM. The 5--9 point UCF gap to these systems is therefore best read
+as the cost of the components we intentionally excluded, not as a deficiency of
+the fusion approach itself.
+
+\medskip\noindent\textbf{Competitiveness within the comparable regime.}
+When the comparison is restricted to the apples-to-apples subset
+(Table~\ref{tab:sota-fair}) --- fully frozen features, no text branch, no
+fine-tuning, a single-GPU-class head --- the picture is markedly more favorable.
+On XD-Violence our 78.7\% AP is on par with RTFM (77.81\%, ICCV 2021), MGFN's
+I3D variant (79.19\%), and Light-WVAD (77.3\%, Neurocomputing 2024), and well
+above the founding Sultani et al.\ MIL baseline. On UCF-Crime our 82.5\% sits
+above Sultani (75.41\%) and within a few points of RTFM (84.30\%) and Light-WVAD
+(84.7\%). The closest single comparator is CLIP-TSA (87.58\% / 82.19\%), which,
+like us, uses frozen CLIP visual features with no text branch; the residual gap
+to it is attributable to its temporal self-attention module and multi-crop
+aggregation, components our minimal head omits by design. Read against its true
+peer group rather than against fine-tuned or multimodal systems, the fusion
+pipeline is competitive, not an outlier.
+
+\medskip\noindent\textbf{The contribution axis is orthogonal to peak AUC.}
+The thesis does not claim a new state of the art on clean benchmark AUC; its
+contributions lie on a different axis. First, it demonstrates a working
+dual-modal fusion of frozen skeleton dynamics (CTR-GCN) with frozen
+vision-language semantics through learned gated fusion, a combination not
+represented among the visual-only and audio-visual methods above, and quantifies
+the fusion gain over each single-stream baseline (skeleton-only 68.8\% / 40.8\%;
+visual-only CLIP 81.2\% / 74.6\%; SigLIP2-Giant 82.4\% / 76.8\%). Second, it
+provides a systematic four-backbone comparison (CLIP ViT-B/16, SigLIP2 ViT-B/16,
+SigLIP2 SO400M, SigLIP2 Giant) revealing dataset-specific backbone preferences.
+Third, and most distinctively, it studies test-time adaptation for frozen
+dual-modal VAD: it shows that entropy-minimization TTA (TENT, SAR) cannot
+improve rank-based detection metrics, and proposes a label-free
+discriminative-reliability reweighting that improves \emph{corrupted-AUC}
+(robustness, not clean-benchmark AUC) on all four backbones (mean $+1.2\%$, up
+to $+13.2\%$ on the hardest corruption). None of the higher-AUC methods above
+report a corruption-robustness or test-time-adaptation study of this kind, so
+the work occupies a complementary niche rather than competing for the top
+leaderboard slot.
+
+\medskip\noindent\textbf{Reproducibility and transparency as a deliberate virtue.}
+All thesis numbers are reported as means over three random seeds on fixed
+train/val splits with a single evaluation protocol, and the headline figures are
+git-reproducible from a committed frame-count manifest. This contrasts with
+several of the highest numbers in the literature, which are single-run preprints
+(e.g.\ GS-MoE's 91.58\% UCF, an arXiv/ICCV-2025 poster whose primary PDF resists
+automated verification; Holmes-VAD's 89.51\% / 90.67\%, an unrefereed preprint).
+It also contrasts with comparisons that quietly mix evaluation protocols ---
+Holmes-VAU's 88.96\% / 87.68\% are video-level metrics on a 398-sample split,
+not the frame-level ROC-AUC / AP that every weakly-supervised baseline (and this
+thesis) uses. By keeping the backbone frozen, the head tiny, the seeds fixed,
+and the metric definitions explicit (UCF $=$ frame-level ROC-AUC; XD $=$ Average
+Precision), the work prioritizes a number a reader can trust and reproduce over
+a number that is merely higher.
+
+\medskip\noindent\textbf{Compute honesty: training-free is not low-compute.}
+A final positioning point concerns budget. Two recent training-free LLM methods,
+LAVAD (80.28\% / 62.01\%, CVPR 2024) and EventVAD (82.03\% / 64.04\%, ACM MM
+2025), require running 13B and 7B multimodal LLMs at inference (LAVAD on an HPC
+cluster, EventVAD on an 80\,GB A800), yet our frozen dual-modal head on a single
+24\,GB consumer GPU matches or exceeds them on UCF and substantially exceeds both
+on XD-Violence AP (78.7\% vs 62.01\% / 64.04\%). This makes a concrete point that
+``training-free'' does not imply ``cheap,'' and that a small trainable head on
+frozen features remains a strong, deployable trade-off for a single-GPU
+researcher. The thesis's value is precisely this corner of the design space:
+reproducible, consumer-GPU-feasible, multimodal-by-fusion, and explicitly
+robustness-aware, rather than a pursuit of the absolute highest benchmark AUC.
+
+\medskip
+
+%% --- References (manual labels; replace with \cite + references.bib later) ---
+\noindent\textbf{\small References (manual labels for this standalone fragment).}
+{\footnotesize\par\noindent
+The full author / venue strings for every method are listed in the per-method
+citation appendix (Section~8 of \texttt{12-RESEARCH-sota.md}). When wiring this
+fragment into the thesis, replace the bracketed method names above with
+\texttt{\textbackslash cite\{key\}} and add the corresponding \texttt{@article}
+/ \texttt{@inproceedings} entries to the thesis \texttt{references.bib}.
+Note on Light-WVAD attribution: the correct authors are Wang, Zhou \& Guan
+(Neurocomputing 2024), \emph{not} ``Sun et al.''}
+
 %% ----------------------------- FRAGMENT BODY END -----------------------------
 
 \end{document}
