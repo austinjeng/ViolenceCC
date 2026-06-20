@@ -5,8 +5,8 @@ milestone_name: milestone
 current_phase: 12
 current_plan: 2
 status: executing
-stopped_at: Phase 12 Plan 01 complete
-last_updated: "2026-06-21T06:15:00.000Z"
+stopped_at: Phase 12 Plan 02 Tasks 1-2 complete — awaiting human-verify checkpoint (Task 3)
+last_updated: "2026-06-20T22:30:00.000Z"
 last_activity: 2026-06-21
 progress:
   total_phases: 14
@@ -40,7 +40,7 @@ Phase: 12 (sota-comparison-and-positioning) — EXECUTING
 Plan: 2 of 3
 **Current phase:** 12
 **Current plan:** 2
-**Status:** Executing Phase 12 (Plan 01 complete)
+**Status:** Executing Phase 12 Plan 02 — Tasks 1-2 done (Section 2 backfill + bib entries committed 2885a9a; condensed comparison table committed bdf8b72). PAUSED at Task 3 human-verify checkpoint (blocking). Paper rebuilds clean: 11 pages, exit 0, no undefined citations. SUMMARY pending human approval.
 
 **Progress:**
 
@@ -135,6 +135,7 @@ Targets from PRD v2.3:
 | Skeleton complementarity is small + consistent, not large | gated ≥ visual-only in 8/8 backbone×dataset configs (mean +0.6pp, sign test p≈0.008), with NO per-cell significance at n=3; largest on XD (CLIP +1.9, SO400M +2.1). Paper claims/tables must not overstate it; SO400M leads XD only under gated fusion (78.7, robust) |
 | Adversarially pre-check exact-number LaTeX/paper edits before applying | 2026-06-09 skeptic workflows caught, pre-edit: 2 dangling \ref{tab:tta}, a stale 81.1→81.2 / 2.5→2.6pp number a prior edit introduced, a wrong "21.6 FPS is unbacked" rationale (it is a real 02-UAT.md measurement), and a T-symbol collision (frame-count vs bag) — none shipped |
 | SOTA comparison fragment = standalone, manual-[N] cites, zero references.bib dep (Phase 12 P01) | paper/sota_comparison_full.tex is the full-treatment thesis SOTA artifact (NOT \input by main.tex; main.tex gets a condensed table in Plan 02). Uses \documentclass{standalone}+varwidth and manual bracketed labels so it compiles in isolation with no bib → no `??`. FRAGMENT BODY BEGIN/END markers delimit the lift-into-thesis content. Attribution guardrails baked in: MGFN XD 79.19 (I3D, not 80.11), CLIP-TSA 82.19, EventVAD 64.04 AP / LAVAD 62.01 AP, STPrompt/FDPN XD N/A, Sultani XD omitted (Wu 2020), HyperVD/Ghadiya/PiercingEye labeled audio. 15 inline % RE-VERIFY flags. Zero overclaim (only "we do not claim SOTA" negation). Headlines 82.5/78.7 + all single-stream anchors intact. .gitignore extended for the new fragment's PDF |
+| FULL condensed table chosen over mini-table fallback (Phase 12 P02) | Baseline main.tex = 11 pages; adding the 10-row condensed comparison table (tab:comparison, two-column table*) in Section 6 kept it at 11 pages — no overflow, so the documented 3-4-row mini-table fallback was NOT needed. table* (not single-column table) gives the Setting column room and matches the existing Tables 1/2 house style. Setting column mandatory; This-work bolded 82.5/78.7; Sultani XD="---" (no 2018 XD number); MGFN XD=79.19(I3D) + CLIP-TSA 82.19 carry % RE-VERIFY flags; no STPrompt/FDPN/audio-visual rows. Table label renamed tab:sota→tab:comparison to avoid a false-positive \bSOTA\b overclaim-grep hit on the label substring. Build exit 0, no undefined citations/refs, zero overclaim tokens in added prose. Awaiting Task 3 human-verify on the rendered table |
 
 ### Roadmap Evolution
 

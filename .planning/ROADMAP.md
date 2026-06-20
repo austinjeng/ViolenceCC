@@ -415,7 +415,7 @@ Plans:
 **Wave 1**
 
 - [x] 12-01-PLAN.md — Standalone thesis artifact: full ~20-method SOTA table + fair-subset table + 5 positioning paragraphs (sota_comparison_full.tex) — complete 2026-06-21
-- [ ] 12-02-PLAN.md — Paper edits: §2 number-backfill + condensed comparison table (Setting column, page-budget fallback) + references.bib entries
+- [~] 12-02-PLAN.md — Paper edits: §2 number-backfill + condensed comparison table (Setting column, page-budget fallback) + references.bib entries — Tasks 1-2 done & committed (2885a9a, bdf8b72); PAUSED at Task 3 human-verify checkpoint. Full condensed table fit at 11 pages (no fallback needed); clean build, no undefined citations
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
