@@ -45,6 +45,7 @@ wandb/
 
 # LaTeX build artifacts (paper/) — global *.log rule above already covers main.log
 paper/main.pdf
+paper/sota_comparison_full.pdf
 paper/*.aux
 paper/*.bbl
 paper/*.blg
