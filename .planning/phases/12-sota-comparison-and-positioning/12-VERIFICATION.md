@@ -147,8 +147,10 @@ Items the student MUST personally re-check before final submission. **"Cited"** 
 | 13 | Ghadiya 86.34 / HyperVD 85.67 / HL-Net 78.64 — AUDIO-VISUAL | full table only (labelled audio) | YES (full l.124, l.125) | RE-CHECK modality labels |
 | 14 | STPrompt & FDPN have NO XD number | full table (N/A) | YES (footnotes d, e) | Confirm N/A — done |
 | 15 | Light-WVAD authors = Wang, Zhou & Guan (not "Sun et al.") | **paper `tab:comparison` + fair-subset** | bib `wang2024lightwvad` correctly attributes Wang/Zhou/Guan | Confirm bib author string — VERIFIED correct |
+| 16 | PI-VAD (`majhi2025pivad`) & DSANet (`yin2026dsanet`) publication status / bib type (code-review WR-02) | **paper `tab:comparison`** | typed `@inproceedings` w/ arXiv id in `note` | **RE-CHECK** whether each is accepted to CVPR'25 / AAAI'26; if still preprint, retype as `@misc`/preprint with `eprint`+`archivePrefix`; if accepted, add real `pages`/`publisher` |
+| 17 | PI-VAD & DSANet full author lists (code-review IN-02) | bib only (renders as "et al.") | `author = {... and others}` placeholder | Fill full author lists from the primary arXiv records before submission |
 
-**Highest-priority manual re-checks for the SHIPPED paper (condensed table):** items **#1 (CLIP-TSA 82.19)**, **#2 (MGFN 79.19 I3D)**, **#11 (RTFM 77.81 I3D)**, and **#15 (Light-WVAD attribution)** — these are the four re-verify-list entries whose numbers/attributions actually appear in `paper/main.tex`. All are flagged/handled correctly as audited; the student should still confirm #1 and #2 against the primary PDFs before camera-ready.
+**Highest-priority manual re-checks for the SHIPPED paper (condensed table):** items **#1 (CLIP-TSA 82.19)**, **#2 (MGFN 79.19 I3D)**, **#11 (RTFM 77.81 I3D)**, and **#15 (Light-WVAD attribution)** — these are the four re-verify-list entries whose numbers/attributions actually appear in `paper/main.tex`. All are flagged/handled correctly as audited; the student should still confirm #1 and #2 against the primary PDFs before camera-ready. **Items #16–#17** are bib-hygiene follow-ups deferred from code review (WR-02 / IN-02) for the two preprint entries (PI-VAD, DSANet) — fold into the same publication-status pass.
 
 ---
 

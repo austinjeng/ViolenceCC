@@ -12,7 +12,10 @@ findings:
   warning: 2
   info: 2
   total: 4
-status: issues_found
+  resolved: 2
+  deferred: 2
+status: resolved
+resolution: "WR-01 + IN-01 fixed (commit pending); WR-02 + IN-02 deferred to the camera-ready re-verify checklist in 12-VERIFICATION.md (overlap with DSANet/PI-VAD publication-status re-verify items)."
 ---
 
 # Phase 12: Code Review Report
@@ -68,6 +71,28 @@ Two warnings (bib-hygiene on the two preprint-as-proceedings entries; a caption
 claim contradicted by its own Setting column) and two info items (an empty
 superscript group; placeholder `others` authors) are below.
 
+## Resolution (2026-06-21, post-review)
+
+User chose "fix clear defects now" during `/gsd-execute-phase 12`:
+
+- **WR-01 — RESOLVED.** Caption first clause reworded to drop the over-broad
+  "only a trainable head" universal: now "all listed methods use frozen backbone
+  features (no end-to-end backbone fine-tuning), and the Setting column marks
+  those that additionally train a text-alignment branch or use auxiliary
+  training-time modalities…". No longer contradicts the Setting column. Paper
+  rebuilt clean (`build_paper.ps1 -Clean`, exit 0, 11 pages, 0 undefined cites).
+- **IN-01 — RESOLVED.** Empty `LAVAD$^{}$` superscript group removed →
+  `LAVAD`. Standalone fragment unaffected (trivial markup removal).
+- **WR-02 — DEFERRED** to the camera-ready re-verify checklist in
+  12-VERIFICATION.md. The `@inproceedings`-vs-preprint typing of
+  `majhi2025pivad` (PI-VAD, CVPR'25) and `yin2026dsanet` (DSANet, AAAI'26)
+  depends on confirming each paper's actual publication status — which is
+  already a DSANet/PI-VAD re-verify item the student must check before
+  submission. Folded there to avoid a half-fix.
+- **IN-02 — DEFERRED** (same two entries). Full author lists are not in the
+  verified research artifact (only "et al."); filling them requires the primary
+  arXiv records, so it ships with the camera-ready re-verify pass.
+
 ## Structural Findings (fallow)
 
 No `<structural_findings>` block was provided for this review.
@@ -76,7 +101,7 @@ No `<structural_findings>` block was provided for this review.
 
 ## Warnings
 
-### WR-01: `tab:comparison` caption asserts "only a trainable head" but its own Setting column lists heavier-than-head training for three rows
+### WR-01 [RESOLVED]: `tab:comparison` caption asserts "only a trainable head" but its own Setting column lists heavier-than-head training for three rows
 
 **File:** `paper/main.tex:388`
 **Issue:** The caption states a universal property of every tabulated method:
@@ -102,7 +127,7 @@ Methods with a text-alignment branch or extra training-time modalities operate
 under a heavier budget than our frozen, no-text, visual+skeleton head.
 ```
 
-### WR-02: Two new bib entries type unpublished arXiv preprints as `@inproceedings` with placeholder authors and no proceedings-level fields
+### WR-02 [DEFERRED → camera-ready re-verify]: Two new bib entries type unpublished arXiv preprints as `@inproceedings` with placeholder authors and no proceedings-level fields
 
 **File:** `paper/references.bib:220-234`
 **Issue:** `majhi2025pivad` and `yin2026dsanet` are entered as `@inproceedings`
@@ -133,7 +158,7 @@ proceedings are out and replace `note` with `eprint`/`archivePrefix` fields.
 
 ## Info
 
-### IN-01: Empty superscript group on the LAVAD row
+### IN-01 [RESOLVED]: Empty superscript group on the LAVAD row
 
 **File:** `paper/sota_comparison_full.tex:122`
 **Issue:** The LAVAD row begins `LAVAD$^{}$` — an empty superscript math group.
@@ -148,7 +173,7 @@ matching note:
 LAVAD                      & 2024 & CVPR'24           & 80.28 & 62.01 & ...
 ```
 
-### IN-02: Placeholder `and others` author lists in two new bib entries
+### IN-02 [DEFERRED → camera-ready re-verify]: Placeholder `and others` author lists in two new bib entries
 
 **File:** `paper/references.bib:221,229`
 **Issue:** `majhi2025pivad` (`author = {Snehashis Majhi and others}`) and
