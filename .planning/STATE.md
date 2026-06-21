@@ -21,7 +21,7 @@ progress:
 **Last updated:** 2026-05-30
 **Session:** Phase 11 complete. All 4 plans executed. CGW '26 workshop paper draft complete (404 lines, 18 citations, 5 figures, 3 tables). Ready for Overleaf upload.
 
-Last activity: 2026-06-20
+Last activity: 2026-06-21 - Completed quick task 260621-fjk: Phase 12 SOTA-comparison framing fixes
 
 ---
 
@@ -214,6 +214,7 @@ None currently.
 | 260611-ttr | Add .knowledge/tta-to-reweighting.html — self-contained one-time-use HTML explainer of the TTA→reweighting transition (dropout artifact 83b8927 → continual protocol 1ed2d16 → real <0.1pp entropy zero a5e3f73 → CORAL dead end → disc_reweight def88d5 → paper rewrite 12cd95f), with mechanism formulas/diagram, Table-3 + per-corruption evidence, caveats, and code/record pointers. Rendering verified via playwright (full-page screenshots, no console errors beyond favicon 404) | 2026-06-11 | f079df5 | — (inline /gsd:fast) |
 | 260611-66v | Rebuild paper Figure 1 as native TikZ vector figure (replaces unreadable ~3pt-text raster PNG): new paper/figures/fig_architecture.tex \input at \textwidth, tikz preamble, content corrected to current methods (late fusion = score averaging, visual feat 1024–3072-d, Eqs (2)-(4) math incl. residual, TENT/SAR blocks → dashed disc-reliability-reweighting annotation ref sec:disc), caption rewritten, PNG/HTML deleted. PDF clean 10pp; visually verified at 300dpi. | 2026-06-11 | 3e9c492 | [260611-66v-rebuild-paper-figure-1-architecture-over](./quick/260611-66v-rebuild-paper-figure-1-architecture-over/) |
 | 260611-fsl | Fix paper Figure 4 (fig_tta_comparison.pdf): legend at loc="upper left" overlapped the CLIP ViT-B/16 bars, hiding 63.7/64.4/+0.67 labels. Moved to compact 2-column upper-center box (clear headroom between Base and SO400M groups). Targeted single-figure regen ONLY (fig_backbone_comparison left untouched — its chart CSV is stale/pre-λ0, regen would corrupt; planner-caught hazard). git-status isolation gate confirmed only fig_tta_comparison.pdf changed under paper/figures/. PDF rebuilt clean (10pp); legend placement visually verified in figure PDF + main.pdf p.8. | 2026-06-11 | 2d45071 | [260611-fsl-fix-paper-figure-4-fig-tta-comparison-mo](./quick/260611-fsl-fix-paper-figure-4-fig-tta-comparison-mo/) |
+| 260621-fjk | Phase 12 SOTA-comparison framing fixes (from the honesty-assessment workflow): #3 abstract SOTA-context sentence (~88–91% field ceiling, gap-by-design); #1 honest-hypothesis CLIP-TSA rewrite ×3 ('we hypothesize … but do not isolate this experimentally') in main.tex Limitations + fragment fair-subset read + P2; #2 XD-scoped competitiveness (state UCF trails every modern fair-subset peer; drop the 'competitive, not an outlier' two-metric implication); #6 fragment positioning now leads with the orthogonal contribution (P3 moved ahead of the competitiveness paragraph). Framing-only — no number changed; clean rebuild 11pp / 0 undefined citations; standalone fragment recompiles; headlines + Tables 1–3 byte-identical; Phase 12 12-VERIFICATION PASS still holds | 2026-06-21 | 8a72d2d | [260621-fjk-apply-phase-12-sota-comparison-framing-f](./quick/260621-fjk-apply-phase-12-sota-comparison-framing-f/) |
 
 ---
 
