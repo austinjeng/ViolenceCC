@@ -2,12 +2,18 @@
 %% Figure 1 -- dual-modal architecture overview (native TikZ vector figure).
 %% This file contains ONLY a tikzpicture: it is \input inside the figure*
 %% environment in main.tex, wrapped in \resizebox{\textwidth}{!}{...}.
-%% Designed at a natural width of ~8.0in so the resize factor stays >= 0.85
-%% and \footnotesize/\scriptsize labels remain readable at print size.
+%% Designed at a natural width of ~8.5in so the resize factor stays high and
+%% \footnotesize/\scriptsize labels remain readable at print size.
+%%
+%% Swimlane layout: two tinted frozen-stream lanes (skeleton green / visual
+%% blue) funnel into the trainable gated-fusion box (conceptual labels; the
+%% equations live in Sec. 3.4), then a centered prediction column. The dashed
+%% red annotations mark the MIL ranking-loss training signal and the test-time
+%% reliability reweighting (Sec.~\ref{sec:disc}).
 %% Palette: muted derivatives of the original SVG hue anchors
-%%   skeleton green 27ae60/d5f5e3, visual blue 2980b9/ebf5fb,
-%%   fusion orange f39c12/fef9e7 (accent e74c3c), prediction purple
-%%   8e44ad/f5eef8, neutral 2c3e50/f8f9fa.
+%%   skeleton green 1E8449/D5F5E3, visual blue 2471A3/EBF5FB,
+%%   fusion orange D68910/FEF9E7 (accent C0392B), prediction purple
+%%   7D3C98/F5EEF8, neutral 2C3E50/F8F9FA.
 %% ---------------------------------------------------------------------------
 \definecolor{skelBorder}{HTML}{1E8449}%
 \definecolor{skelFill}{HTML}{D5F5E3}%
@@ -24,97 +30,93 @@
 \begin{tikzpicture}[
     x=1in, y=1in,
     box/.style={draw, rounded corners=2pt, align=center, font=\footnotesize,
-                inner xsep=4pt, inner ysep=3pt, line width=0.6pt},
+                fill=white, inner xsep=4pt, inner ysep=3pt, line width=0.7pt},
     featbox/.style={box, dashed},
     badge/.style={draw, rounded corners=1.5pt, fill=white, font=\tiny,
                   inner sep=1.6pt, line width=0.5pt},
     arr/.style={-{Stealth[length=2mm]}, line width=0.7pt, draw=neuBorder!85},
     darr/.style={-{Stealth[length=1.8mm]}, line width=0.6pt, dashed},
     zone/.style={font=\scriptsize\sffamily\bfseries, text=zoneInk},
+    lanelab/.style={font=\scriptsize\sffamily, anchor=west},
   ]
 
-  %% ---- Zone labels (read left -> right across the top) --------------------
-  \node[zone] at (0.50, 2.74) {Input};
-  \node[zone] at (3.10, 2.74) {Frozen Feature Extraction};
-  \node[zone] at (5.55, 2.74) {Trainable Fusion};
-  \node[zone] at (7.55, 2.74) {Prediction};
+  %% ---- Background swimlanes (drawn first = behind boxes) -------------------
+  \draw[rounded corners=7pt, fill=skelFill!55, draw=skelBorder!45, line width=0.5pt]
+    (1.02, 1.46) rectangle (5.42, 2.16);
+  \draw[rounded corners=7pt, fill=visFill!70, draw=visBorder!45, line width=0.5pt]
+    (1.02, 0.06) rectangle (5.42, 0.94);
+  \node[lanelab, text=skelBorder!90] at (1.12, 2.05) {{\bfseries Skeleton stream} (frozen)};
+  \node[lanelab, text=visBorder!90]  at (1.12, 0.83) {{\bfseries Visual stream} (frozen)};
+
+  %% ---- Zone labels --------------------------------------------------------
+  \node[zone] at (0.46, 2.34) {Input};
+  \node[zone] at (3.25, 2.34) {Frozen Feature Extraction};
+  \node[zone] at (6.15, 2.34) {Trainable Fusion};
+  \node[zone] at (7.65, 2.34) {Prediction};
 
   %% ---- Input ---------------------------------------------------------------
-  \node[box, draw=neuBorder, fill=neuFill] (video) at (0.50, 1.41) {Video\\frames};
+  \node[box, draw=neuBorder] (video) at (0.46, 1.15) {Video\\frames};
 
-  %% ---- Skeleton stream (top, green) -----------------------------------------
-  \node[box, draw=skelBorder, fill=skelFill] (pose) at (1.72, 2.32)
-    {RTMPose\\{\scriptsize COCO-17 keypoints,}\\{\scriptsize top-2 persons}};
-  \node[box, draw=skelBorder, fill=skelFill] (gcn) at (3.15, 2.32)
-    {CTR-GCN\\{\scriptsize NTU-120, 4 streams}\\{\scriptsize (j/b/jm/bm)}};
-  \node[featbox, draw=skelBorder] (skelfeat) at (4.55, 2.32)
-    {256-d\\{\scriptsize skeleton snippet feat.}};
+  %% ---- Skeleton stream (top, green) ----------------------------------------
+  \node[box, draw=skelBorder] (pose) at (1.92, 1.74)
+    {RTMPose\\{\scriptsize COCO-17 kpts, top-2}};
+  \node[box, draw=skelBorder] (gcn) at (3.42, 1.74)
+    {CTR-GCN\\{\scriptsize NTU-120, 4 streams}};
+  \node[featbox, draw=skelBorder] (skelfeat) at (4.78, 1.74)
+    {256-d\\{\scriptsize skel. feat.}};
 
-  %% ---- Visual stream (bottom, blue) ------------------------------------------
-  \node[box, draw=visBorder, fill=visFill] (backbone) at (1.75, 0.42)
-    {Visual backbone\\{\scriptsize CLIP ViT-B/16 or SigLIP2}\\{\scriptsize (Base / SO400M / Giant)}};
-  \node[box, draw=visBorder, fill=visFill] (fps) at (3.07, 0.42)
-    {${\sim}1$~FPS\\{\scriptsize frame features}};
-  \node[box, draw=visBorder, fill=visFill] (pool) at (4.12, 0.42)
-    {mean+max concat\\{\scriptsize snippet pooling}};
-  \node[featbox, draw=visBorder] (visfeat) at (5.45, 0.42)
-    {$2d$-dim (1024--3072-d)\\{\scriptsize visual snippet feat.}};
+  %% ---- Visual stream (bottom, blue) ----------------------------------------
+  \node[box, draw=visBorder] (backbone) at (1.92, 0.48)
+    {Visual backbone\\{\scriptsize CLIP / SigLIP2}\\{\scriptsize frames @ $\sim$1~FPS}};
+  \node[box, draw=visBorder] (pool) at (3.42, 0.48)
+    {mean+max\\{\scriptsize snippet pool}};
+  \node[featbox, draw=visBorder] (visfeat) at (4.78, 0.48)
+    {$2d$-d (1024--3072)\\{\scriptsize visual feat.}};
 
-  %% ---- Gated fusion (the trainable core) --------------------------------------
+  %% ---- Gated fusion (trainable core) ---------------------------------------
   \node[box, draw=fusBorder, fill=fusFill, line width=1.1pt,
-        inner xsep=5pt, inner ysep=4pt] (fusion) at (5.55, 1.41) {%
-    {\bfseries Gated Fusion \textcolor{fusAccent}{(trainable)}}\\[1.5pt]
-    {\scriptsize project + LN per modality:}\\[-1pt]
-    $\hat{\mathbf{s}}=\mathrm{LN}_s(W_s\mathbf{s}{+}\mathbf{b}_s)$, $\hat{\mathbf{v}}=\mathrm{LN}_v(W_v\mathbf{v}{+}\mathbf{b}_v)$\\[1.5pt]
-    gate: $\mathbf{g}=\sigma(W_g[\hat{\mathbf{s}}\,\|\,\hat{\mathbf{v}}]{+}\mathbf{b}_g)$\\[1.5pt]
-    fuse: $\mathbf{f}=\mathrm{LN}_f(\mathbf{g}\odot\hat{\mathbf{s}}+(1-\mathbf{g})\odot\hat{\mathbf{v}}+\hat{\mathbf{s}}+\hat{\mathbf{v}})$};
+        inner xsep=6pt, inner ysep=5pt] (fusion) at (6.15, 1.15) {%
+    {\bfseries Gated Fusion}~\textcolor{fusAccent}{(trainable)}\\[2pt]
+    {\scriptsize project + LayerNorm (per modality)}\\[1pt]
+    {\scriptsize per-dim gate $\mathbf{g}=\sigma(\cdot)$}\\[1pt]
+    {\scriptsize gated blend + residual + LN}};
 
-  %% ---- Late-fusion baseline (detached note) ------------------------------------
-  \node[box, draw=neuBorder!60, fill=neuFill, font=\scriptsize] (latenote) at (7.55, 2.40)
-    {Late fusion baseline\\(score averaging):\\$a_{\text{late}}=\tfrac{1}{2}h_s(\mathbf{s})+\tfrac{1}{2}h_v(\mathbf{v})$};
+  %% ---- Prediction (right, purple) ------------------------------------------
+  \node[box, draw=predBorder, fill=predFill] (milhead) at (7.65, 1.55)
+    {MIL head\\{\scriptsize FC+sigmoid, top-$k$}};
+  \node[box, draw=predBorder, fill=predFill] (score) at (7.65, 0.62)
+    {Anomaly score\\$\in[0,1]$};
 
-  %% ---- Prediction (right, purple) ----------------------------------------------
-  \node[box, draw=predBorder, fill=predFill] (milhead) at (7.55, 1.41)
-    {MIL head\\{\scriptsize FC + sigmoid,}\\{\scriptsize top-$k$ snippet selection}};
-  \node[box, draw=predBorder, fill=predFill] (score) at (7.55, 0.42)
-    {Anomaly score\\$\in [0,1]$};
+  %% ---- Test-time annotation (dashed) ---------------------------------------
+  \node[featbox, draw=fusAccent, font=\scriptsize, text=fusAccent, align=center]
+        (ttnote) at (6.15, 0.10)
+    {test-time: scale visual by $w$ (Sec.~\ref{sec:disc})};
 
-  %% ---- Test-time annotation (dashed) ---------------------------------------------
-  \node[featbox, draw=fusAccent, font=\scriptsize, text=fusAccent] (ttnote) at (5.35, -0.04)
-    {test-time: visual stream scaled by\\reliability weight $w$ (Sec.~\ref{sec:disc})};
-
-  %% ---- Badges ----------------------------------------------------------------------
-  \node[badge, draw=skelBorder, text=skelBorder] at (gcn.north east) {frozen};
-  \node[badge, draw=visBorder, text=visBorder] at (backbone.north east) {frozen};
-  \node[badge, draw=fusAccent, text=fusAccent] at (milhead.north east) {trainable};
-
-  %% ---- Arrows: input fan-out ---------------------------------------------------------
+  %% ---- Arrows: input fan-out -----------------------------------------------
   \draw[arr] (video.east) to[out=0, in=180] (pose.west);
   \draw[arr] (video.east) to[out=0, in=180] (backbone.west);
 
-  %% ---- Arrows: skeleton stream ---------------------------------------------------------
+  %% ---- Arrows: streams -----------------------------------------------------
   \draw[arr] (pose.east) -- (gcn.west);
   \draw[arr] (gcn.east) -- (skelfeat.west);
-  \draw[arr] (skelfeat.south) to[out=-90, in=90] ($(fusion.north west)!0.18!(fusion.north east)$);
-
-  %% ---- Arrows: visual stream ------------------------------------------------------------
-  \draw[arr] (backbone.east) -- (fps.west);
-  \draw[arr] (fps.east) -- (pool.west);
+  \draw[arr] (backbone.east) -- (pool.west);
   \draw[arr] (pool.east) -- (visfeat.west);
-  \draw[arr] (visfeat.north) -- (visfeat.north |- fusion.south);
 
-  %% ---- Arrows: fusion -> prediction -------------------------------------------------------
-  \draw[arr] (fusion.east) -- (milhead.west);
-  \draw[arr] ([xshift=9pt]milhead.south) -- ([xshift=9pt]score.north);
+  %% ---- Arrows: streams -> fusion -------------------------------------------
+  \draw[arr] (skelfeat.east) to[out=0, in=145] (fusion.north west);
+  \draw[arr] (visfeat.east) to[out=0, in=-145] (fusion.south west);
 
-  %% ---- Training signal (dashed, back into the MIL head) ------------------------------------
-  \draw[darr, draw=fusAccent] ([xshift=-9pt]score.north) --
-    node[left=2pt, font=\scriptsize, align=right, text=fusAccent] {MIL ranking\\loss}
-    ([xshift=-9pt]milhead.south);
+  %% ---- Arrows: fusion -> prediction ----------------------------------------
+  \draw[arr] (fusion.east) to[out=0, in=180] (milhead.west);
+  \draw[arr] (milhead.south) -- (score.north);
 
-  %% ---- Test-time annotation arrow ------------------------------------------------------------
-  \draw[darr, draw=fusAccent] (ttnote.east) to[out=0, in=-90]
-    ($(fusion.south east)!0.22!(fusion.south)$);
+  %% ---- Training signal (dashed, right-side feedback loop) ------------------
+  \draw[darr, draw=fusAccent] (score.east) to[out=0, in=0, looseness=1.4]
+    node[right=2pt, font=\tiny, text=fusAccent, align=left] {MIL ranking\\loss}
+    (milhead.east);
+
+  %% ---- Test-time arrow -----------------------------------------------------
+  \draw[darr, draw=fusAccent] (ttnote.north) -- (fusion.south);
 
 \end{tikzpicture}%
 \endinput
