@@ -212,16 +212,21 @@ of CLIP-TSA (82.19) and UR-DMU (81.66). On UCF, 82.5\% trails the frozen-feature
 pack (RTFM 84.30, UR-DMU 86.97, CLIP-TSA 87.58) but exceeds Sultani's 75.41
 baseline by $\sim$7 points. The closest single comparator, CLIP-TSA, uses CLIP
 \emph{visual} features with a temporal self-attention module and
-multi-crop-style aggregation that this work deliberately omits; the residual gap
-to it is largely a temporal-modeling / aggregation gap, not a feature-quality
-gap.
+multi-crop-style aggregation that this work deliberately omits; we hypothesize
+the residual gap to it stems from that temporal-modeling and aggregation
+machinery rather than from feature quality, but we do not isolate this
+experimentally.
 \end{flushleft}
 \end{table}
 
 \medskip
 
 %% --- Positioning paragraphs (P1-P5) ---
-\noindent\textbf{Positioning.}\par\medskip
+\noindent\textbf{Positioning.} The central claim of this work is a contribution
+\emph{orthogonal} to peak benchmark AUC---a reproducible, single-GPU dual-modal
+fusion pipeline with a label-free robustness mechanism; within-regime
+competitiveness (clearest on XD-Violence) is presented below as supporting
+evidence, not as a claim to the leaderboard.\par\medskip
 
 \noindent\textbf{Scope and the deliberate-constraint frame.}
 Our system reports 82.5\% frame-level AUC on UCF-Crime and 78.7\% AP on
@@ -239,21 +244,6 @@ five auxiliary modalities at training time; and Holmes-VAD/Holmes-VAU fine-tune
 a multimodal LLM. The 5--9 point UCF gap to these systems is therefore best read
 as the cost of the components we intentionally excluded, not as a deficiency of
 the fusion approach itself.
-
-\medskip\noindent\textbf{Competitiveness within the comparable regime.}
-When the comparison is restricted to the apples-to-apples subset
-(Table~\ref{tab:sota-fair}) --- fully frozen features, no text branch, no
-fine-tuning, a single-GPU-class head --- the picture is markedly more favorable.
-On XD-Violence our 78.7\% AP is on par with RTFM (77.81\%, ICCV 2021), MGFN's
-I3D variant (79.19\%), and Light-WVAD (77.3\%, Neurocomputing 2024), and well
-above the founding Sultani et al.\ MIL baseline. On UCF-Crime our 82.5\% sits
-above Sultani (75.41\%) and within a few points of RTFM (84.30\%) and Light-WVAD
-(84.7\%). The closest single comparator is CLIP-TSA (87.58\% / 82.19\%), which,
-like us, uses frozen CLIP visual features with no text branch; the residual gap
-to it is attributable to its temporal self-attention module and multi-crop
-aggregation, components our minimal head omits by design. Read against its true
-peer group rather than against fine-tuned or multimodal systems, the fusion
-pipeline is competitive, not an outlier.
 
 \medskip\noindent\textbf{The contribution axis is orthogonal to peak AUC.}
 The thesis does not claim a new state of the art on clean benchmark AUC; its
@@ -274,6 +264,26 @@ to $+13.2\%$ on the hardest corruption). None of the higher-AUC methods above
 report a corruption-robustness or test-time-adaptation study of this kind, so
 the work occupies a complementary niche rather than competing for the top
 leaderboard slot.
+
+\medskip\noindent\textbf{Competitiveness within the comparable regime (supporting evidence).}
+With the contribution framed above, within-regime competitiveness is supporting
+evidence rather than the central claim, and it differs by metric. Restricted to
+the apples-to-apples subset (Table~\ref{tab:sota-fair}) --- fully frozen
+features, no text branch, no fine-tuning, a single-GPU-class head --- on
+XD-Violence our 78.7\% AP is on par with RTFM (77.81\%, ICCV 2021), MGFN's I3D
+variant (79.19\%), and Light-WVAD (77.3\%, Neurocomputing 2024), and well above
+the founding Sultani et al.\ MIL baseline. On UCF-Crime, our 82.5\% clears
+Sultani (75.41\%) but trails every modern method in this same frozen-feature
+band --- RTFM (84.30\%), Light-WVAD (84.7\%), UR-DMU (86.97\%), MGFN (86.98\%),
+and CLIP-TSA (87.58\%) --- so the competitiveness is clearest on XD-Violence AP
+and weakest on UCF-Crime AUC. The closest single comparator is CLIP-TSA
+(87.58\% / 82.19\%), which, like us, uses frozen CLIP visual features with no
+text branch; we hypothesize that the residual gap to it stems from its temporal
+self-attention module and multi-crop aggregation --- components our minimal head
+omits --- rather than from feature quality, but we do not isolate this
+experimentally. Read against its true peer group rather than against fine-tuned
+or multimodal systems, the fusion pipeline is a reasonable mid-pack entry on
+XD-Violence rather than an outlier.
 
 \medskip\noindent\textbf{Reproducibility and transparency as a deliberate virtue.}
 All thesis numbers are reported as means over three random seeds on fixed
