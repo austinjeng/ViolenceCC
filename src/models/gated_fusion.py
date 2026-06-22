@@ -58,9 +58,14 @@ class GatedFusion(nn.Module):
         # replay-only keys are skipped to keep config_snapshot replay quiet.
         _unexpected = [k for k in unused if k not in _KNOWN_EXTRA_KWARGS]
         if _unexpected:
-            logger.warning(
-                "GatedFusion: unexpected kwargs %s ignored (possible typo?)",
-                sorted(_unexpected),
+            # C1-3 (supersedes the D-15 warn-only policy): fail loud on a typo'd
+            # hyperparameter rather than silently dropping it to a default. Known
+            # replay-only keys are allow-listed above. The primary gate is
+            # build_model(); this protects direct construction too.
+            raise ValueError(
+                f"GatedFusion: unexpected kwargs {sorted(_unexpected)} (possible typo?). "
+                "Remove or correct the config key; only "
+                f"{sorted(_KNOWN_EXTRA_KWARGS)} ride along as replay keys."
             )
 
         # Modality projections into shared_dim

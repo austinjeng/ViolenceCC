@@ -8,6 +8,7 @@ os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
 import argparse
 import datetime
 import sys
+import warnings
 from pathlib import Path
 
 # Script-mode bootstrap: when invoked as `python src/train.py` (not
@@ -243,7 +244,19 @@ def validate(model, val_loader, device, train_cfg) -> float:
             lam_smooth=float(train_cfg["lam_smooth"]),
         )
         losses.append(loss.item())
-    return float(sum(losses) / max(len(losses), 1)) if losses else float("inf")
+    if not losses:
+        # C4-3: every val batch was single-class (no normal/abnormal pair), so the
+        # MIL ranking loss is undefined. Returning inf makes early-stopping treat the
+        # epoch as a non-improvement; warn so a degenerate val split is visible at
+        # runtime rather than only surfacing later as a missing-checkpoint error.
+        warnings.warn(
+            "validate(): no val batch yielded a normal/abnormal pair; returning inf "
+            "(check the val split / shuffle — this should not happen with a stratified split).",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        return float("inf")
+    return float(sum(losses) / len(losses))
 
 
 @torch.no_grad()
@@ -277,7 +290,19 @@ def validate_i3d(model, val_loader, device, train_cfg) -> float:
             lam_smooth=float(train_cfg["lam_smooth"]),
         )
         losses.append(loss.item())
-    return float(sum(losses) / max(len(losses), 1)) if losses else float("inf")
+    if not losses:
+        # C4-3: every val batch was single-class (no normal/abnormal pair), so the
+        # MIL ranking loss is undefined. Returning inf makes early-stopping treat the
+        # epoch as a non-improvement; warn so a degenerate val split is visible at
+        # runtime rather than only surfacing later as a missing-checkpoint error.
+        warnings.warn(
+            "validate(): no val batch yielded a normal/abnormal pair; returning inf "
+            "(check the val split / shuffle — this should not happen with a stratified split).",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        return float("inf")
+    return float(sum(losses) / len(losses))
 
 
 def main(argv=None) -> int:

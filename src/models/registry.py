@@ -63,10 +63,13 @@ def build_model(variant: str, **kwargs):
         )
     cls = MODEL_REGISTRY[variant]()
 
-    # D-15: warn (never raise) about kwargs the constructor does not declare, so a
-    # typo'd hyperparameter does not silently fall back to a default via **unused.
-    # Known replay-only keys (variant/strategy/cache_variant/backbone) are skipped
-    # to keep config_snapshot replay quiet; this is non-fatal so replay still works.
+    # C1-3 (supersedes the D-15 warn-only policy): a kwarg the constructor does not
+    # declare AND that is not a known replay-only key (variant/strategy/cache_variant/
+    # backbone) is a typo that would otherwise be swallowed by **unused and silently
+    # fall back to a default -- producing plausible-but-wrong numbers with only a
+    # stderr-only warning that never reaches the run log. Fail loud instead. This is
+    # safe for every tracked config (all model-block keys are declared args or
+    # allow-listed); it fires only on a genuine typo.
     try:
         sig = inspect.signature(cls.__init__)
         has_var_kw = any(
@@ -79,12 +82,17 @@ def build_model(variant: str, **kwargs):
                 if k not in declared and k not in _KNOWN_EXTRA_KWARGS
             ]
             if unexpected:
-                logger.warning(
-                    "build_model(%r): unexpected kwargs %s not declared by %s; "
-                    "they will be swallowed by **kwargs and IGNORED (possible typo?)",
-                    variant, sorted(unexpected), cls.__name__,
+                raise ValueError(
+                    f"build_model({variant!r}): unexpected kwargs {sorted(unexpected)} "
+                    f"not declared by {cls.__name__} and not a known replay key "
+                    f"({sorted(_KNOWN_EXTRA_KWARGS)}). Likely a typo'd hyperparameter "
+                    "that would otherwise be silently ignored -- fix the config key."
                 )
-    except (ValueError, TypeError):
+    except (ValueError, TypeError) as e:
+        # Re-raise our own loud typo error; only swallow genuine signature-introspection
+        # failures (exotic __init__) so model construction is not broken by them.
+        if isinstance(e, ValueError) and "unexpected kwargs" in str(e):
+            raise
         # Signature introspection failed (exotic __init__); skip the check rather
         # than break model construction.
         pass

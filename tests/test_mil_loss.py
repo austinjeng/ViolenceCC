@@ -115,6 +115,24 @@ def test_masked_topk():
 
 # ---- Additional invariants beyond the VALIDATION.md minimum ----
 
+def test_mil_ranking_loss_raises_when_bag_has_fewer_than_k_real():
+    """C1-2: a bag with <k real snippets must fail loud (ValueError), not return NaN.
+
+    Pins the C1-1 contract: every production caller pads to a full T>=k mask
+    (sample-with-replacement), so a bag shorter than k is a contract violation.
+    """
+    import pytest
+    T, k = 5, 3
+    scores = torch.rand(4, T)            # 2 normal + 2 abnormal bags
+    mask = torch.zeros_like(scores)
+    mask[:, :2] = 1.0                    # only 2 real snippets per bag (< k=3)
+    with pytest.raises(ValueError, match="real snippets"):
+        mil_ranking_loss(scores, mask, n_normal=2, k=k)
+    # And the well-formed (full-mask) case stays finite.
+    full = mil_ranking_loss(scores, torch.ones_like(scores), n_normal=2, k=k)
+    assert torch.isfinite(full).item()
+
+
 def test_mil_ranking_loss_is_scalar_float():
     torch.manual_seed(0)
     scores = torch.rand(4, 32).requires_grad_(True)

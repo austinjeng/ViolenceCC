@@ -439,8 +439,15 @@ def main(argv=None) -> int:
         per_video_snippet_scores = _run_inference(model, dataset, device)
         eval_duration_s = float(time.time() - t0)
         metadata = _build_metadata(cfg, run_dir, args.split, eval_duration_s)
-        print("NOTE: --split val writes mil_loss=0.0 (stub). "
-              "Scores saved to eval_scores.npz; loss not recomputed.")
+        # C4-1: emit via the warnings machinery (CLAUDE.md eval-stub convention) so
+        # downstream tooling does not consume the placeholder mil_loss=0.0 as a real
+        # value; a bare print() is easy for a JSON/CSV scraper to miss.
+        warnings.warn(
+            "--split val writes mil_loss=0.0 (stub); loss not recomputed. "
+            "Scores saved to eval_scores.npz.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
         out = {"mil_loss": 0.0, **metadata}
         _write_json_atomic(out, run_dir / "eval_metrics.json")
         np.savez_compressed(

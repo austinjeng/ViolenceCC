@@ -72,6 +72,18 @@ def mil_ranking_loss(
       4. Sparsity + smoothness regularizers on abnormal-bag scores ONLY
          (masked to zero at padded positions so padding does not bias reg).
     """
+    # C1-1: enforce the documented all-ones-mask invariant. If any bag has fewer
+    # than k real (unmasked) snippets, top-k would pull in masked -inf entries and
+    # the loss would silently become -inf/NaN. Every production caller upsamples to
+    # a full T>=k mask (sample-with-replacement, dataset.py), so this fails loud
+    # only on a genuine contract violation rather than degrading silently.
+    min_real = int(mask.sum(dim=1).min().item())
+    if min_real < k:
+        raise ValueError(
+            f"mil_ranking_loss: a bag has only {min_real} real snippets but k={k}; "
+            "callers must pad to a full T>=k mask (sample-with-replacement)."
+        )
+
     # Step 1: mask for top-k
     scores_masked = scores.masked_fill(mask == 0, float("-inf"))
     topk_vals = torch.topk(scores_masked, k=k, dim=1).values.mean(dim=1)

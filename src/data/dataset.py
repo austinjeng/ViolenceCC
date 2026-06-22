@@ -27,6 +27,7 @@ Alignment invariant (DATA-08):
 """
 from __future__ import annotations
 
+import warnings
 from pathlib import Path
 from typing import List
 
@@ -136,6 +137,20 @@ class MILFeatureDataset(Dataset):
         # Load split + filter out missing / zero-snippet videos (D-10).
         all_ids = self._load_split(split_file)
         self.video_ids: List[str] = [vid for vid in all_ids if self._is_loadable(vid)]
+        # C2-1: surface silently-dropped videos so feature-extraction gaps or the
+        # known <64-frame exclusions are visible at runtime (CLAUDE.md convention),
+        # mirroring build_dataloaders_i3d's "k/n videos available" log.
+        n_dropped = len(all_ids) - len(self.video_ids)
+        if n_dropped:
+            dropped = [v for v in all_ids if v not in set(self.video_ids)]
+            warnings.warn(
+                f"MILFeatureDataset[{self.dataset}/{mode}]: "
+                f"{len(self.video_ids)}/{len(all_ids)} videos loadable; "
+                f"dropped {n_dropped} (missing .npy or <64-frame). "
+                f"First few: {dropped[:5]}",
+                RuntimeWarning,
+                stacklevel=2,
+            )
         self.labels = {vid: float(self._label_fn(vid)) for vid in self.video_ids}
 
     # ---- internals ----
