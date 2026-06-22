@@ -89,30 +89,50 @@ def load_results() -> pd.DataFrame:
     return pd.read_csv(csv_path)
 
 
+def _seed_mean(idx, s42_name, metric):
+    """Mean of ``metric`` over the 3-seed family ({_s42,_s123,_s2024}) for a run
+    given by its ``_s42`` member; skips absent seed siblings and falls back to the
+    single run if none are seed-suffixed.
+
+    Fixes review finding C7-2: COMPARISON_MAP hardcodes ``_s42`` run names, so the
+    generated backbone_comparison_4way.csv (and thus fig_backbone_comparison.pdf)
+    was single-seed and disagreed with the 3-seed Tables 1-2. Bar values must be
+    the 3-seed means that back those tables.
+    """
+    if not isinstance(s42_name, str) or not s42_name.endswith("_s42"):
+        return idx.loc[s42_name, metric] if s42_name in idx.index else np.nan
+    base = s42_name[:-4]
+    vals = [idx.loc[n, metric]
+            for n in (f"{base}_s42", f"{base}_s123", f"{base}_s2024")
+            if n in idx.index]
+    vals = [v for v in vals if pd.notna(v)]
+    return float(np.mean(vals)) if vals else np.nan
+
+
 def build_comparison_table(df: pd.DataFrame) -> pd.DataFrame:
     idx = df.set_index("run_name")
     rows = []
     for (dataset, label), (clip_name, sig_name, so400m_name, giant_name) in COMPARISON_MAP.items():
         row = {"Dataset": dataset.upper(), "Variant": label}
         if clip_name in idx.index:
-            row["CLIP_AUC"] = idx.loc[clip_name, "auc"]
-            row["CLIP_AP"] = idx.loc[clip_name, "ap"]
+            row["CLIP_AUC"] = _seed_mean(idx, clip_name, "auc")
+            row["CLIP_AP"] = _seed_mean(idx, clip_name, "ap")
         if sig_name and sig_name in idx.index:
-            row["SigLIP2_AUC"] = idx.loc[sig_name, "auc"]
-            row["SigLIP2_AP"] = idx.loc[sig_name, "ap"]
+            row["SigLIP2_AUC"] = _seed_mean(idx, sig_name, "auc")
+            row["SigLIP2_AP"] = _seed_mean(idx, sig_name, "ap")
             row["Delta_CLIP_SigLIP2_AUC"] = row["SigLIP2_AUC"] - row["CLIP_AUC"]
             row["Delta_CLIP_SigLIP2_AP"] = row["SigLIP2_AP"] - row["CLIP_AP"]
         if so400m_name and so400m_name in idx.index:
-            row["SO400M_AUC"] = idx.loc[so400m_name, "auc"]
-            row["SO400M_AP"] = idx.loc[so400m_name, "ap"]
+            row["SO400M_AUC"] = _seed_mean(idx, so400m_name, "auc")
+            row["SO400M_AP"] = _seed_mean(idx, so400m_name, "ap")
             row["Delta_CLIP_SO400M_AUC"] = row["SO400M_AUC"] - row["CLIP_AUC"]
             row["Delta_CLIP_SO400M_AP"] = row["SO400M_AP"] - row["CLIP_AP"]
             if sig_name and sig_name in idx.index:
                 row["Delta_SigLIP2_SO400M_AUC"] = row["SO400M_AUC"] - row["SigLIP2_AUC"]
                 row["Delta_SigLIP2_SO400M_AP"] = row["SO400M_AP"] - row["SigLIP2_AP"]
         if giant_name and giant_name in idx.index:
-            row["Giant_AUC"] = idx.loc[giant_name, "auc"]
-            row["Giant_AP"] = idx.loc[giant_name, "ap"]
+            row["Giant_AUC"] = _seed_mean(idx, giant_name, "auc")
+            row["Giant_AP"] = _seed_mean(idx, giant_name, "ap")
             row["Delta_CLIP_Giant_AUC"] = row["Giant_AUC"] - row["CLIP_AUC"]
             row["Delta_CLIP_Giant_AP"] = row["Giant_AP"] - row["CLIP_AP"]
             if sig_name and sig_name in idx.index:

@@ -280,7 +280,7 @@ Figure~\ref{fig:temporal-scores} illustrates the temporal behavior of our gated 
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\textwidth]{figures/fig_backbone_comparison.pdf}
-  \caption{Performance comparison across four visual backbones and six fusion variants. Left: UCF-Crime AUC (\%). Right: XD-Violence AP (\%). SigLIP2 Giant leads on UCF-Crime; on XD-Violence the four visual-only backbones fall within seed variance, while SigLIP2 SO400M is the clear leader under gated fusion---a dataset-specific preference that emerges through fusion. Visual Only and Gated Fusion bars are three-seed means (Gated shown with $\pm$std); Late Fusion is single-seed.}
+  \caption{Performance comparison across four visual backbones and three fusion variants. Left: UCF-Crime AUC (\%). Right: XD-Violence AP (\%). SigLIP2 Giant leads on UCF-Crime; on XD-Violence the four visual-only backbones fall within seed variance, while SigLIP2 SO400M is the clear leader under gated fusion---a dataset-specific preference that emerges through fusion. All bars are three-seed means over seeds $\{42,123,2024\}$, matching Tables~\ref{tab:ucf-ablation}--\ref{tab:xd-ablation} (Gated Fusion shown with $\pm$std).}
   \label{fig:backbone-comparison}
 \end{figure*}
 
