@@ -115,7 +115,7 @@ PEL4VAD                    & 2024 & IEEE TIP'24       & 86.76 & 85.59 & Frozen I
 PiercingEye$^{h}$          & 2026 & IEEE TPAMI'26     & 86.64 & 88.82 & Frozen I3D+VGGish+text, \emph{audio}+text, frame \\ % RE-VERIFY: PiercingEye XD = 88.82 LOW conf (inferred from relative gains) and is AUDIO+visual+text; UCF 86.64 is visual-only
 AnomalyCLIP$^{i}$          & 2024 & CVIU'24           & 86.36 & 78.51 & Frozen CLIP latent dirs, text, frame \\ % RE-VERIFY: AnomalyCLIP 86.36/78.51 LOW conf (not re-verified from primary table); the ~90.3 leaderboard figure is recognition mAUC, a DIFFERENT task -- do not cite it as detection AUC
 TEVAD$^{j}$                & 2023 & CVPRW'23          & 84.9  & 79.8  & Frozen I3D + caption text, text, frame \\ % RE-VERIFY: TEVAD XD ~= 79.8 MEDIUM precision (headline 79.8, ablation variants 79.3-79.76); disregard '88.28' web misattribution
-Light-WVAD                 & 2024 & Neurocomp.'24     & 84.7  & 77.3  & Frozen I3D, no-text, frame; consumer-GPU head \\
+Light-WVAD                 & 2024 & Neurocomp.'24     & 84.7  & ---   & Frozen I3D, no-text, frame; consumer-GPU head (XD not evaluated) \\
 RTFM                       & 2021 & ICCV'21           & 84.30 & 77.81 & Frozen I3D feats, no-text, frame; lightweight \\
 EventVAD$^{k}$             & 2025 & ACM MM'25         & 82.03 & 64.04 & Training-free 7B MLLM, text, frame; 80GB A800 \\ % RE-VERIFY: EventVAD XD = 64.04 (AP); do NOT cite 87.51 (that is the XD ROC-AUC). Training-free != low-compute
 \textbf{This work (dual-modal fusion)} & \textbf{2026} & \textbf{(thesis)} & \textbf{82.5} & \textbf{78.7} & \textbf{Frozen skel+CLIP/SigLIP2, no-text, frame; 1$\times$RTX 4090} \\
@@ -194,7 +194,7 @@ Method & Year & UCF AUC & XD AP & Why it qualifies \\
 CLIP-TSA           & 2023 & 87.58 & 82.19 & Frozen CLIP \emph{visual-only}, no text branch --- the closest analogue (CLIP feats, no prompts) \\
 UR-DMU             & 2023 & 86.97 & 81.66 & I3D frozen feats, no text, no fine-tune, RGB-only \\
 MGFN-I3D           & 2023 & 86.98 & 79.19 & I3D frozen feats, no text, RGB-only (I3D XD to keep one backbone) \\
-Light-WVAD         & 2024 & 84.7  & 77.3  & Frozen I3D, lightweight head, no text --- explicit consumer-GPU efficiency play \\
+Light-WVAD         & 2024 & 84.7  & ---   & Frozen I3D, lightweight head, no text --- explicit consumer-GPU efficiency play (XD not evaluated) \\
 RTFM               & 2021 & 84.30 & 77.81 & Frozen I3D feats, no text, the canonical MIL anchor \\
 \textbf{This work} & \textbf{2026} & \textbf{82.5} & \textbf{78.7} & Frozen skeleton (CTR-GCN) $+$ frozen CLIP/SigLIP2, gated fusion $+$ MIL head only, no text, single 4090 \\
 Sultani et al.     & 2018 & 75.41 & ---   & Frozen C3D, FC $+$ MIL ranking; founding baseline (XD number is a later re-impl, omitted) \\
@@ -206,7 +206,7 @@ Sultani et al.     & 2018 & 75.41 & ---   & Frozen C3D, FC $+$ MIL ranking; foun
 \begin{flushleft}
 \textit{Read of the fair subset.} Within this strictly-frozen / no-text /
 RGB($+$skeleton)-only band, this work's \textbf{78.7\% XD AP is essentially on
-par with RTFM (77.81), Light-WVAD (77.3), and MGFN-I3D (79.19)} and clearly
+par with RTFM (77.81) and MGFN-I3D (79.19)} and clearly
 above the Sultani lineage, while sitting below the CLIP-visual-feature ceiling
 of CLIP-TSA (82.19) and UR-DMU (81.66). On UCF, 82.5\% trails the frozen-feature
 pack (RTFM 84.30, UR-DMU 86.97, CLIP-TSA 87.58) but exceeds Sultani's 75.41
@@ -271,7 +271,7 @@ evidence rather than the central claim, and it differs by metric. Restricted to
 the apples-to-apples subset (Table~\ref{tab:sota-fair}) --- fully frozen
 features, no text branch, no fine-tuning, a single-GPU-class head --- on
 XD-Violence our 78.7\% AP is on par with RTFM (77.81\%, ICCV 2021), MGFN's I3D
-variant (79.19\%), and Light-WVAD (77.3\%, Neurocomputing 2024), and well above
+variant (79.19\%), and well above
 the founding Sultani et al.\ MIL baseline. On UCF-Crime, our 82.5\% clears
 Sultani (75.41\%) but trails every modern method in this same frozen-feature
 band --- RTFM (84.30\%), Light-WVAD (84.7\%), UR-DMU (86.97\%), MGFN (86.98\%),
