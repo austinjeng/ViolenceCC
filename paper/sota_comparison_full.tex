@@ -99,7 +99,7 @@ final primary-source check before citation.}
 \toprule
 Method & Year & Venue & UCF AUC & XD AP & Setting \\
 \midrule
-GS-MoE$^{a}$               & 2025 & ICCV'25 (arXiv)   & 91.58 & 82.89 & Frozen feats, no-text, frame; MoE experts \\ % RE-VERIFY: GS-MoE 91.58/82.89 MEDIUM conf, arXiv/ICCV-25 preprint, primary PDF not machine-parsed
+GS-MoE$^{a}$               & 2025 & ICCV'25 (arXiv)   & 91.58 & 82.89 & Frozen feats, no-text, frame; MoE experts \\ % VERIFIED 2026-06-22: GS-MoE 91.58 UCF / 82.89 XD AP confirmed from arXiv:2508.06318 Table 1 (I3D, RGB-only, no text); ICCV 2025 poster
 PI-VAD                     & 2025 & CVPR'25           & 90.33 & 85.37 & Frozen I3D + 5 train-only modalities, text(train), frame \\
 Holmes-VAD$^{b}$           & 2024 & arXiv'24          & 89.51 & 90.67 & MLLM LoRA-tuned, text, frame; heavy VRAM \\ % RE-VERIFY: Holmes-VAD 89.51/90.67 arXiv preprint, no peer-reviewed venue; partial MLLM LoRA training (not frozen-feature)
 DSANet                     & 2026 & AAAI'26           & 89.44 & 86.95 & Frozen CLIP + V-L alignment, text, frame \\
@@ -135,8 +135,9 @@ this work add a learnable text branch, audio, an MLLM, partial fine-tuning, or
 a video-level metric (see Setting / notes), so a bare head-to-head against them
 is not apples-to-apples (Table~\ref{tab:sota-fair}).\par\smallskip
 \textit{Per-number caveats.}
-$^{a}$\,GS-MoE 91.58: MEDIUM confidence; arXiv/ICCV-2025 poster preprint, primary
-PDF not machine-parsable --- treat as preliminary.
+$^{a}$\,GS-MoE 91.58\,/\,82.89: confirmed from the arXiv:2508.06318 primary table
+(I3D, RGB-only, no text); ICCV 2025 poster. Omitted from the main comparison only
+because its trained per-category mixture-of-experts head exceeds the single-GPU-class regime.
 $^{b}$\,Holmes-VAD 89.51/90.67: arXiv preprint (no confirmed peer-reviewed venue);
 MLLM LoRA fine-tuned --- not a frozen-feature head.
 $^{c}$\,Holmes-VAU 88.96/87.68: \textbf{VIDEO-LEVEL} AUC/AP on a 398-sample split,
@@ -259,8 +260,8 @@ Third, and most distinctively, it studies test-time adaptation for frozen
 dual-modal VAD: it shows that entropy-minimization TTA (TENT, SAR) cannot
 improve rank-based detection metrics, and proposes a label-free
 discriminative-reliability reweighting that improves \emph{corrupted-AUC}
-(robustness, not clean-benchmark AUC) on all four backbones (mean $+1.2\%$, up
-to $+13.2\%$ on the hardest corruption). None of the higher-AUC methods above
+(robustness, not clean-benchmark AUC) on all four backbones (mean $+1.2$ points, up
+to $+13.2$ points on the hardest corruption). None of the higher-AUC methods above
 report a corruption-robustness or test-time-adaptation study of this kind, so
 the work occupies a complementary niche rather than competing for the top
 leaderboard slot.
@@ -290,8 +291,7 @@ All thesis numbers are reported as means over three random seeds on fixed
 train/val splits with a single evaluation protocol, and the headline figures are
 git-reproducible from a committed frame-count manifest. This contrasts with
 several of the highest numbers in the literature, which are single-run preprints
-(e.g.\ GS-MoE's 91.58\% UCF, an arXiv/ICCV-2025 poster whose primary PDF resists
-automated verification; Holmes-VAD's 89.51\% / 90.67\%, an unrefereed preprint).
+(e.g.\ Holmes-VAD's 89.51\% / 90.67\%, an unrefereed preprint).
 It also contrasts with comparisons that quietly mix evaluation protocols ---
 Holmes-VAU's 88.96\% / 87.68\% are video-level metrics on a 398-sample split,
 not the frame-level ROC-AUC / AP that every weakly-supervised baseline (and this
@@ -303,8 +303,8 @@ a number that is merely higher.
 \medskip\noindent\textbf{Compute honesty: training-free is not low-compute.}
 A final positioning point concerns budget. Two recent training-free LLM methods,
 LAVAD (80.28\% / 62.01\%, CVPR 2024) and EventVAD (82.03\% / 64.04\%, ACM MM
-2025), require running 13B and 7B multimodal LLMs at inference (LAVAD on an HPC
-cluster, EventVAD on an 80\,GB A800), yet our frozen dual-modal head on a single
+2025), require running 13B and 7B multimodal LLMs at inference (LAVAD on dual
+RTX 3090s, EventVAD on an 80\,GB A800), yet our frozen dual-modal head on a single
 24\,GB consumer GPU matches or exceeds them on UCF and substantially exceeds both
 on XD-Violence AP (78.7\% vs 62.01\% / 64.04\%). This makes a concrete point that
 ``training-free'' does not imply ``cheap,'' and that a small trainable head on
