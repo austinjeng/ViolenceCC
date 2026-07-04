@@ -580,9 +580,9 @@ Not applicable — this phase installs **no external packages**. LaTeX packages 
 
 ## Open Questions
 
-1. **Per-condition continual TENT/SAR table in Ch 6?** Tracked summary covers the null-result claim; a per-condition table needs either ~880 small JSON trackings or (recommended) one generated+tracked rollup CSV. → Planner decides; recommend the rollup CSV (also softens C7-1).
-2. **Promote `scripts/_tmp_r1_full.py` + 3 deps (C7-1)?** Not strictly required for provenance (tracked pri5/aggregate scripts + tracked JSONs suffice), but Appendix E's reproducibility story is stronger with them. → Planner discretion; low cost.
-3. **`\include` vs `\input` for chapters** — recommend `\include` for partial-build speed during Wave-1 parallel drafting. → Executor discretion.
+1. **Per-condition continual TENT/SAR table in Ch 6?** (RESOLVED — planner r2, 2026-07-05) Rollup CSV adopted: 13-03 Task 2 generates and tracks results/_tta_rerun_continual/per_condition_rollup.csv (also softens C7-1). Original note: tracked summary covers the null-result claim; a per-condition table needs either ~880 small JSON trackings or one generated+tracked rollup CSV.
+2. **Promote `scripts/_tmp_r1_full.py` + 3 deps (C7-1)?** (RESOLVED — planner r2, 2026-07-05) Declined — documented in 13-03 Task 2: tracked pri5/aggregate scripts + tracked JSONs already give Table-3 provenance; the rollup CSV covers the per-condition need.
+3. **`\include` vs `\input` for chapters** (RESOLVED — planner r2, 2026-07-05) `\include` chosen — 13-01 Task 1 builds the main.tex \include chain (partial-build speed during Wave-1 parallel drafting).
 
 ## Sources
 
