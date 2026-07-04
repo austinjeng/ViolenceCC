@@ -5,8 +5,23 @@ data/weights/clip/*.pt
 # Extracted features (per D-06, symlink/junction to E:\features)
 data/features/
 
-# Training results
-results/
+# Training results.
+# Policy (Phase 13, discharges review item C7-3): `results/*` (not `results/`)
+# so that `!` un-ignore rules below can re-include the thesis provenance
+# sources (git cannot re-include a file whose parent DIRECTORY is excluded).
+# Fully-wanted paths get explicit `!` rules here. Subdirectories holding a MIX
+# of wanted and unwanted files (_coral_derisk/, _tta_rerun_continual/,
+# h1_recompute/, phase10_charts/, and the 128 canonical run dirs) deliberately
+# get NO broad un-ignore rules: their already-tracked files stay tracked
+# regardless of gitignore, new files there are added via `git add -f`
+# (spec 7a permits either mechanism), and the hybrid keeps `git status` free
+# of ~880 untracked TTA JSONs.
+results/*
+!results/results-index.csv
+!results/benchmark_models.csv
+!results/backbone_bench_combined.csv
+!results/_analysis_2026-06-10/
+!results/_analysis_2026-06-10/**
 results_sweep/
 
 # Python
@@ -55,3 +70,20 @@ paper/*.fdb_latexmk
 paper/*.toc
 paper/*.synctex.gz
 paper/*.cut
+
+# LaTeX build artifacts (thesis/) — global *.log rule above already covers main.log
+# (\include emits per-chapter .aux files under chapters/ and appendices/)
+thesis/main.pdf
+thesis/*.aux
+thesis/chapters/*.aux
+thesis/appendices/*.aux
+thesis/*.bbl
+thesis/*.blg
+thesis/*.out
+thesis/*.fls
+thesis/*.fdb_latexmk
+thesis/*.toc
+thesis/*.synctex.gz
+thesis/*.cut
+thesis/*.lof
+thesis/*.lot

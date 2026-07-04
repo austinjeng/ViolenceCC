@@ -1,0 +1,48 @@
+%%
+%% preamble.tex -- package configuration for the ViolenceCC master's thesis
+%% Load order per 13-RESEARCH.md S7: standard packages -> natbib -> hyperref LAST.
+%%
+
+%% Page layout
+\usepackage[margin=2.5cm]{geometry}
+
+%% Fonts: scalable Latin Modern (T1). Required by microtype's font expansion
+%% -- the report class's default bitmap CM fonts abort pdfTeX with
+%% "auto expansion is only possible with scalable fonts".
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+
+%% Mathematics
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+%% Tables
+\usepackage{booktabs}
+\usepackage{multirow}
+
+%% Graphics
+\usepackage{graphicx}
+
+%% Extended column setups (needed by the SOTA fragment tables -- Pitfall 14)
+\usepackage{array}
+
+%% TikZ (architecture figure; exact library set the paper uses)
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,fit,calc}
+
+%% Line spacing
+\usepackage{setspace}
+\onehalfspacing
+
+%% Captions (kept single-spaced and consistent under setspace)
+\usepackage{caption}
+\usepackage{subcaption}
+
+%% Typography
+\usepackage{microtype}
+
+%% Bibliography: IEEEtranN.bst REQUIRES natbib -- never remove it.
+\usepackage[numbers,sort&compress]{natbib}
+
+%% hyperref LAST (only cleveref/glossaries would come after; neither is used)
+\usepackage[bookmarksnumbered,hidelinks]{hyperref}

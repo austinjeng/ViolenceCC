@@ -1,0 +1,4 @@
+# Vendored BibTeX style must stay byte-identical to its MiKTeX source
+# (13-01 Task 1 cmp assertion; 13-VALIDATION build gate). core.autocrlf=true
+# would otherwise rewrite the LF blob to CRLF at checkout.
+thesis/IEEEtranN.bst -text
