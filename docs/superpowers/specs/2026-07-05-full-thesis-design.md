@@ -81,7 +81,7 @@ offline; anything the preflight finds nonstandard on stock MiKTeX gets vendored 
 ## 4. Chapter content map
 
 Every chapter builds on the corresponding paper section as base prose, expanded with the
-listed sources. Paper section references are to `paper/main.tex` (458 lines).
+listed sources. Paper section references are to `paper/main.tex` (457 lines).
 
 ### Ch 1 — Introduction (paper §1)
 Motivation (surveillance-scale violence detection, annotation cost, weak supervision),
@@ -239,7 +239,7 @@ Restate findings with numbers, modularity/efficiency pitch, code availability.
 ### Regenerate zero-GPU (replot committed data; no new experiments — consistent with D3)
 | Asset | Action |
 |---|---|
-| Phase-7 sweep heatmaps (S01/S02/S04/S05) | Run `scripts/generate_phase7_charts.py` (output dir currently absent; regenerable from results-index.csv). **Historical-baseline guard:** the generator hardcodes the sweep-era baselines (`XD_BASELINE_AP = 0.7192`, `UCF_BASELINE_AUC = 0.8227`, lines 55-56) and emits "Delta vs Baseline" columns against them. Thesis tables/captions must either exclude those delta columns or label them explicitly as deltas vs the historical 2026-05 sweep configuration (CLIP backbone, pre-λ0, s42) — those two values may appear ONLY as clearly-labeled historical sweep baselines, never as current results, and never chained to the 82.5/78.7 headlines. |
+| Phase-7 sweep heatmaps (S01/S02/S04/S05) | Run `scripts/generate_phase7_charts.py` (output dir currently absent; regenerable from results-index.csv). **Historical-baseline guard:** the generator hardcodes the sweep-era baselines (`XD_BASELINE_AP = 0.7192`, `UCF_BASELINE_AUC = 0.8227`, lines 55-56) and emits "Delta vs Baseline" columns against them. Thesis tables/captions must either exclude those delta columns or label them explicitly as deltas vs the historical 2026-05 sweep configuration (CLIP backbone, pre-λ0, s42) — those two values may appear ONLY as clearly-labeled historical sweep baselines, never as current results, and never chained to the 82.5/78.7 headlines. The SAME rule applies to the S03 confirmation outputs (`generate_phase7_charts.py:266-297`), which embed the 3-seed sweep-era baselines `70.98% ± 1.08%` (P4c) and `81.98% ± 0.29%` (P4, pre-full-length-eval) plus "Delta vs P4c/P4" columns — exclude those delta columns from thesis tables or label them historical-configuration-only. |
 | Corruption heatmaps (old phase6 C01–C06) | STALE (pre-dropout-fix episodic runs). Regenerate from `results/_tta_rerun_continual/` 3-seed data + disc_reweight results; old C-series is FORBIDDEN |
 | 20×4 severity heatmap | New figure/table from `results/_analysis_2026-06-10/pri5_per_condition_heatmap.csv` |
 | Per-category tables | Regenerate from canonical run dirs' `per_category.csv` (3-seed, post-λ0/post-h1 state) |
@@ -386,8 +386,9 @@ Manuscript** (added via `/gsd:phase`, planned via `/gsd:plan-phase`, executed vi
 `/gsd:execute-phase`), with this spec as the phase's context input. Expected wave shape:
 
 - **Wave 0:** thesis skeleton + preamble + vendored IEEEtranN.bst + non-interactive
-  build script + bib superset + `.gitignore` un-ignore rules + PROVENANCE.md scaffold +
-  figure regeneration/provenance pass (zero-GPU).
+  build script + bib superset + provenance-source tracking (via `.gitignore` rules OR
+  explicit `git add -f`, per Section 7a, verified with `git ls-files --error-unmatch`) +
+  PROVENANCE.md scaffold + figure regeneration/provenance pass (zero-GPU).
 - **Wave 1:** chapter drafting (parallel writers per chapter, each seeded with this
   spec's guardrails + pointed sources).
 - **Wave 2:** appendices + frontmatter; primary-source verification workflow for
