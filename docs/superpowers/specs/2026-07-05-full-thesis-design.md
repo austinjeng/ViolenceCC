@@ -55,9 +55,12 @@ thesis/
 scripts/build_thesis.ps1    latexmk wrapper modeled on build_paper.ps1 but
                             NON-INTERACTIVE by default (no Invoke-Item; build_paper.ps1:111
                             opens the PDF viewer — do not copy that); optional -Open flag;
-                            -Clean flag; preflight that asserts the vendored
-                            thesis/IEEEtranN.bst exists and kpsewhich resolves each
-                            required LaTeX package, failing with a clear message
+                            -Clean flag; preflight HARD-asserts only the vendored
+                            thesis/IEEEtranN.bst (repo-controlled), and REPORTS
+                            (non-blocking) kpsewhich resolution per required package —
+                            MiKTeX installs missing packages on demand during the
+                            latexmk run, so absence pre-build is not an error; the
+                            report only makes a later build failure diagnosable
 ```
 
 **Build baseline (defines "stock MiKTeX + repo alone"):** MiKTeX with its default
@@ -236,7 +239,7 @@ Restate findings with numbers, modularity/efficiency pitch, code availability.
 ### Regenerate zero-GPU (replot committed data; no new experiments — consistent with D3)
 | Asset | Action |
 |---|---|
-| Phase-7 sweep heatmaps (S01/S02/S04/S05) | Run `scripts/generate_phase7_charts.py` (output dir currently absent; regenerable from results-index.csv) |
+| Phase-7 sweep heatmaps (S01/S02/S04/S05) | Run `scripts/generate_phase7_charts.py` (output dir currently absent; regenerable from results-index.csv). **Historical-baseline guard:** the generator hardcodes the sweep-era baselines (`XD_BASELINE_AP = 0.7192`, `UCF_BASELINE_AUC = 0.8227`, lines 55-56) and emits "Delta vs Baseline" columns against them. Thesis tables/captions must either exclude those delta columns or label them explicitly as deltas vs the historical 2026-05 sweep configuration (CLIP backbone, pre-λ0, s42) — those two values may appear ONLY as clearly-labeled historical sweep baselines, never as current results, and never chained to the 82.5/78.7 headlines. |
 | Corruption heatmaps (old phase6 C01–C06) | STALE (pre-dropout-fix episodic runs). Regenerate from `results/_tta_rerun_continual/` 3-seed data + disc_reweight results; old C-series is FORBIDDEN |
 | 20×4 severity heatmap | New figure/table from `results/_analysis_2026-06-10/pri5_per_condition_heatmap.csv` |
 | Per-category tables | Regenerate from canonical run dirs' `per_category.csv` (3-seed, post-λ0/post-h1 state) |
@@ -293,7 +296,10 @@ note; a clean checkout gets tracked binaries + the note, or full regenerability.
 ### Forbidden sources (stale / superseded / fabricated)
 - `paper/tables_generated.tex` (its own header says so; old single-seed rows, old Table 3).
 - Phase 8/9/10/11 summary numbers (single-seed era; superseded by commit 33591ac).
-- `REQUIREMENTS.md` EVAL traceability numbers (0.8227 / 71.92 / 0.9200 — pre-λ0, pre-full-length).
+- `REQUIREMENTS.md` EVAL traceability numbers (0.8227 / 71.92 / 0.9200 — pre-λ0,
+  pre-full-length). Sole exception: 0.8227/0.7192 may appear in the sweep section /
+  Appendix C as explicitly-labeled historical sweep-era baselines (Section 5 guard),
+  never as current results.
 - Light-WVAD XD 77.3 (fabricated; removed in 260622-ukd; XD cell is `---`).
 - Old phase6 C-series corruption heatmaps (pre-fix TTA data).
 - Phase 4/4c-era per-category numbers for the CURRENT model (regenerate from run dirs).
@@ -361,8 +367,9 @@ so:
    status/authors), agents fetch the primary paper and confirm the cited number, venue,
    metric definition, and author list; output = evidence report (per-item quote + URL +
    verdict) saved under `.planning/phases/13-*/`. User spot-approves the report.
-   Failed items corrected; unverifiable items get a visible footnote. No `% RE-VERIFY`
-   comment survives in `thesis/`.
+   Failed items corrected; unverifiable result cells are OMITTED (`---`/N/A) and
+   footnoted, per Section 7 — never kept with a footnote. No `% RE-VERIFY` comment
+   survives in `thesis/`.
 3. Headline-consistency check: 82.5 / 78.7 identical in abstract, chapters, tables,
    conclusion.
 4. Overclaim scan: honesty framings present; no disallowed claims (SOTA, online TTA,
