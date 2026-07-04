@@ -1,0 +1,122 @@
+%% ---------------------------------------------------------------------------
+%% Figure 1 -- dual-modal architecture overview (native TikZ vector figure).
+%% This file contains ONLY a tikzpicture: it is \input inside the figure*
+%% environment in main.tex, wrapped in \resizebox{\textwidth}{!}{...}.
+%% Designed at a natural width of ~8.5in so the resize factor stays high and
+%% \footnotesize/\scriptsize labels remain readable at print size.
+%%
+%% Swimlane layout: two tinted frozen-stream lanes (skeleton green / visual
+%% blue) funnel into the trainable gated-fusion box (conceptual labels; the
+%% equations live in Sec. 3.4), then a centered prediction column. The dashed
+%% red annotations mark the MIL ranking-loss training signal and the test-time
+%% reliability reweighting (Sec.~\ref{sec:disc}).
+%% Palette: muted derivatives of the original SVG hue anchors
+%%   skeleton green 1E8449/D5F5E3, visual blue 2471A3/EBF5FB,
+%%   fusion orange D68910/FEF9E7 (accent C0392B), prediction purple
+%%   7D3C98/F5EEF8, neutral 2C3E50/F8F9FA.
+%% ---------------------------------------------------------------------------
+\definecolor{skelBorder}{HTML}{1E8449}%
+\definecolor{skelFill}{HTML}{D5F5E3}%
+\definecolor{visBorder}{HTML}{2471A3}%
+\definecolor{visFill}{HTML}{EBF5FB}%
+\definecolor{fusBorder}{HTML}{D68910}%
+\definecolor{fusFill}{HTML}{FEF9E7}%
+\definecolor{fusAccent}{HTML}{C0392B}%
+\definecolor{predBorder}{HTML}{7D3C98}%
+\definecolor{predFill}{HTML}{F5EEF8}%
+\definecolor{neuBorder}{HTML}{2C3E50}%
+\definecolor{neuFill}{HTML}{F8F9FA}%
+\definecolor{zoneInk}{HTML}{5D6D7E}%
+\begin{tikzpicture}[
+    x=1in, y=1in,
+    box/.style={draw, rounded corners=2pt, align=center, font=\footnotesize,
+                fill=white, inner xsep=4pt, inner ysep=3pt, line width=0.7pt},
+    featbox/.style={box, dashed},
+    badge/.style={draw, rounded corners=1.5pt, fill=white, font=\tiny,
+                  inner sep=1.6pt, line width=0.5pt},
+    arr/.style={-{Stealth[length=2mm]}, line width=0.7pt, draw=neuBorder!85},
+    darr/.style={-{Stealth[length=1.8mm]}, line width=0.6pt, dashed},
+    zone/.style={font=\scriptsize\sffamily\bfseries, text=zoneInk},
+    lanelab/.style={font=\scriptsize\sffamily, anchor=west},
+  ]
+
+  %% ---- Background swimlanes (drawn first = behind boxes) -------------------
+  \draw[rounded corners=7pt, fill=skelFill!55, draw=skelBorder!45, line width=0.5pt]
+    (1.02, 1.46) rectangle (5.42, 2.16);
+  \draw[rounded corners=7pt, fill=visFill!70, draw=visBorder!45, line width=0.5pt]
+    (1.02, 0.06) rectangle (5.42, 0.94);
+  \node[lanelab, text=skelBorder!90] at (1.12, 2.05) {{\bfseries Skeleton stream} (frozen)};
+  \node[lanelab, text=visBorder!90]  at (1.12, 0.83) {{\bfseries Visual stream} (frozen)};
+
+  %% ---- Zone labels --------------------------------------------------------
+  \node[zone] at (0.46, 2.34) {Input};
+  \node[zone] at (3.25, 2.34) {Frozen Feature Extraction};
+  \node[zone] at (6.15, 2.34) {Trainable Fusion};
+  \node[zone] at (7.65, 2.34) {Prediction};
+
+  %% ---- Input ---------------------------------------------------------------
+  \node[box, draw=neuBorder] (video) at (0.46, 1.15) {Video\\frames};
+
+  %% ---- Skeleton stream (top, green) ----------------------------------------
+  \node[box, draw=skelBorder] (pose) at (1.92, 1.74)
+    {RTMPose\\{\scriptsize COCO-17 kpts, top-2}};
+  \node[box, draw=skelBorder] (gcn) at (3.42, 1.74)
+    {CTR-GCN\\{\scriptsize NTU-120, 4 streams}};
+  \node[featbox, draw=skelBorder] (skelfeat) at (4.78, 1.74)
+    {256-d\\{\scriptsize skel. feat.}};
+
+  %% ---- Visual stream (bottom, blue) ----------------------------------------
+  \node[box, draw=visBorder] (backbone) at (1.92, 0.48)
+    {Visual backbone\\{\scriptsize CLIP / SigLIP2}\\{\scriptsize frames @ $\sim$1~FPS}};
+  \node[box, draw=visBorder] (pool) at (3.42, 0.48)
+    {mean+max\\{\scriptsize snippet pool}};
+  \node[featbox, draw=visBorder] (visfeat) at (4.78, 0.48)
+    {$2d$-d (1024--3072)\\{\scriptsize visual feat.}};
+
+  %% ---- Gated fusion (trainable core) ---------------------------------------
+  \node[box, draw=fusBorder, fill=fusFill, line width=1.1pt,
+        inner xsep=6pt, inner ysep=5pt] (fusion) at (6.15, 1.15) {%
+    {\bfseries Gated Fusion}~\textcolor{fusAccent}{(trainable)}\\[2pt]
+    {\scriptsize project + LayerNorm (per modality)}\\[1pt]
+    {\scriptsize per-dim gate $\mathbf{g}=\sigma(\cdot)$}\\[1pt]
+    {\scriptsize gated blend + residual + LN}};
+
+  %% ---- Prediction (right, purple) ------------------------------------------
+  \node[box, draw=predBorder, fill=predFill] (milhead) at (7.65, 1.55)
+    {MIL head\\{\scriptsize FC+sigmoid, top-$k$}};
+  \node[box, draw=predBorder, fill=predFill] (score) at (7.65, 0.62)
+    {Anomaly score\\$\in[0,1]$};
+
+  %% ---- Test-time annotation (dashed) ---------------------------------------
+  \node[featbox, draw=fusAccent, font=\scriptsize, text=fusAccent, align=center]
+        (ttnote) at (6.15, 0.10)
+    {test-time: scale visual by $w$ (Sec.~\ref{sec:disc})};
+
+  %% ---- Arrows: input fan-out -----------------------------------------------
+  \draw[arr] (video.east) to[out=0, in=180] (pose.west);
+  \draw[arr] (video.east) to[out=0, in=180] (backbone.west);
+
+  %% ---- Arrows: streams -----------------------------------------------------
+  \draw[arr] (pose.east) -- (gcn.west);
+  \draw[arr] (gcn.east) -- (skelfeat.west);
+  \draw[arr] (backbone.east) -- (pool.west);
+  \draw[arr] (pool.east) -- (visfeat.west);
+
+  %% ---- Arrows: streams -> fusion -------------------------------------------
+  \draw[arr] (skelfeat.east) to[out=0, in=145] (fusion.north west);
+  \draw[arr] (visfeat.east) to[out=0, in=-145] (fusion.south west);
+
+  %% ---- Arrows: fusion -> prediction ----------------------------------------
+  \draw[arr] (fusion.east) to[out=0, in=180] (milhead.west);
+  \draw[arr] (milhead.south) -- (score.north);
+
+  %% ---- Training signal (dashed, right-side feedback loop) ------------------
+  \draw[darr, draw=fusAccent] (score.east) to[out=0, in=0, looseness=1.4]
+    node[right=2pt, font=\tiny, text=fusAccent, align=left] {MIL ranking\\loss}
+    (milhead.east);
+
+  %% ---- Test-time arrow -----------------------------------------------------
+  \draw[darr, draw=fusAccent] (ttnote.north) -- (fusion.south);
+
+\end{tikzpicture}%
+\endinput

@@ -1,0 +1,61 @@
+%%
+%% Main LaTeX source for the ViolenceCC master's thesis
+%% "Dual-Modal Skeleton-Visual Fusion for Weakly Supervised Violence Detection"
+%% Skeleton created in Phase 13 Wave 0; chapters drafted in Waves 1-2.
+%%
+\documentclass[12pt,a4paper,oneside]{report}
+
+\input{preamble}
+
+\begin{document}
+
+%%
+%% Frontmatter
+%%
+\pagenumbering{roman}
+\input{frontmatter/titlepage}
+\input{frontmatter/abstract}
+\input{frontmatter/acknowledgments}
+\tableofcontents
+\listoffigures
+\listoftables
+\input{frontmatter/notation}
+\clearpage
+\pagenumbering{arabic}
+
+%%
+%% Chapters
+%%
+\include{chapters/ch01_introduction}
+\include{chapters/ch02_related_work}
+\include{chapters/ch03_methodology}
+\include{chapters/ch04_experimental_setup}
+\include{chapters/ch05_results_fusion}
+\include{chapters/ch06_results_tta}
+\include{chapters/ch07_discussion}
+\include{chapters/ch08_limitations}
+\include{chapters/ch09_conclusion}
+
+%%
+%% Appendices
+%%
+\appendix
+\include{appendices/appA_rtfm}
+\include{appendices/appB_per_category}
+\include{appendices/appC_sweep}
+\include{appendices/appD_engineering}
+\include{appendices/appE_reproducibility}
+\include{appendices/appF_figures}
+
+%%
+%% Bibliography (vendored thesis/IEEEtranN.bst + natbib [numbers,sort&compress])
+%% W0 smoke test: \nocite{*} forces the full bibliography through the vendored
+%% IEEEtranN.bst so staged-entry syntax errors surface at Wave 0 (placeholder
+%% chapters cite nothing yet). Wave-3 integration removes this once chapters
+%% carry real \cite coverage.
+%%
+\nocite{*}
+\bibliographystyle{IEEEtranN}
+\bibliography{references}
+
+\end{document}
