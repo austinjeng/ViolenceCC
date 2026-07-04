@@ -1,0 +1,33 @@
+{
+  "pri5_TTA_breakdown": {
+    "i_cross_backbone_gaussian_family_mean_delta_3seed": 4.8258,
+    "i_claim": "+4.8 / +4.826",
+    "i_verdict": "VERIFIED",
+    "ii_base_seed42_gaussian_noise_5_d": -3.2015,
+    "ii_claim": "-3.2",
+    "ii_verdict": "VERIFIED",
+    "iii_so400m_gaussian_noise_5_3seed_mean": 13.1917,
+    "iii_claim": "+13.2",
+    "iii_verdict": "VERIFIED",
+    "note": "(i) = mean over 4 backbones of each backbone 3-seed avg of gaussian-family(5-sev mean) delta; seed-42-only cross-backbone mean-of-means is 3.3077. (iii) is severity-5 condition 3-seed mean, NOT the 5-severity gaussian-family mean (which is 8.95)."
+  },
+  "pri6_bootstrap_CI": {
+    "critical_label_recon_check": "VERIFIED",
+    "recomputed_pooled_frame_AUC": 0.8249043114503092,
+    "claimed_AUC": 0.8249043114503092,
+    "abs_diff": 0.0,
+    "within_1e-4": true,
+    "n_videos": 254,
+    "n_frames": 1097050,
+    "n_pos_frames": 82930,
+    "bootstrap_video_level_seed12345_B1000": {
+      "mean": 0.82222,
+      "ci95": [
+        0.75707,
+        0.88011
+      ],
+      "width_pp": 12.305
+    },
+    "ci_width_plausible": true
+  }
+}

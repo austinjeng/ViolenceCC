@@ -1,0 +1,6 @@
+model,total_params,trainable_params,params_k,macs_m,flops_m,latency_ms_batch,latency_ms_sample,throughput_samples_s,peak_gpu_mb
+Skeleton-Only,37569,37569,37.57,1.21,2.43,0.504,0.0315,31766.2,10.6
+CLIP-Only,595649,595649,595.65,19.07,38.14,0.690,0.0431,23180.7,14.8
+Late Fusion,633218,633218,633.22,20.29,40.57,1.153,0.0721,13874.0,17.8
+Gated Fusion,498113,498113,498.11,15.96,31.92,1.050,0.0656,15236.8,21.7
+RTFM-I3D,137409,137409,137.41,4.46,8.91,0.460,0.0287,34785.6,18.8

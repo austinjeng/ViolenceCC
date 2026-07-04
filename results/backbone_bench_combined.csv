@@ -1,0 +1,5 @@
+backbone,params_m,params_source,flops_g,flops_source,latency,throughput,peak_gpu_mb,per_frame_ms
+CLIP ViT-B/16,86.19,measured,22.54,measured,67.8 ms/B,944 f/s,1062.5,1.059
+RTMPose-m + YOLOX,13.0,published,3.22,published (YOLOX ~1.0 + RTMPose-m 2.22),30.1 ms/f,33.3 f/s,213.0,30.07
+CTR-GCN (4-stream),5.684,"measured (backbone only, excl. cls_head)",,partial (thop failed on some streams),154.2 ms/sn,6.5 sn/s,29.1,N/A (snippet)
+I3D RGB,25.0,published,107.9,published (per clip),Pre-extracted,---,,---
