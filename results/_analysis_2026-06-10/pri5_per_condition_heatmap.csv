@@ -1,0 +1,29 @@
+family,severity,condition,CLIP ViT-B/16,SigLIP2-base,SigLIP2-SO400M,SigLIP2-giant
+Gaussian noise,1,gaussian_noise_1,0.9168,5.6676,-0.6573,0.2900
+Gaussian noise,2,gaussian_noise_2,2.6628,3.6818,3.7279,0.3963
+Gaussian noise,3,gaussian_noise_3,2.5587,1.0016,10.3289,0.2443
+Gaussian noise,4,gaussian_noise_4,3.4873,-1.7715,11.9846,1.4381
+Gaussian noise,5,gaussian_noise_5,4.8303,-3.2015,13.9231,4.6435
+Motion blur,1,motion_blur_1,0.0000,0.0000,0.0000,0.0000
+Motion blur,2,motion_blur_2,0.0000,0.0000,0.0000,0.0000
+Motion blur,3,motion_blur_3,0.0000,0.0000,0.0000,0.0000
+Motion blur,4,motion_blur_4,0.0000,0.0000,0.0000,0.0000
+Motion blur,5,motion_blur_5,0.0000,0.0000,0.0000,0.0000
+JPEG compression,1,jpeg_compression_1,0.0000,0.0000,0.0000,0.0000
+JPEG compression,2,jpeg_compression_2,0.0000,0.0000,0.0000,0.0000
+JPEG compression,3,jpeg_compression_3,0.0000,0.0000,0.0000,0.0000
+JPEG compression,4,jpeg_compression_4,0.0000,0.0000,0.0000,0.0000
+JPEG compression,5,jpeg_compression_5,0.0000,0.0000,0.0000,0.0000
+Brightness,1,brightness_1,0.0072,0.0003,0.0101,0.0023
+Brightness,2,brightness_2,0.0052,-0.0047,0.0020,0.0000
+Brightness,3,brightness_3,0.0205,-0.0097,0.0005,0.0000
+Brightness,4,brightness_4,0.0044,0.0237,-0.0015,0.0000
+Brightness,5,brightness_5,0.0399,0.0147,0.0051,0.0000
+Gaussian noise,mean(s42),gaussian_noise_mean_s42,2.8912,1.0756,7.8614,1.4024
+Motion blur,mean(s42),motion_blur_mean_s42,0.0000,0.0000,0.0000,0.0000
+JPEG compression,mean(s42),jpeg_compression_mean_s42,0.0000,0.0000,0.0000,0.0000
+Brightness,mean(s42),brightness_mean_s42,0.0154,0.0048,0.0032,0.0005
+Gaussian noise,mean(3seed),gaussian_noise_mean_3seed,2.6708,5.9884,8.9539,1.6901
+Motion blur,mean(3seed),motion_blur_mean_3seed,0.0000,0.0000,0.0000,0.0000
+JPEG compression,mean(3seed),jpeg_compression_mean_3seed,0.0000,0.0000,0.0000,0.0000
+Brightness,mean(3seed),brightness_mean_3seed,0.0127,-0.0020,-0.0000,0.0018

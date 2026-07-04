@@ -1,0 +1,64 @@
+{
+  "task": "Pri 6 - video-level bootstrap 95% CIs (defense insurance)",
+  "primary_seed": 42,
+  "bootstrap_B": 2000,
+  "rng_seed": 12345,
+  "ucf": {
+    "dataset": "UCF",
+    "run_dir": "D:\\ViolenceCC\\results\\ucf_gated_fusion_giant_s42",
+    "metric": "AUC",
+    "n_videos": 254,
+    "stored_point_estimate": 0.8249043114503092,
+    "recomputed_point_estimate": 0.8249043114503092,
+    "gate_abs_diff": 0.0,
+    "gate_tol": 0.0001,
+    "gate_pass": true,
+    "build_info": {
+      "n_annotated": 254,
+      "n_normal_default": 0
+    },
+    "bootstrap": {
+      "B": 2000,
+      "rng_seed": 12345,
+      "ci_lo": 0.7563245907365725,
+      "ci_hi": 0.8802179832795438,
+      "ci_width_pp": 12.389339254297127,
+      "bootstrap_mean": 0.8219915425082349,
+      "point_inside_ci": true,
+      "single_class_resamples_skipped": 0,
+      "ci_lo_pct": 75.63245907365726,
+      "ci_hi_pct": 88.02179832795439,
+      "stored_pct": 82.49043114503093
+    },
+    "status": "OK"
+  },
+  "xd": {
+    "dataset": "XD",
+    "run_dir": "D:\\ViolenceCC\\results\\xd_gated_fusion_so400m_s42",
+    "metric": "AP",
+    "n_videos": 800,
+    "stored_point_estimate": 0.7974129371935831,
+    "recomputed_point_estimate": 0.7974129371935831,
+    "gate_abs_diff": 0.0,
+    "gate_tol": 0.0001,
+    "gate_pass": true,
+    "build_info": {
+      "n_abnormal": 500,
+      "n_normal": 300
+    },
+    "bootstrap": {
+      "B": 2000,
+      "rng_seed": 12345,
+      "ci_lo": 0.7662453777429367,
+      "ci_hi": 0.8268018610444163,
+      "ci_width_pp": 6.055648330147967,
+      "bootstrap_mean": 0.7973978100335567,
+      "point_inside_ci": true,
+      "single_class_resamples_skipped": 0,
+      "ci_lo_pct": 76.62453777429367,
+      "ci_hi_pct": 82.68018610444163,
+      "stored_pct": 79.74129371935831
+    },
+    "status": "OK"
+  }
+}
