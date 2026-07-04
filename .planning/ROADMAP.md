@@ -353,7 +353,7 @@ Plans:
 | 10. SigLIP2 Giant-opt Backbone Comparison | 0/4 | Executing | - |
 | 11. Thesis Manuscript | 4/4 | Complete | 2026-05-30 |
 | 12. SOTA Comparison and Positioning | 3/3 | Complete | 2026-06-21 |
-| 13. Full Thesis Manuscript | 0/? | Added 2026-07-05, not planned | - |
+| 13. Full Thesis Manuscript | 1/13 | In Progress|  |
 
 ---
 
@@ -436,10 +436,10 @@ Plans:
   5. Honesty framings intact (no SOTA claim, transductive TTA disclosure, complementarity wording, etc.)
   6. Primary-source SOTA verification gate passed: evidence report user-approved; zero unresolved RE-VERIFY comments / bib TODOs; unverifiable external cells omitted (`---`) with omission footnotes
 
-**Plans:** 13 plans
+**Plans:** 1/13 plans executed
 
 Plans:
-- [ ] 13-01-PLAN.md — Wave 0: thesis skeleton + preamble + vendored IEEEtranN.bst + build_thesis.ps1 + .latexmkrc + gitignore + bib superset (skeleton compiles)
+- [x] 13-01-PLAN.md — Wave 0: thesis skeleton + preamble + vendored IEEEtranN.bst + build_thesis.ps1 + .latexmkrc + gitignore + bib superset (skeleton compiles)
 - [ ] 13-02-PLAN.md — Wave 0: provenance-source tracking (~269 files, hard assertions) + PROVENANCE.md scaffold with number-family table
 - [ ] 13-03-PLAN.md — Wave 0: new Class-R generators (severity heatmap, corruption heatmaps, per-category tables, TENT/SAR rollup) + Phase-7 sweep regen
 - [ ] 13-04-PLAN.md — Wave 0: figure reuse + Phase-6 disposition pass + PROVENANCE figure rows + USER CHECKPOINT (skeleton)
