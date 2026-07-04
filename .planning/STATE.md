@@ -146,6 +146,7 @@ Targets from PRD v2.3:
 - Phase 9 added: SigLIP2-SO400M Backbone Comparison — swap CLIP ViT-B/16 with SigLIP2 SO400M (google/siglip2-so400m-patch16-256), re-extract features, run identical ablation matrix, compare against both CLIP and SigLIP2 ViT-B/16-256
 - Phase 11 added: Thesis Manuscript — full master's thesis document targeting workshop venue, integrating all experimental results
 - Phase 12 added (2026-06-21): SOTA Comparison and Positioning — post-milestone phase added after professor review ("thesis lacks SOTA comparison"). Zero-GPU writing/analysis: verified published-numbers comparison table + fair-subset table + positioning prose + §2 Related-Work backfill (thesis) and a condensed table (CGW '26 paper), framed orthogonal-contribution + fair-subset-competitiveness, no SOTA overclaim. Grounded in a 40-agent verified-SOTA research artifact (.planning/phases/12-.../12-RESEARCH-sota.md, 31/34 methods primary-source-verified). CONTEXT seeded; ready to plan.
+- Phase 13 added (2026-07-05): Full Thesis Manuscript — write the full-length master's thesis per approved+4x-reviewed spec docs/superpowers/specs/2026-07-05-full-thesis-design.md. 9-chapter report-class LaTeX in thesis/ + appendices A-F, frozen canonical numbers (UCF 82.5 / XD 78.7), tracked provenance manifest (thesis/PROVENANCE.md + git-tracked sources), in-phase primary-source SOTA verification gate (unverifiable cells omitted), vendored IEEEtranN.bst, non-interactive build_thesis.ps1, zero-GPU (figure regeneration from committed data only).
 
 ### Roadmap Evolution
 

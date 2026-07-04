@@ -353,6 +353,7 @@ Plans:
 | 10. SigLIP2 Giant-opt Backbone Comparison | 0/4 | Executing | - |
 | 11. Thesis Manuscript | 4/4 | Complete | 2026-05-30 |
 | 12. SOTA Comparison and Positioning | 3/3 | Complete | 2026-06-21 |
+| 13. Full Thesis Manuscript | 0/? | Added 2026-07-05, not planned | - |
 
 ---
 
@@ -420,6 +421,25 @@ Plans:
 **Wave 2** *(blocked on Wave 1 completion)*
 
 - [x] 12-03-PLAN.md — Final verification: clean rebuild + number-traceability audit + overclaim scan + headline integrity (12-VERIFICATION.md) — complete 2026-06-21 (overall PASS on all four audits; 11-page clean build, 0 untraceable numbers, 0 disallowed overclaim, headlines + Tables 1-3 byte-identical to baseline; report-only, no paper source patched)
+
+### Phase 13: Full Thesis Manuscript
+
+**Goal:** The full-length master's thesis manuscript exists as a self-contained LaTeX document (`thesis/`) that compiles clean, covers everything the research produced, and is oral-defense-ready — built per the approved spec `docs/superpowers/specs/2026-07-05-full-thesis-design.md` (4 review rounds closed).
+**Requirements**: None new (writing deliverable; zero-GPU)
+**Depends on:** Phase 12 (SOTA fragment + verified research artifact), Phase 11 (CGW '26 paper as base prose), Phases 4-10 result artifacts
+**Success Criteria** (from spec §11, binding):
+
+  1. `thesis/main.pdf` builds clean via `scripts/build_thesis.ps1 -Clean` (non-interactive; vendored IEEEtranN.bst; MiKTeX on-demand baseline); 90-120 pages; 9 chapters + appendices A-F + frontmatter
+  2. All spec §4 content present; no `\todo` / placeholder prose (acknowledgments placeholder exempt)
+  3. Adversarial number audit passes via tracked `thesis/PROVENANCE.md` — zero untraceable numbers, zero forbidden-source values, headlines (UCF 82.5 / XD 78.7) byte-consistent, every manifest source git-tracked (clean checkout reproduces audit)
+  4. Every figure provenance Class R (regenerable from tracked data) or Class V (committed binary + verification note); no stale-provenance figures
+  5. Honesty framings intact (no SOTA claim, transductive TTA disclosure, complementarity wording, etc.)
+  6. Primary-source SOTA verification gate passed: evidence report user-approved; zero unresolved RE-VERIFY comments / bib TODOs; unverifiable external cells omitted (`---`) with omission footnotes
+
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 13 to break down)
 
 ---
 
