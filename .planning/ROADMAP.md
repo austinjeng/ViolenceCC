@@ -436,12 +436,24 @@ Plans:
   5. Honesty framings intact (no SOTA claim, transductive TTA disclosure, complementarity wording, etc.)
   6. Primary-source SOTA verification gate passed: evidence report user-approved; zero unresolved RE-VERIFY comments / bib TODOs; unverifiable external cells omitted (`---`) with omission footnotes
 
-**Plans:** 0 plans
+**Plans:** 13 plans
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 13 to break down)
+- [ ] 13-01-PLAN.md — Wave 0: thesis skeleton + preamble + vendored IEEEtranN.bst + build_thesis.ps1 + .latexmkrc + gitignore + bib superset (skeleton compiles)
+- [ ] 13-02-PLAN.md — Wave 0: provenance-source tracking (~269 files, hard assertions) + PROVENANCE.md scaffold with number-family table
+- [ ] 13-03-PLAN.md — Wave 0: new Class-R generators (severity heatmap, corruption heatmaps, per-category tables, TENT/SAR rollup) + Phase-7 sweep regen
+- [ ] 13-04-PLAN.md — Wave 0: figure reuse + Phase-6 disposition pass + PROVENANCE figure rows + USER CHECKPOINT (skeleton)
+- [ ] 13-05-PLAN.md — Wave 1: chapters 1-3 (Introduction, Related Work, Methodology)
+- [ ] 13-06-PLAN.md — Wave 1: chapters 4-6 (Experimental Setup, Results: Fusion, Results: Robustness & TTA)
+- [ ] 13-07-PLAN.md — Wave 1: chapters 7-9 (Discussion + full SOTA, Limitations & FW, Conclusion)
+- [ ] 13-08-PLAN.md — Wave 1 exit: merged clean build + scans + USER CHECKPOINT (chapter drafts)
+- [ ] 13-09-PLAN.md — Wave 2: appendices A-C (RTFM gap, per-category + Pri-7, sweep detail)
+- [ ] 13-10-PLAN.md — Wave 2: appendices D-F + frontmatter (titlepage, restructured abstract, notation)
+- [ ] 13-11-PLAN.md — Wave 2: SOTA primary-source verification gate + evidence report + USER SPOT-APPROVAL
+- [ ] 13-12-PLAN.md — Wave 3: RE-VERIFY resolution merge + bib finalization + integration pass
+- [ ] 13-13-PLAN.md — Wave 3: adversarial number audit + overclaim scan + final build + FINAL USER CHECKPOINT
 
 ---
 
 *Roadmap created: 2026-03-31*
-*Last updated: 2026-05-02 — Phase 7 complete: 198-config sweep, XD winner lr=1e-3/k=2 (+3.72pp), UCF insensitive*
+*Last updated: 2026-07-05 — Phase 13 planned: 13 plans across 8 execution waves (spec Waves 0-3)*
