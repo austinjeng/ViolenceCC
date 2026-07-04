@@ -107,7 +107,8 @@ Write-Output "[build_thesis] Thesis dir:  $thesisDir"
 # Absence is NOT an error: MiKTeX installs packages on demand during the build.
 $requiredPkgs = @(
     'natbib', 'booktabs', 'multirow', 'graphicx', 'geometry', 'setspace',
-    'caption', 'subcaption', 'microtype', 'amsmath', 'amssymb', 'array', 'tikz'
+    'caption', 'subcaption', 'microtype', 'amsmath', 'amssymb', 'array', 'tikz',
+    'lmodern'
 )
 $kpsewhich = Find-Exe -Name 'kpsewhich.exe' -ProbeDirs @($miktexBin)
 if ($kpsewhich) {

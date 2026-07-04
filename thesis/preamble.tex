@@ -6,6 +6,12 @@
 %% Page layout
 \usepackage[margin=2.5cm]{geometry}
 
+%% Fonts: scalable Latin Modern (T1). Required by microtype's font expansion
+%% -- the report class's default bitmap CM fonts abort pdfTeX with
+%% "auto expansion is only possible with scalable fonts".
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+
 %% Mathematics
 \usepackage{amsmath}
 \usepackage{amssymb}
