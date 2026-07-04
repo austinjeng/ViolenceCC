@@ -21,10 +21,11 @@ No full-length thesis manuscript exists today; Phase 11 produced the workshop pa
 |---|----------|--------|
 | D1 | Format | No university template. Clean generic LaTeX `report`-class skeleton, easy to re-skin later. |
 | D2 | Language | English throughout. No Chinese abstract. |
-| D3 | Numbers | **Freeze: committed numbers only.** Current verified anchors (UCF 82.5 AUC / XD 78.7 AP). In-flight tracks (Pri-3 XD smoothing, Pri-2/4/8 TTA extensions) go to Future Work, not results. |
+| D3 | Numbers | **Freeze: canonical verified numbers only** (UCF 82.5 AUC / XD 78.7 AP anchors). No new experiments. In-flight tracks (Pri-3 XD smoothing, Pri-2/4/8 TTA extensions) go to Future Work, not results. Enforced via the tracked provenance manifest (Section 7a): every cited source gets git-tracked in Wave 0. |
 | D4 | Scope | Thesis document only. Defense slides are a separate later task. |
 | D5 | Emphasis | No special committee emphasis — thorough everywhere. |
 | D6 | Structure | 9 chapters: paper's core flow preserved, Experiments split into Setup / Fusion-Results / TTA-Results. Appendices A–F. |
+| D7 | SOTA debt (added 2026-07-05, spec review) | **In-phase primary-source verification gate**: agents verify all RE-VERIFY / checklist externals against primary papers, user spot-approves the evidence report; no downgraded "draft pending verification" deliverable. |
 
 ## 3. Deliverable layout
 
@@ -46,11 +47,19 @@ thesis/
   appendices/
     appA_rtfm.tex ... appF_figures.tex
   references.bib            superset: paper's 27 entries + ~11 new (Section 6)
+  IEEEtranN.bst             VENDORED copy (do not rely on MiKTeX resolution: the only
+                            local hit is inside the unrelated feupphdteses package)
+  PROVENANCE.md             tracked manifest: every thesis number/figure -> tracked
+                            source path (Section 7a)
   figures/                  thesis figure set (Section 5)
-scripts/build_thesis.ps1    mirrors scripts/build_paper.ps1 (latexmk, -Clean flag)
+scripts/build_thesis.ps1    latexmk wrapper modeled on build_paper.ps1 but
+                            NON-INTERACTIVE by default (no Invoke-Item; build_paper.ps1:111
+                            opens the PDF viewer — do not copy that); optional -Open flag;
+                            -Clean flag; preflight check that IEEEtranN.bst + required
+                            packages resolve, failing with a clear message
 ```
 
-- Bibliography: BibTeX with `IEEEtranN.bst` (numeric, natbib-compatible) + natbib `[numbers]`.
+- Bibliography: BibTeX with the vendored `IEEEtranN.bst` (numeric, natbib-compatible) + natbib `[numbers]`.
 - Build artifacts git-ignored (extend existing paper artifact patterns to `thesis/`).
 - `paper/` stays frozen as the CGW '26 artifact; the thesis never modifies it.
 - Estimated length: 90–120 pages.
@@ -238,8 +247,9 @@ provenance cannot be established. B-series is XD-only by necessity (documented).
   TPWNG, PEL4VAD, PiercingEye, AnomalyCLIP, TEVAD, HyperVD, Ghadiya et al. — citation
   strings staged in `12-RESEARCH-sota.md` Section 8.
 - Add survey-support cites for Ch 2 as needed (ST-GCN, etc.) — verified entries only.
-- Carry forward known bib debts as visible TODO comments: PI-VAD/DSANet publication
-  status + full author lists (12-VERIFICATION items #16/#17).
+- PI-VAD/DSANet publication status + full author lists (12-VERIFICATION items #16/#17)
+  are RESOLVED by the primary-source verification gate (Section 8, step 2b) — no TODO
+  comments survive into the final bib.
 
 ## 7. Number-integrity guardrails (binding on all writers)
 
@@ -272,12 +282,34 @@ condition"; gains in "points" not "%"; transductive assumption disclosed; UCF λ
 smoothness-implementation footnote (≤0.13pp) retained; 64-frame exclusion disclosures
 retained; complementarity wording "small but consistent".
 
-### SOTA external numbers
-The 15 inline `% RE-VERIFY` comments from `sota_comparison_full.tex` carry forward as
-LaTeX comments in the thesis SOTA tables, plus the 17-item camera-ready checklist
-reference (`12-VERIFICATION.md`). Resolving them (primary-PDF re-checks) is the
-student's manual task, out of scope here. Optional follow-up: a web-verification
-workflow pass, only if the user requests it.
+### SOTA external numbers — in-phase verification gate (user decision 2026-07-05)
+The 15 inline `% RE-VERIFY` items from `sota_comparison_full.tex` and the 17-item
+camera-ready checklist (`12-VERIFICATION.md`) are RESOLVED inside Phase 13, not carried
+as debt: a primary-source verification workflow (Section 8, step 2b) checks every
+flagged external number against the method's primary paper and produces an evidence
+report; the user spot-approves it. Items that fail verification are corrected; items
+that cannot be verified get an explicit visible footnote (not a silent comment).
+Zero unresolved `% RE-VERIFY` comments may survive into the final thesis source.
+
+## 7a. Provenance manifest and tracked sources (binding)
+
+`results/` is git-ignored wholesale (`.gitignore:9`) with only 28 force-tracked files;
+several sources this spec names are currently UNTRACKED (`benchmark_models.csv`,
+`backbone_bench_combined.csv`, all run-dir `per_category.csv`, all of
+`_analysis_2026-06-10/`). A clean checkout must be able to reproduce the thesis audit,
+so:
+
+1. `thesis/PROVENANCE.md` is a tracked manifest mapping every numeric claim family and
+   every figure/table to its source: tracked repo path (+ generating script where
+   applicable). One row per source; no thesis number without a manifest row.
+2. Every source named in the manifest MUST be tracked in git. Wave 0 force-adds the
+   missing ones via explicit `!results/...` un-ignore rules in `.gitignore`
+   (this also discharges open review item C7-3). Expected additions: the two benchmark
+   CSVs, `_analysis_2026-06-10/` artifacts (Pri-5/6/7/9 CSVs/JSONs/MDs + score
+   histogram), and `per_category.csv` + `eval_metrics.json` for exactly the canonical
+   run dirs the thesis cites (small text files; only cited runs, not all 141 dirs).
+3. The adversarial number audit (Section 8, step 2) FAILS any number whose manifest
+   source is missing, untracked, or mismatched.
 
 ## 8. Build and verification
 
@@ -285,9 +317,18 @@ workflow pass, only if the user requests it.
    compiles `thesis/main.pdf` with zero LaTeX errors, zero undefined references,
    zero undefined citations (assert by scanning the .log).
 2. **Adversarial number audit** (same standard as Phase 12's 4 audits): every numeric
-   claim in the thesis traced to a canonical source (main.tex inlined tables,
-   results-index.csv, run-dir CSV/JSON, `_analysis_2026-06-10/` artifacts,
-   verified planning docs). Multi-agent verification workflow; findings fixed before done.
+   claim in the thesis traced through `thesis/PROVENANCE.md` to a tracked canonical
+   source (main.tex inlined tables, results-index.csv, run-dir CSV/JSON,
+   `_analysis_2026-06-10/` artifacts, verified planning docs). Multi-agent verification
+   workflow; audit FAILS on any untracked or manifest-missing source; findings fixed
+   before done.
+2b. **Primary-source verification gate (external SOTA numbers)**: for each RE-VERIFY
+   item and 12-VERIFICATION checklist item (incl. #16/#17 PI-VAD/DSANet bib
+   status/authors), agents fetch the primary paper and confirm the cited number, venue,
+   metric definition, and author list; output = evidence report (per-item quote + URL +
+   verdict) saved under `.planning/phases/13-*/`. User spot-approves the report.
+   Failed items corrected; unverifiable items get a visible footnote. No `% RE-VERIFY`
+   comment survives in `thesis/`.
 3. Headline-consistency check: 82.5 / 78.7 identical in abstract, chapters, tables,
    conclusion.
 4. Overclaim scan: honesty framings present; no disallowed claims (SOTA, online TTA,
@@ -303,21 +344,24 @@ Per CLAUDE.md GSD enforcement, implementation runs as **GSD Phase 13 — Full Th
 Manuscript** (added via `/gsd:phase`, planned via `/gsd:plan-phase`, executed via
 `/gsd:execute-phase`), with this spec as the phase's context input. Expected wave shape:
 
-- **Wave 0:** thesis skeleton + preamble + build script + bib superset + figure
-  regeneration/provenance pass (zero-GPU).
+- **Wave 0:** thesis skeleton + preamble + vendored IEEEtranN.bst + non-interactive
+  build script + bib superset + `.gitignore` un-ignore rules + PROVENANCE.md scaffold +
+  figure regeneration/provenance pass (zero-GPU).
 - **Wave 1:** chapter drafting (parallel writers per chapter, each seeded with this
   spec's guardrails + pointed sources).
-- **Wave 2:** appendices + frontmatter.
+- **Wave 2:** appendices + frontmatter; primary-source verification workflow for
+  external SOTA numbers (Section 8, step 2b) runs in parallel.
 - **Wave 3:** integration (cross-references, notation consistency), adversarial number
-  audit, overclaim scan, final clean build.
+  audit against PROVENANCE.md, overclaim scan, RE-VERIFY resolution merge, final clean
+  build.
 
-User checkpoints: after Wave 0 (skeleton compiles), after Wave 1 (chapter drafts), final.
+User checkpoints: after Wave 0 (skeleton compiles), after Wave 1 (chapter drafts),
+spot-approval of the SOTA evidence report, final.
 
 ## 10. Out of scope
 
 - Chinese abstract, committee/cover pages beyond the generic title page.
 - Defense slide deck (separate later task).
-- Resolving the 15/17 RE-VERIFY external-number checks (manual student task).
 - Any GPU experiment; any change to headline numbers (incl. Pri-3 XD smoothing).
 - Any modification to `paper/` or its build.
 - University-template re-skinning (structure kept re-skin-friendly).
@@ -329,7 +373,13 @@ User checkpoints: after Wave 0 (skeleton compiles), after Wave 1 (chapter drafts
 2. All content listed in Section 4 present; no `\todo`, no placeholder prose
    (acknowledgments placeholder exempt).
 3. Number audit passes: zero untraceable numbers, zero forbidden-source values,
-   headlines byte-consistent.
+   headlines byte-consistent; every manifest source tracked in git (clean checkout
+   reproduces the audit).
 4. All figures either verified-current or regenerated from committed data;
    no stale-provenance figure included.
 5. Honesty framings intact (Section 7 list).
+6. Primary-source verification gate passed: evidence report user-approved; zero
+   unresolved `% RE-VERIFY` comments and zero bib TODOs in `thesis/`; unverifiable
+   externals carry visible footnotes.
+7. `thesis/main.pdf` builds on a machine with stock MiKTeX + the repo alone
+   (vendored .bst; non-interactive build script with preflight).
