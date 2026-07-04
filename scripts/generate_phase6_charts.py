@@ -1042,7 +1042,9 @@ def chart_D_gate_by_category(gate_outputs, annos, label_fn, dataset_label):
     rows = []
     for vid, gates in gate_outputs.items():
         mean_gate = float(np.mean(gates))
-        if vid in annos:
+        # UCF's annotation file INCLUDES the 150 Normal test videos (category
+        # "Normal"), so membership alone misclassifies them as anomalous.
+        if vid in annos and not annos[vid].is_normal:
             cat = annos[vid].category
             if dataset_label.startswith("XD"):
                 cat = XD_CAT_NAMES.get(cat, cat)
@@ -1092,7 +1094,9 @@ def chart_D_gate_histogram(gate_outputs, annos, dataset_label):
 
     for vid, gates in gate_outputs.items():
         flat = gates.ravel()
-        if vid in annos:
+        # See chart_D_gate_by_category: UCF normals ARE in annos (category
+        # "Normal") -- classify by is_normal, not bare membership.
+        if vid in annos and not annos[vid].is_normal:
             abnormal_gates.append(flat)
         else:
             normal_gates.append(flat)
@@ -1141,7 +1145,11 @@ def chart_E_tsne(fused_features, annos, dataset_label):
     labels = []
     categories = []
     for vid in vids:
-        if vid in annos:
+        # See chart_D_gate_by_category: UCF normals ARE in annos (category
+        # "Normal") -- without the is_normal check they get label 1 with
+        # category "Normal", which the plotting loops below silently skip
+        # (invisible points).
+        if vid in annos and not annos[vid].is_normal:
             cat = annos[vid].category
             if "xd" in dataset_label.lower():
                 cat = XD_CAT_NAMES.get(cat, cat)
