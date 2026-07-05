@@ -140,3 +140,71 @@ is affected.
 ---
 
 ## NUMBER AUDIT: **PASS** (Audits A–D all PASS; 0 untraceable, 0 forbidden, 0 untracked)
+
+---
+
+# Task 2 — Overclaim Scan + Headline-Consistency Check
+
+**Scope:** all rendered prose in `thesis/` (comments excluded). Token list per Phase-12
+(Audit 3) + the Phase-13 additions (online-TTA cap, clean-AUC-gain cap, points-not-%).
+
+## Audit E — Overclaim scan
+
+### Token hits and dispositions
+
+| Token | Hits (rendered) | Disposition |
+|---|---|---|
+| `state-of-the-art` / `state of the art` | ch07:15, ch07:190, ch07:204, ch07:257, ch07:378, ch09:73 | :15 "comparison **against** the published state of the art" (descriptive); :190 section title (descriptive); :204 "We do \emph{not} claim state-of-the-art performance" (**required negation** — note: this hit contains the literal token sequence "state-of-the-art performance"; it is the mandated no-SOTA framing itself, ALLOWED per the Phase-12 negation precedent); :257 "\textbf{We do not claim state-of-the-art}" (negation, table note); :378 "does not claim a new state of the art" (negation); ch09:73 "We do not claim state-of-the-art benchmark performance" (negation). **0 disallowed** |
+| `\bSOTA\b` | 0 rendered (1 hit inside a `%` provenance comment, ch07:225) | non-rendered — ALLOWED |
+| `achieves SOTA` / `beats SOTA` / `comparable to SOTA` | 0 | CLEAN |
+| `outperform*` | ch02:266, ch05:98–99 | ch02:266 — **other** (task-adapted/text-aligned) systems outperform frozen-feature ones: the honesty-ceiling statement itself; ch05:98–99 — internal gated-vs-late ablation claim (the exact analog of the two 12-VERIFICATION KNOWN-ALLOWED lines). **0 disallowed** |
+| `surpass` / `beats` | ch07:273 | FDPN footnote quoting that paper's own "narrowly beats" self-report (external attribution). ALLOWED |
+| online/streaming TTA claims | ch01:232, ch03:316/:403, ch06:76/:132/:368–369, ch08:92–98/:165–168 | every hit is either the protocol name ("continual-online", TENT/SAR's own terminology), a future-work pointer, or an explicit **negation** — ch08:98: "we make no online-adaptation claim". **0 disallowed** |
+| clean-AUC TTA gains | ch06:19, abstract:47, ch01:230, ch03:403 region, ch09:57 | all negations/caps: "no method in this chapter changes clean-data [metrics]", "no gain claimed on clean data", "improves AUC \emph{under corruption} only", "not clean[-data] improvement". **0 disallowed** |
+| "%" used on TTA gains (points required) | 0 | all ch06 gains denominated in "points" (grep for `+N.NN\%` gain phrasing: 0 hits); ch06:19 states the convention explicitly ("gains, stated in points") |
+
+**Total disallowed overclaim hits: 0.** (6 negations, 2 descriptive headers, 1 external
+self-report, 2 internal-ablation claims — all itemized above.)
+
+### Required framings — located (file:line)
+
+| # | Required framing | Locations |
+|---|---|---|
+| 1 | No-SOTA / no-peak-score statement | ch07:204, ch07:257, ch07:378, ch09:73; ch01:220 ("\textbf{No peak-score claim.}"); abstract:34–35 ("not a new peak score") |
+| 2 | ~88–91% field-ceiling disclosure | abstract:32, ch01:221–222 (+ ch02:266 qualitative ceiling statement) |
+| 3 | Fair-subset framing (ch07) | ch07:16 (intro pointer), ch07:333 ("\textit{Read of the fair subset.} Within this strictly-frozen / no-text ...") |
+| 4 | "+13.2 … single most-degraded condition" | abstract:46, ch01:212, ch06:303 (fig caption), ch06:329 (prose) |
+| 5 | Transductive disclosure (ch03/ch06/ch08) | ch03:334, ch03:359, ch03:401; ch06:366–370; ch08:92–98, :123, :165–168; also ch07:165, ch09:57, abstract:46, ch01:232 |
+| 6 | λ2 smoothness-implementation footnote (ch04) | ch04:237–247 ("shifts the headline UCF-Crime AUC by at most 0.13 percentage points") |
+| 7 | 64-frame exclusion disclosures (ch03/ch04) | ch03:114 (paper L136 sentence verbatim: "Videos shorter than 64 frames (172 videos in UCF-Crime, one in XD-Violence) are excluded…"); ch04:29 ("254 meet the 64-frame minimum") + ch04:76 |
+| 8 | "small but consistent" complementarity (ch05) | ch05:231 (\emph{small but consistent}); also ch01:184, ch07:29, ch09:21, abstract:28 |
+
+All 8 required framings present. **Audit E: PASS.**
+
+## Audit F — Headline byte-consistency
+
+Full occurrence inventory (rendered lines only):
+
+**82.5 — 22 occurrences:** abstract:26 · ch01:179, :220 · ch05:47, :49 (table cells), :78, :137, :188 · ch06:52 · ch07:68, :244, :306, :325, :337, :358, :407 · ch08:18, :48, :61 · ch09:30, :37. Every occurrence is byte-exactly `82.5`; wherever a std is attached it is `$\pm$0.4` (ch01:179, :220; ch05:47, :49, :78, :137; ch07:68; ch08:18). Near-string `82.51` (ch07:293) is HyperVD's visual-only variant — an external verified number, not drift.
+
+**78.7 — 21 occurrences:** abstract:27 · ch01:180, :220 · ch05:69 (table cell), :79, :204, :213 · ch07:69, :244, :306, :325, :334, :358, :403, :445 · ch08:21, :44, :63 · ch09:31, :37. Every occurrence byte-exactly `78.7`; std wherever given is `$\pm$0.9` (ch01:180, :220; ch05:69, :79; ch07:69; ch08:21). Near-string `78.72` (ch08:146) is the Pri-3 smoothing baseline (78.72→79.29, +0.57), cited to the tracked REVIEW-2026-06-10 tracker — the explicitly permitted context.
+
+**Drift guard:** `82.49` — exactly 1 occurrence (ch05:331), the s42 bootstrap point
+estimate inside the Pri-6 CI paragraph — the ONLY permitted context. `79.74` — 1
+occurrence (ch05:333), same context. No other precision variants of either headline
+exist anywhere in `thesis/`.
+
+Plan gate check: abstract + ch09 contain ≥2 occurrences of 82.5 (3 found: abstract:26,
+ch09:30, ch09:37) ✓; `achieves SOTA` = 0 ✓; the single `state-of-the-art performance`
+token match is the mandated negation at ch07:204, dispositioned above ✓.
+
+**Audit F: PASS — headlines byte-consistent everywhere; zero unexplained drift.**
+
+---
+
+## OVERALL VERDICT (Tasks 1 + 2): **PASS**
+
+Number audit PASS (Audits A–D) · Overclaim scan PASS with 0 disallowed hits and all 8
+required framings located (Audit E) · Headlines 82.5 / 78.7 byte-consistent across
+abstract, ch01, ch05, ch06, ch07, ch08, ch09 with ±0.4 / ±0.9 wherever std is given
+(Audit F).
