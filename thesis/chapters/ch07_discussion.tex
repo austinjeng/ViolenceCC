@@ -4,9 +4,445 @@
 \chapter{Discussion}
 \label{ch:07}
 
-PLACEHOLDER-W0 --- Wave-1 writer: expand the paper's five discussion threads
-(paper/main.tex L362--374) + full SOTA positioning lifted from
-paper/sota\_comparison\_full.tex between the FRAGMENT BODY BEGIN/END markers
-(L65/L329); rewire manual [N] labels to \textbackslash cite (Pitfall 14). Use
-the POST-260622-ukd state: Light-WVAD XD cell is `---'. Delete this marker
-when drafting.
+The preceding two chapters reported the fusion, backbone, robustness, and
+test-time-adaptation results largely on their own terms. This chapter steps
+back and discusses the patterns that cut across those sections: why a weak
+skeleton stream still helps a strong visual-language stream, why the two
+benchmarks prefer different visual backbones, why fixed-weight late fusion
+fails where learned gating succeeds, what the failure of entropy-minimization
+test-time adaptation reveals about LayerNorm-based fusion heads, and what the
+frozen-backbone design costs and buys computationally. The chapter closes with
+a full comparison against the published state of the art
+(Section~\ref{sec:sota}), including the fair-subset analysis that defines the
+regime in which this work's numbers are directly comparable.
+
+\section{The Complementarity Argument}
+\label{sec:disc-complementarity}
+
+Despite achieving only 68.8\% AUC in isolation on UCF-Crime (and 40.8\% AP on
+XD-Violence), the skeleton modality consistently improves gated fusion
+performance over visual-only baselines. Across all eight
+backbone$\times$dataset configurations evaluated in Chapter~\ref{ch:05}, gated
+fusion meets or exceeds its visual-only counterpart --- strictly positive in
+six configurations with two ties, a pattern unlikely under a no-effect null
+(tie-dropping sign test, $p \approx 0.03$) --- with a mean gain of $+0.6$
+points. The gain is small but consistent, and that combination is precisely
+what one expects from a modality that contributes \emph{orthogonal}
+information: motion dynamics that appearance-based vision-language models do
+not capture, rather than a redundant re-encoding of what the visual stream
+already knows.
+
+The strongest single piece of evidence that the network extracts genuine
+signal from the skeleton stream is the gated mechanism's large advantage over
+fixed equal-weight late fusion on XD-Violence, where gating raises the CLIP
+backbone's AP from 63.9\% to 76.5\% --- a 12.6-point gap. A redundant or
+pure-noise modality could not produce this behavior: if the skeleton features
+carried no usable information, no input-dependent weighting scheme could
+recover 12 points of AP by consulting them. The gap instead indicates that the
+skeleton stream is informative for some inputs and misleading for others, and
+that the value of the modality is only realized when the network can decide,
+per input, how much to trust it.
+
+The per-class analysis in Appendix~\ref{app:b} probes the mechanism directly.
+If skeleton features contribute motion information, the fusion gain should
+concentrate in human-motion-centric anomaly categories. The observed pattern
+is directionally supportive but mixed and noisy: human-motion categories show
+a mean per-class gain of $+0.31 \pm 1.08$ points (positive in 7 of 10
+categories), appearance-centric categories $-0.29 \pm 0.16$ (positive in 0 of
+3), a difference of $+0.60$ points, with Shooting ($+1.05 \pm 0.20$) the
+cleanest single-category signal. Per-class sample sizes on UCF-Crime are
+small, so we present this as a consistency check on the mechanism rather than
+as an independent statistical result.
+
+Two honest qualifications frame the argument. First, the magnitude is modest
+and backbone-dependent: complementarity here means ``meets or exceeds, usually
+by a little,'' not a transformative gain. Second, the complementarity claim is
+about the \emph{fusion} of the streams, not about parity between them --- the
+skeleton stream on its own is far below the visual stream on both benchmarks,
+and nothing in our results suggests otherwise.
+
+\section{Dataset-Specific Backbone Preferences}
+\label{sec:disc-backbones}
+
+The divergence between UCF-Crime and XD-Violence in optimal backbone selection
+--- SigLIP2 Giant for UCF-Crime ($82.5 \pm 0.4$\% AUC under gated fusion),
+SigLIP2 SO400M for XD-Violence ($78.7 \pm 0.9$\% AP) --- has practical
+implications for system deployment. UCF-Crime consists of fixed-camera
+surveillance footage where the larger Giant backbone's richer representations
+may better disambiguate fine-grained anomaly categories. XD-Violence draws
+from heterogeneous sources including movies, sports broadcasts, and news
+footage, where SO400M's shape-optimized architecture may provide a better
+capacity fit.
+
+Notably, the XD-Violence preference is not visible in the visual-only
+baselines, which sit within seed variance of one another; it emerges only
+under fusion. This means the interaction is not simply ``a better visual
+encoder wins'' --- the preference reflects how each backbone's feature
+geometry combines with the skeleton stream through the learned gate. A
+backbone ranking obtained from visual-only probes, or from general-purpose
+retrieval and classification benchmarks, would not have predicted the fusion
+ranking on XD-Violence.
+
+This finding cautions against selecting a visual backbone for anomaly
+detection based on general-purpose benchmarks alone and suggests that
+dataset-specific evaluation is essential. The frozen-backbone design makes
+such evaluation cheap (Section~\ref{sec:disc-efficiency}): swapping the
+backbone requires re-extracting features once and retraining only the fusion
+head, so a per-deployment backbone sweep is a matter of minutes of training
+time per candidate rather than days of fine-tuning.
+
+\section{The Late-Fusion Failure Mode}
+\label{sec:disc-latefusion}
+
+The consistent underperformance of late fusion relative to both gated fusion
+and, in some cases, visual-only baselines warrants attention. Late fusion
+combines the two modalities with a fixed equal weight, so when the skeleton
+signal quality is low --- as reflected by its 68.8\% standalone AUC on
+UCF-Crime and 40.8\% AP on XD-Violence --- it still contributes half of every
+score, degrading inputs where the visual stream alone is more reliable. On
+UCF-Crime the best late-fusion configuration reaches only $79.9 \pm 0.8$\%
+AUC, and the CLIP late-fusion variant (78.9\%) falls below its own visual-only
+baseline (81.2\%): adding the skeleton stream at a fixed mix actively hurts.
+On XD-Violence the failure is more dramatic --- late fusion collapses to
+63.6--65.7\% AP across backbones, more than 10 points below gated fusion in
+every configuration.
+
+The asymmetry between the two datasets is informative. The quality gap between
+the modalities is much larger on XD-Violence (skeleton-only 40.8\% AP versus
+visual-only in the mid-70s) than on UCF-Crime, and equal-weight averaging is
+most damaging precisely when the mixed streams are most unequal. The gated
+mechanism instead learns an input-dependent, per-dimension reweighting over a
+residual baseline, allowing it to reduce the skeleton stream's relative
+contribution for inputs where visual features are more informative --- and to
+do so continuously, per feature dimension, rather than with a single global
+mixing coefficient. The lesson for multi-modal VAD systems is that the
+decision of \emph{how much} to trust an auxiliary modality is itself learnable
+signal, and discarding it (as any fixed mixing scheme does) can cost more than
+the auxiliary modality contributes.
+
+\section{Test-Time Adaptation and the LayerNorm Barrier}
+\label{sec:disc-ln-barrier}
+
+Our TTA results (Chapter~\ref{ch:06}) are an informative negative finding with
+implications beyond VAD. Entropy-minimization methods such as
+TENT~\cite{wang2021tent} and SAR~\cite{niu2023sar} were designed for BatchNorm
+networks, where adaptation recalibrates the running mean and variance
+statistics that summarize the source distribution~\cite{ioffe2015batchnorm}.
+Our fusion head normalizes with LayerNorm~\cite{ba2016layernorm}, which keeps
+no such running statistics --- normalization is computed per sample --- so on
+each batch these methods can only nudge the LayerNorm affine parameters
+($\gamma$, $\beta$; 1{,}536 scalars in our head). With the visual-language
+backbone, the gate, and the detection head all frozen, the corruption-induced
+shift lives upstream in the frozen features, and affine updates of this size
+are far too small to reorder a rank-based AUC --- leaving the metric
+essentially unchanged ($<0.1$ points across all four backbones and three
+seeds).
+
+The failure is structural, not a matter of tuning. A rank-based metric such as
+AUC is invariant to any monotone transformation of the scores; to improve it,
+an adaptation method must \emph{reorder} snippets, and a 1,536-parameter
+affine correction applied after frozen feature extraction has almost no
+capacity to do so. Forcing the features back toward the clean statistics
+directly, in the style of statistic-restoration methods such as
+NORM~\cite{schneider2020norm} or correlation alignment~\cite{sun2016coral},
+does reach the right space but is rank-disruptive in our experiments, with an
+effect whose sign flips across backbones. The lesson is not that the
+corruptions are benign --- source-only corrupted AUC drops by roughly twenty
+points --- but that adaptation confined to LayerNorm affine parameters cannot
+move a frozen, rank-based detector.
+
+What does work here is to change \emph{which} modality the frozen fusion
+trusts: the label-free discriminative-reliability reweighting of
+Section~\ref{sec:disc} routes the gated fusion toward the corruption-robust
+skeleton stream when the visual-language stream's discriminative signal
+collapses, recovering corrupted-AUC on all four backbones (mean $+1.21$
+points) without updating a single parameter. This suggests that robustness for
+frozen LayerNorm-based fusion heads is better pursued through
+reliability-aware routing --- or, more broadly, prompt- or adapter-based
+mechanisms that alter the features themselves --- than through affine
+test-time adaptation. We emphasize that these gains concern corrupted-input
+robustness only, are largest where exactly one modality degrades, and rely on
+a transductive protocol whose limitations are discussed in
+Chapter~\ref{ch:08}.
+
+\section{Computational Efficiency}
+\label{sec:disc-efficiency}
+
+Our frozen-backbone design yields a lightweight trainable component: the gated
+fusion head contains 0.50M (CLIP) to 1.02M (SigLIP2 Giant) trainable
+parameters, scaling with the visual feature dimension $d_v$, as only the
+projection, gating, and MIL detection-head layers are learned. Training
+completes in under 5 minutes per configuration on a single RTX 4090. This
+efficiency enables the comprehensive multi-backbone evaluation presented in
+this thesis --- four visual backbones, two datasets, six fusion variants, and
+three seeds per configuration --- which would be infeasible with end-to-end
+backbone fine-tuning on the same hardware.
+
+The efficiency argument is a deployment argument as much as a research-budget
+one. Because all learned capacity lives in a sub-megaparameter head on top of
+cached features, the marginal cost of retraining --- for a new site, a new
+threshold policy, or a newly released vision-language backbone --- is minutes,
+not GPU-days, and the feature extraction pipeline is shared across every
+variant. Section~\ref{sec:sota} returns to this point quantitatively when
+comparing against methods whose inference alone requires data-center-class
+GPUs.
+
+\section{Comparison with the State of the Art}
+\label{sec:sota}
+
+\noindent\textit{Metric definitions (stated once).}
+On \textbf{UCF-Crime} we report \textbf{frame-level ROC-AUC (\%)}; on
+\textbf{XD-Violence} we report \textbf{Average Precision (AP) / AUPRC (\%)}
+--- \emph{not} ROC-AUC. Several cited papers publish both an XD ROC-AUC and an
+XD AP (e.g.\ EventVAD~\cite{shao2025eventvad} 87.51 AUC vs 64.04 AP;
+LAVAD~\cite{zanella2024lavad} 85.36 AUC vs 62.01 AP); we
+tabulate only the AP. The \textbf{Setting} column encodes, compactly, whether
+the backbone is frozen vs.\ (partly) fine-tuned, whether a learnable text/prompt
+branch is used, whether audio is used, and whether the reported metric is
+frame-level or video-level, so a reader can see at a glance which rows are
+\emph{not} apples-to-apples with a frozen, visual-only, frame-level system.
+We do \emph{not} claim state-of-the-art performance; the honest claim is
+competitiveness within the constrained frozen / visual-only / single-GPU regime
+(Table~\ref{tab:sota-fair}).
+
+\begin{table}[p]
+\centering
+\singlespacing
+\caption{Published-numbers comparison on UCF-Crime (frame-level ROC-AUC, \%)
+and XD-Violence (Average Precision, \%), sorted by UCF AUC descending. The
+\textbf{This work} row is placed at its true position and shown in
+\textbf{bold}; it is never a bare head-to-head, because the \textbf{Setting}
+column makes each row's regime explicit. Superscripts mark per-number caveats
+(see notes below the table).}
+\label{tab:sota-full}
+\small
+\setlength{\tabcolsep}{4pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{l c l c c l}
+\toprule
+Method & Year & Venue & UCF AUC & XD AP & Setting \\
+\midrule
+GS-MoE$^{a}$~\cite{damicantonio2025gsmoe} & 2025 & ICCV'25 (arXiv)   & 91.58 & 82.89 & Frozen feats, no-text, frame; MoE experts \\ % VERIFIED 2026-06-22: GS-MoE 91.58 UCF / 82.89 XD AP confirmed from arXiv:2508.06318 Table 1 (I3D, RGB-only, no text); ICCV 2025 poster
+PI-VAD~\cite{majhi2025pivad}              & 2025 & CVPR'25           & 90.33 & 85.37 & Frozen I3D + 5 train-only modalities, text(train), frame \\
+Holmes-VAD$^{b}$~\cite{zhang2024holmesvad} & 2024 & arXiv'24          & 89.51 & 90.67 & MLLM LoRA-tuned, text, frame; heavy VRAM \\ % RE-VERIFY: Holmes-VAD 89.51/90.67 arXiv preprint, no peer-reviewed venue; partial MLLM LoRA training (not frozen-feature)
+DSANet~\cite{yin2026dsanet}               & 2026 & AAAI'26           & 89.44 & 86.95 & Frozen CLIP + V-L alignment, text, frame \\
+Holmes-VAU$^{c}$~\cite{zhang2025holmesvau} & 2025 & CVPR'25           & 88.96 & 87.68 & LoRA MLLM + sampler, text, \emph{VIDEO-level} \\ % RE-VERIFY: Holmes-VAU 88.96/87.68 are VIDEO-LEVEL (398-sample split), NOT frame-level; disclose or omit from frame-level head-to-head
+STPrompt~\cite{wu2024stprompt}            & 2024 & ACM MM'24         & 88.08 & N/A$^{d}$ & Frozen CLIP + ST prompts, text, frame; XD not eval. \\
+FDPN$^{e}$~\cite{song2025fdpn}            & 2025 & WACV'25           & 88.03 & N/A$^{e}$ & I3D RGB, frame; self-report, XD not eval. \\ % RE-VERIFY: FDPN 88.03 LOW conf, niche WACV-25 paper's OWN method (+0.01 over VadCLIP self-report); XD not evaluated -- re-check primary or drop
+VadCLIP~\cite{wu2024vadclip}              & 2024 & AAAI'24           & 88.02 & 84.51 & Frozen CLIP + dual-branch, text, frame \\
+TPWNG~\cite{yang2024tpwng}                & 2024 & CVPR'24           & 87.79 & 83.68 & CLIP text-proj fine-tuned, text, frame; self-train \\
+CLIP-TSA~\cite{joo2023cliptsa}            & 2023 & ICIP'23           & 87.58 & 82.19$^{f}$ & Frozen CLIP \emph{visual-only}, no-text, frame \\ % RE-VERIFY: CLIP-TSA XD = 82.19 (primary AUC@PR); VadCLIP table = 82.17 (0.02 drift); NEVER the paper's own 94.02 (non-comparable protocol)
+MGFN~\cite{chen2023mgfn}                  & 2023 & AAAI'23           & 86.98 & 79.19$^{g}$ & Frozen I3D feats, no-text, frame \\ % RE-VERIFY: MGFN XD = 79.19 is the I3D-RGB AP (NOT 80.11, which is the VideoSwin variant); keep one backbone (I3D)
+UR-DMU~\cite{zhou2023urdmu}               & 2023 & AAAI'23           & 86.97 & 81.66 & Frozen I3D feats, no-text, frame; single-GPU \\
+PEL4VAD~\cite{pu2024pel4vad}              & 2024 & IEEE TIP'24       & 86.76 & 85.59 & Frozen I3D + CLIP text prompts, text, frame \\
+PiercingEye$^{h}$~\cite{leng2026piercingeye} & 2026 & IEEE TPAMI'26     & 86.64 & 88.82 & Frozen I3D+VGGish+text, \emph{audio}+text, frame \\ % RE-VERIFY: PiercingEye XD = 88.82 LOW conf (inferred from relative gains) and is AUDIO+visual+text; UCF 86.64 is visual-only
+AnomalyCLIP$^{i}$~\cite{zanella2024anomalyclip} & 2024 & CVIU'24           & 86.36 & 78.51 & Frozen CLIP latent dirs, text, frame \\ % RE-VERIFY: AnomalyCLIP 86.36/78.51 LOW conf (not re-verified from primary table); the ~90.3 leaderboard figure is recognition mAUC, a DIFFERENT task -- do not cite it as detection AUC
+TEVAD$^{j}$~\cite{chen2023tevad}          & 2023 & CVPRW'23          & 84.9  & 79.8  & Frozen I3D + caption text, text, frame \\ % RE-VERIFY: TEVAD XD ~= 79.8 MEDIUM precision (headline 79.8, ablation variants 79.3-79.76); disregard '88.28' web misattribution
+Light-WVAD~\cite{wang2024lightwvad}       & 2024 & Neurocomp.'24     & 84.7  & ---   & Frozen I3D, no-text, frame; consumer-GPU head (XD not evaluated) \\
+RTFM~\cite{tian2021rtfm}                  & 2021 & ICCV'21           & 84.30 & 77.81 & Frozen I3D feats, no-text, frame; lightweight \\
+EventVAD$^{k}$~\cite{shao2025eventvad}    & 2025 & ACM MM'25         & 82.03 & 64.04 & Training-free 7B MLLM, text, frame; 80GB A800 \\ % RE-VERIFY: EventVAD XD = 64.04 (AP); do NOT cite 87.51 (that is the XD ROC-AUC). Training-free != low-compute
+\textbf{This work (dual-modal fusion)} & \textbf{2026} & \textbf{(thesis)} & \textbf{82.5} & \textbf{78.7} & \textbf{Frozen skel+CLIP/SigLIP2, no-text, frame; 1$\times$RTX 4090} \\
+LAVAD~\cite{zanella2024lavad}             & 2024 & CVPR'24           & 80.28 & 62.01 & Training-free 13B-LLM pipeline, text, frame \\ % RE-VERIFY: LAVAD XD = 62.01 (AP), NOT 85.36 (its XD ROC-AUC); double-check AP not AUC
+Sultani et al.$^{l}$~\cite{sultani2018ucfcrime} & 2018 & CVPR'18           & 75.41 & ---$^{l}$ & Frozen C3D, FC+MIL, no-text, frame; founding baseline \\ % RE-VERIFY: Sultani XD 73.20 is NOT from the 2018 paper -- it is Wu et al. ECCV 2020's re-impl; attribute correctly or omit the XD cell
+HyperVD$^{m}$~\cite{peng2024hypervd}      & 2024 & Image\,\&\,Vis.\,Comp.'24 & N/A$^{m}$ & 85.67 & Frozen I3D+VGGish, \emph{audio}, frame; UCF not rep. \\ % RE-VERIFY: HyperVD is AUDIO-VISUAL (85.67 AP); visual-only variant = 82.51; UCF not reported -- label modality if compared
+Ghadiya et al.$^{n}$~\cite{ghadiya2024crossmodal} & 2024 & CVPRW'24 (MULA)   & N/A$^{n}$ & 86.34 & Frozen I3D+VGGish, \emph{audio}, frame; UCF not rep. \\ % RE-VERIFY: Ghadiya 86.34 MEDIUM conf, AUDIO-VISUAL workshop preprint; UCF not reported -- not comparable to visual/skeleton-only
+\bottomrule
+\end{tabular}%
+}
+
+\vspace{2pt}
+\scriptsize
+\begin{flushleft}
+\textit{Metric:} UCF AUC $=$ frame-level ROC-AUC (\%); XD AP $=$ Average
+Precision / AUPRC (\%). \textbf{We do not claim state-of-the-art}; rows above
+this work add a learnable text branch, audio, an MLLM, partial fine-tuning, or
+a video-level metric (see Setting / notes), so a bare head-to-head against them
+is not apples-to-apples (Table~\ref{tab:sota-fair}).\par\smallskip
+\textit{Per-number caveats.}
+$^{a}$\,GS-MoE 91.58\,/\,82.89: confirmed from the arXiv:2508.06318 primary table
+(I3D, RGB-only, no text); ICCV 2025 poster. Omitted from the main comparison only
+because its trained per-category mixture-of-experts head exceeds the single-GPU-class regime.
+$^{b}$\,Holmes-VAD 89.51/90.67: arXiv preprint (no confirmed peer-reviewed venue);
+MLLM LoRA fine-tuned --- not a frozen-feature head.
+$^{c}$\,Holmes-VAU 88.96/87.68: \textbf{VIDEO-LEVEL} AUC/AP on a 398-sample split,
+\emph{not} frame-level; apples-to-oranges vs.\ all frame-level rows including this
+work --- do not tabulate without disclosing the metric difference.
+$^{d}$\,STPrompt: XD-Violence is \emph{not} evaluated (benchmarks: UCF /
+ShanghaiTech / UBnormal); any XD value would be fabricated.
+$^{e}$\,FDPN 88.03: LOW confidence; the paper's own method, $+0.01$ over VadCLIP
+(a ``narrowly beats'' self-report); XD not evaluated.
+$^{f}$\,CLIP-TSA XD $=$ 82.19 (primary AUC@PR); the 82.17 that circulates is from
+VadCLIP's secondary table; the paper's own 94.02 uses a non-comparable protocol
+--- do not use it.
+$^{g}$\,MGFN XD $=$ 79.19 is the \textbf{I3D-RGB} AP; 80.11 is the VideoSwin
+variant. UCF 86.98 is I3D; we keep a single (I3D) backbone per row.
+$^{h}$\,PiercingEye XD $=$ 88.82 is \textbf{audio$+$visual$+$text}; UCF 86.64 is
+visual-only; LOW confidence (AP inferred/cross-checked).
+$^{i}$\,AnomalyCLIP 86.36/78.51: LOW confidence (detection-task numbers); the
+$\sim$90.3 leaderboard figure is recognition mAUC, a different task.
+$^{j}$\,TEVAD XD $\approx$ 79.8: MEDIUM precision (ablation variants 79.3--79.76);
+the ``88.28'' web snippet is a misattribution.
+$^{k}$\,EventVAD XD $=$ 64.04 is the AP; the paper's XD ROC-AUC is 87.51 (different
+metric); training-free but runs a 7B MLLM on an 80GB A800.
+$^{l}$\,Sultani XD: the 73.20 AP often quoted is \emph{not} from the 2018 paper
+(XD did not exist until 2020); it is Wu et al.'s ECCV-2020 re-implementation ---
+attribute to Wu et al., not Sultani; XD cell omitted here.
+$^{m}$\,HyperVD UCF not reported (XD-focused); XD 85.67 is audio-visual
+(visual-only variant $=$ 82.51).
+$^{n}$\,Ghadiya et al.\ 86.34: MEDIUM confidence, audio-visual workshop preprint;
+UCF not reported --- not comparable to visual/skeleton-only methods.
+\end{flushleft}
+\end{table}
+
+%% --- Fair-subset (apples-to-apples) table ---
+\begin{table}[p]
+\centering
+\singlespacing
+\caption{Fair-subset (apples-to-apples) comparison. \textbf{Subset definition:}
+frozen features, no backbone fine-tuning, no learnable text/prompt branch,
+visual-only RGB (or RGB$+$skeleton), and a single-GPU-class feature head. This
+is the regime in which this work's 82.5\% UCF AUC / 78.7\% XD AP is most
+directly comparable; methods with text/prompt branches, audio, MLLMs, partial
+fine-tuning, or video-level evaluation are excluded (reasons in
+Table~\ref{tab:sota-full}). Because \emph{every} row is, by construction, the
+same setting, a per-row Setting column is unnecessary here --- the setting is
+captured once by this caption. \textbf{Metric:} UCF AUC $=$ frame-level ROC-AUC
+(\%); XD AP $=$ Average Precision (\%). \textbf{This work} in \textbf{bold}.}
+\label{tab:sota-fair}
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{l c c c p{0.40\linewidth}}
+\toprule
+Method & Year & UCF AUC & XD AP & Why it qualifies \\
+\midrule
+CLIP-TSA~\cite{joo2023cliptsa} & 2023 & 87.58 & 82.19 & Frozen CLIP \emph{visual-only}, no text branch --- the closest analogue (CLIP feats, no prompts) \\
+UR-DMU~\cite{zhou2023urdmu}    & 2023 & 86.97 & 81.66 & I3D frozen feats, no text, no fine-tune, RGB-only \\
+MGFN-I3D~\cite{chen2023mgfn}   & 2023 & 86.98 & 79.19 & I3D frozen feats, no text, RGB-only (I3D XD to keep one backbone) \\
+Light-WVAD~\cite{wang2024lightwvad} & 2024 & 84.7  & ---   & Frozen I3D, lightweight head, no text --- explicit consumer-GPU efficiency play (XD not evaluated) \\
+RTFM~\cite{tian2021rtfm}       & 2021 & 84.30 & 77.81 & Frozen I3D feats, no text, the canonical MIL anchor \\
+\textbf{This work} & \textbf{2026} & \textbf{82.5} & \textbf{78.7} & Frozen skeleton (CTR-GCN) $+$ frozen CLIP/SigLIP2, gated fusion $+$ MIL head only, no text, single 4090 \\
+Sultani et al.~\cite{sultani2018ucfcrime} & 2018 & 75.41 & ---   & Frozen C3D, FC $+$ MIL ranking; founding baseline (XD number is a later re-impl, omitted) \\
+\bottomrule
+\end{tabular}
+
+\vspace{2pt}
+\footnotesize
+\begin{flushleft}
+\textit{Read of the fair subset.} Within this strictly-frozen / no-text /
+RGB($+$skeleton)-only band, this work's \textbf{78.7\% XD AP is essentially on
+par with RTFM (77.81) and MGFN-I3D (79.19)} and clearly
+above the Sultani lineage, while sitting below the CLIP-visual-feature ceiling
+of CLIP-TSA (82.19) and UR-DMU (81.66). On UCF, 82.5\% trails the frozen-feature
+pack (RTFM 84.30, UR-DMU 86.97, CLIP-TSA 87.58) but exceeds Sultani's 75.41
+baseline by $\sim$7 points. The closest single comparator, CLIP-TSA, uses CLIP
+\emph{visual} features with a temporal self-attention module and
+multi-crop-style aggregation that this work deliberately omits; we hypothesize
+the residual gap to it stems from that temporal-modeling and aggregation
+machinery rather than from feature quality, but we do not isolate this
+experimentally.
+\end{flushleft}
+\end{table}
+
+\subsection{Positioning}
+\label{sec:sota-positioning}
+
+\noindent\textbf{Positioning.} The central claim of this work is a contribution
+\emph{orthogonal} to peak benchmark AUC---a reproducible, single-GPU dual-modal
+fusion pipeline with a label-free robustness mechanism; within-regime
+competitiveness (clearest on XD-Violence) is presented below as supporting
+evidence, not as a claim to the leaderboard.\par\medskip
+
+\noindent\textbf{Scope and the deliberate-constraint frame.}
+Our system reports 82.5\% frame-level AUC on UCF-Crime and 78.7\% AP on
+XD-Violence under a deliberately constrained regime: both the skeleton backbone
+(CTR-GCN, pre-trained on NTU-120) and the vision-language backbone
+(CLIP/SigLIP2) are kept fully frozen, only a gated fusion module and an MIL
+classifier are trained, and no learnable text-prompt branch, no audio stream,
+and no heavy temporal graph are used, all on a single 24\,GB RTX 4090. These are
+not incidental shortcomings but the experimental envelope of the thesis. The
+strongest reported numbers in the field are obtained under materially heavier
+budgets: VadCLIP~\cite{wu2024vadclip} (88.02\% UCF / 84.51\% XD, AAAI 2024),
+TPWNG~\cite{yang2024tpwng} (87.79 / 83.68,
+CVPR 2024) and DSANet~\cite{yin2026dsanet} (89.44 / 86.95, AAAI 2026) all add a
+learnable vision-language text-alignment branch; PI-VAD~\cite{majhi2025pivad}
+(90.33 / 85.37, CVPR 2025) induces
+five auxiliary modalities at training time; and
+Holmes-VAD~\cite{zhang2024holmesvad}/Holmes-VAU~\cite{zhang2025holmesvau}
+fine-tune a multimodal LLM. The 5--9 point UCF gap to these systems is
+therefore best read as the cost of the components we intentionally excluded,
+not as a deficiency of the fusion approach itself.
+
+\medskip\noindent\textbf{The contribution axis is orthogonal to peak AUC.}
+The thesis does not claim a new state of the art on clean benchmark AUC; its
+contributions lie on a different axis. First, it demonstrates a working
+dual-modal fusion of frozen skeleton dynamics (CTR-GCN) with frozen
+vision-language semantics through learned gated fusion, a combination not
+represented among the visual-only and audio-visual methods above, and quantifies
+the fusion gain over each single-stream baseline (skeleton-only 68.8\% / 40.8\%;
+visual-only CLIP 81.2\% / 74.6\%; SigLIP2-Giant 82.4\% / 76.8\%). Second, it
+provides a systematic four-backbone comparison (CLIP ViT-B/16, SigLIP2 ViT-B/16,
+SigLIP2 SO400M, SigLIP2 Giant) revealing dataset-specific backbone preferences.
+Third, and most distinctively, it studies test-time adaptation for frozen
+dual-modal VAD: it shows that entropy-minimization TTA
+(TENT~\cite{wang2021tent}, SAR~\cite{niu2023sar}) cannot
+improve rank-based detection metrics, and proposes a label-free
+discriminative-reliability reweighting that improves \emph{corrupted-AUC}
+(robustness, not clean-benchmark AUC) on all four backbones (mean $+1.2$ points, up
+to $+13.2$ points on the hardest corruption). None of the higher-AUC methods above
+report a corruption-robustness or test-time-adaptation study of this kind, so
+the work occupies a complementary niche rather than competing for the top
+leaderboard slot.
+
+\medskip\noindent\textbf{Competitiveness within the comparable regime (supporting evidence).}
+With the contribution framed above, within-regime competitiveness is supporting
+evidence rather than the central claim, and it differs by metric. Restricted to
+the apples-to-apples subset (Table~\ref{tab:sota-fair}) --- fully frozen
+features, no text branch, no fine-tuning, a single-GPU-class head --- on
+XD-Violence our 78.7\% AP is on par with RTFM~\cite{tian2021rtfm} (77.81\%,
+ICCV 2021), MGFN's~\cite{chen2023mgfn} I3D
+variant (79.19\%), and well above
+the founding Sultani et al.~\cite{sultani2018ucfcrime} MIL baseline. On
+UCF-Crime, our 82.5\% clears
+Sultani (75.41\%) but trails every modern method in this same frozen-feature
+band --- RTFM (84.30\%), Light-WVAD~\cite{wang2024lightwvad} (84.7\%),
+UR-DMU~\cite{zhou2023urdmu} (86.97\%), MGFN (86.98\%),
+and CLIP-TSA~\cite{joo2023cliptsa} (87.58\%) --- so the competitiveness is
+clearest on XD-Violence AP
+and weakest on UCF-Crime AUC. The closest single comparator is CLIP-TSA
+(87.58\% / 82.19\%), which, like us, uses frozen CLIP visual features with no
+text branch; we hypothesize that the residual gap to it stems from its temporal
+self-attention module and multi-crop aggregation --- components our minimal head
+omits --- rather than from feature quality, but we do not isolate this
+experimentally. Read against its true peer group rather than against fine-tuned
+or multimodal systems, the fusion pipeline is a reasonable mid-pack entry on
+XD-Violence rather than an outlier.
+
+\medskip\noindent\textbf{Reproducibility and transparency as a deliberate virtue.}
+All thesis numbers are reported as means over three random seeds on fixed
+train/val splits with a single evaluation protocol, and the headline figures are
+git-reproducible from a committed frame-count manifest. This contrasts with
+several of the highest numbers in the literature, which are single-run preprints
+(e.g.\ Holmes-VAD's~\cite{zhang2024holmesvad} 89.51\% / 90.67\%, an unrefereed
+preprint).
+It also contrasts with comparisons that quietly mix evaluation protocols ---
+Holmes-VAU's~\cite{zhang2025holmesvau} 88.96\% / 87.68\% are video-level
+metrics on a 398-sample split,
+not the frame-level ROC-AUC / AP that every weakly-supervised baseline (and this
+thesis) uses. By keeping the backbone frozen, the head tiny, the seeds fixed,
+and the metric definitions explicit (UCF $=$ frame-level ROC-AUC; XD $=$ Average
+Precision), the work prioritizes a number a reader can trust and reproduce over
+a number that is merely higher.
+
+\medskip\noindent\textbf{Compute honesty: training-free is not low-compute.}
+A final positioning point concerns budget. Two recent training-free LLM methods,
+LAVAD~\cite{zanella2024lavad} (80.28\% / 62.01\%, CVPR 2024) and
+EventVAD~\cite{shao2025eventvad} (82.03\% / 64.04\%, ACM MM
+2025), require running 13B and 7B multimodal LLMs at inference (LAVAD on dual
+RTX 3090s, EventVAD on an 80\,GB A800), yet our frozen dual-modal head on a single
+24\,GB consumer GPU matches or exceeds them on UCF and substantially exceeds both
+on XD-Violence AP (78.7\% vs 62.01\% / 64.04\%). This makes a concrete point that
+``training-free'' does not imply ``cheap,'' and that a small trainable head on
+frozen features remains a strong, deployable trade-off for a single-GPU
+researcher. The thesis's value is precisely this corner of the design space:
+reproducible, consumer-GPU-feasible, multimodal-by-fusion, and explicitly
+robustness-aware, rather than a pursuit of the absolute highest benchmark AUC.
