@@ -208,3 +208,25 @@ Number audit PASS (Audits A–D) · Overclaim scan PASS with 0 disallowed hits a
 required framings located (Audit E) · Headlines 82.5 / 78.7 byte-consistent across
 abstract, ch01, ch05, ch06, ch07, ch08, ch09 with ±0.4 / ±0.9 wherever std is given
 (Audit F).
+
+---
+
+# Task 3 — Final Clean Build + Repo Hygiene (gate record)
+
+Run 2026-07-06, post-audit, from the phase-exit worktree state:
+
+| Gate | Result |
+|---|---|
+| `build_thesis.ps1 -Clean` exit code | **0** |
+| Built-in log scan | **clean** ("no errors, no undefined refs/citations") |
+| `main.log` undefined refs/citations (independent re-grep) | **0** |
+| PDF produced | `thesis/main.pdf`, **128 pages total** (4,380,966 bytes) |
+| **Arabic body page count** | **110 pages** (frontmatter i–xv+ = 18 roman pages; ch01 restarts at arabic p. 1; App F ends p. 101; bibliography through p. 110) — **inside the 90–120 target** |
+| `pytest -q` (vcc-main) | **322 passed, 0 failed** (156 s) — baseline held |
+| `git status --porcelain` | **clean** (0 lines; no build artifacts tracked or stray) |
+
+**Task 3: PASS — all automated phase gates green.**
+
+---
+
+## FINAL VERDICT: **PASS** (all phase-exit audits + gates green; awaiting final user approval)
