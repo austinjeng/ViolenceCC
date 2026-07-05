@@ -276,40 +276,10 @@ setting, multiple backbones, and 3-seed reporting. The value of the sweep is
 its \emph{shape}, which is a property of the loss landscape rather than of the
 exact configuration.
 
-% Source: results/results-index.csv sweep rows (tracked), regenerated via
-% scripts/generate_phase7_charts.py. HISTORICAL-BASELINE GUARD: the embedded
-% "P4 baseline" annotation (0.8227 AUC) is the 2026-05 sweep-era CLIP/s42
-% configuration -- never chain to the 82.5 headline.
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=\textwidth]{figures/fig_sweep_s01_ucf.png}
-  \caption{UCF-Crime learning-rate $\times$ top-$k$ sweep heatmap (AUC, seed
-  42). \emph{Historical configuration:} the sweep and its embedded ``P4
-  baseline'' annotation (82.27\% AUC) use the 2026-05 sweep-era configuration
-  (CLIP ViT-B/16 backbone, pre-$\lambda_2{=}0$, seed 42) and are not
-  comparable to the final 3-seed headline numbers in
-  Table~\ref{tab:ucf-ablation}.}
-  \label{fig:sweep-ucf}
-\end{figure}
-
-% Source: results/results-index.csv sweep rows (tracked), regenerated via
-% scripts/generate_phase7_charts.py. Same historical-baseline guard: embedded
-% "P4c baseline" 0.7192 AP is sweep-era -- never chain to the 78.7 headline.
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=\textwidth]{figures/fig_sweep_s02_xd.png}
-  \caption{XD-Violence learning-rate $\times$ top-$k$ sweep heatmap (AP, seed
-  42). \emph{Historical configuration:} the sweep and its embedded ``P4c
-  baseline'' annotation (71.92\% AP) use the 2026-05 sweep-era configuration
-  (CLIP ViT-B/16 backbone, pre-$\lambda_2{=}0$, seed 42) and are not
-  comparable to the final 3-seed headline numbers in
-  Table~\ref{tab:xd-ablation}.}
-  \label{fig:sweep-xd}
-\end{figure}
-
-Figures~\ref{fig:sweep-ucf} and~\ref{fig:sweep-xd} show the two sweep
-heatmaps (99 configurations per dataset, seed 42, with 3-seed confirmation
-runs at the winning cells). The two datasets answer the tuning question in
+The two sweep heatmaps (99 configurations per dataset, seed 42, with 3-seed
+confirmation runs at the winning cells) appear at full scale in
+Appendix~\ref{app:c} as Figures~\ref{fig:appc-sweep-ucf}
+and~\ref{fig:appc-sweep-xd}. The two datasets answer the tuning question in
 opposite ways:
 
 \begin{itemize}

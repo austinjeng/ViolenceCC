@@ -320,7 +320,9 @@ SigLIP2 Giant  & +1.69 & 0.00 & 0.00 & 0.00 \\
 \end{figure}
 
 Table~\ref{tab:tta_breakdown} and Figure~\ref{fig:severity-heatmap} decompose
-the gain. It is concentrated almost entirely on Gaussian noise: $+4.83$
+the gain, and Figure~\ref{fig:corruption-disc-reweight} shows the resulting
+absolute per-condition AUC. The gain is concentrated almost entirely on
+Gaussian noise: $+4.83$
 points averaged across backbones and severities within that family (per
 backbone $+2.67$ / $+5.99$ / $+8.95$ / $+1.69$ for CLIP / Base / SO400M /
 Giant), growing with severity, and peaking at $+13.2$ points for SigLIP2

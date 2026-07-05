@@ -49,12 +49,9 @@
 
 %%
 %% Bibliography (vendored thesis/IEEEtranN.bst + natbib [numbers,sort&compress])
-%% W0 smoke test: \nocite{*} forces the full bibliography through the vendored
-%% IEEEtranN.bst so staged-entry syntax errors surface at Wave 0 (placeholder
-%% chapters cite nothing yet). Wave-3 integration removes this once chapters
-%% carry real \cite coverage.
+%% The Wave-0 \nocite{*} smoke test was removed in Wave-3 integration (13-12):
+%% chapter \cite coverage is complete (42/42 bib keys cited; verified).
 %%
-\nocite{*}
 \bibliographystyle{IEEEtranN}
 \bibliography{references}
 
