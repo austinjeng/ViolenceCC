@@ -4,9 +4,237 @@
 \chapter{Related Work}
 \label{ch:02}
 
-PLACEHOLDER-W0 --- Wave-1 writer: expand from paper \S2 (paper/main.tex
-L88--109) into full surveys: weakly supervised VAD lineage, skeleton-based
-action recognition (ST-GCN to CTR-GCN; PYSKL), vision-language backbones,
-test-time adaptation (TENT, SAR, NORM, CORAL; BN-vs-LN argument). Primary
-expansion source: 12-RESEARCH-sota.md. Trap: never resurrect the fabricated
-Light-WVAD XD 77.3 (Pitfall 4). Delete this marker when drafting.
+This thesis draws on four research lineages: weakly supervised video anomaly detection
+(Section~\ref{sec:rw-wsvad}), skeleton-based action recognition and its use in anomaly detection
+(Section~\ref{sec:rw-skeleton}), vision-language backbones as frozen feature extractors
+(Section~\ref{sec:rw-vlm}), and test-time adaptation under distribution shift
+(Section~\ref{sec:rw-tta}). Each section traces the developments most relevant to the design
+decisions of Chapter~\ref{ch:03} and closes by positioning this work within the lineage.
+Quantitative comparisons against the methods surveyed here are deferred to the verified
+comparison tables of Chapter~\ref{ch:07}; this chapter describes mechanisms and lineage, not
+leaderboards.
+
+\section{Weakly Supervised Video Anomaly Detection}
+\label{sec:rw-wsvad}
+
+\subsection{MIL Ranking Foundations}
+
+The weakly supervised formulation of video anomaly detection was established by Sultani et
+al.~\cite{sultani2018ucfcrime}, who made two lasting contributions. The first is the UCF-Crime
+dataset: 1,900 untrimmed real-world surveillance videos across thirteen anomaly categories, with
+only video-level labels for training and frame-level annotations reserved for evaluation. The
+second is the multiple instance learning (MIL) ranking framework that nearly all subsequent work
+builds on: each video is a bag of temporal segments, and a ranking loss drives the maximum
+predicted anomaly score of an anomalous bag above that of a normal bag, supplemented by sparsity
+and temporal-smoothness regularizers. With C3D features, the original method reported 75.41\%
+frame-level ROC-AUC on UCF-Crime, the reference point from which the field has advanced.
+
+Wu et al.~\cite{wu2020xdviolence} broadened the empirical foundation with XD-Violence, a
+4,754-video multi-modal benchmark whose footage comes from movies, sports broadcasts, news, and
+online media rather than fixed surveillance cameras, and which is evaluated by frame-level average
+precision (AP) rather than ROC-AUC. Their HL-Net baseline also introduced audio as an auxiliary
+modality, foreshadowing the multi-modal directions surveyed below. Together, UCF-Crime and
+XD-Violence remain the two principal violence-oriented WSVAD benchmarks and are the two used
+throughout this thesis.
+
+\subsection{Feature-Magnitude, Memory, and Uncertainty Methods}
+
+A second generation of methods refined how the MIL signal is extracted from precomputed motion
+features. RTFM~\cite{tian2021rtfm} (Robust Temporal Feature Magnitude learning) observed that
+selecting instances by raw anomaly score is brittle and instead learns feature magnitudes such
+that the top-$k$ largest-magnitude segments discriminate anomalous from normal bags, combined
+with dilated temporal convolutions and self-attention; with I3D features it reached 84.30\% AUC on
+UCF-Crime and 77.81\% AP on XD-Violence, and its top-$k$ selection and regularization scheme have
+become standard components---including in the training objective adopted in
+Chapter~\ref{ch:03} of this thesis.
+
+UR-DMU~\cite{zhou2023urdmu} augments the MIL pipeline with dual memory units---separate learnable
+memory banks for normal and abnormal prototypes---together with an uncertainty-regulated
+representation that models normal-pattern variance explicitly, allowing the detector to separate
+hard normal segments from genuinely anomalous ones. MGFN~\cite{chen2023mgfn} (Magnitude-Contrastive
+Glance-and-Focus Network) mimics human inspection by first \emph{glancing} over the whole video to
+acquire global context and then \emph{focusing} on candidate anomalous regions, with a
+magnitude-contrastive loss that encourages separability of normal and abnormal feature magnitudes
+across scenes. Both lines demonstrate that architectural priors on \emph{how} evidence is
+accumulated over time can substantially improve a fixed feature representation---a lesson that
+transfers to the fusion-head design in this thesis, which likewise keeps its features frozen and
+concentrates learning in a small evidence-aggregation module.
+
+Efficiency-oriented variants also exist within this generation:
+Light-WVAD~\cite{wang2024lightwvad} combines adaptive instance selection with a deliberately
+lightweight architecture to cut parameter count while remaining competitive on UCF-Crime,
+a design goal shared by the sub-million-parameter fusion head of this thesis.
+
+\subsection{The CLIP Era}
+
+The arrival of strong vision-language models shifted the field's feature basis from
+action-recognition backbones (C3D, I3D) to contrastively trained image encoders.
+CLIP-TSA~\cite{joo2023cliptsa} was among the first to pair frozen CLIP features with a temporal
+self-attention module for WSVAD, showing that image-text pretraining transfers to anomaly
+detection despite CLIP never having seen anomaly labels. VadCLIP~\cite{wu2024vadclip} went
+further, exploiting not only CLIP's visual features but its aligned text space: a dual-branch
+design combines a conventional binary scoring branch with a language-image alignment branch driven
+by learnable prompts, reaching 88.02\% AUC on UCF-Crime and 84.51\% AP on XD-Violence and
+demonstrating how much headroom text alignment adds over purely visual scoring.
+
+Several works refined the text-side machinery. TPWNG~\cite{yang2024tpwng} uses text prompts with
+normality guidance to generate pseudo-labels for finer temporal alignment.
+PEL4VAD~\cite{pu2024pel4vad} enhances context features through prompt-based semantic priors drawn
+from external knowledge, tightening the alignment between anomaly concepts and visual context.
+STPrompt~\cite{wu2024stprompt} learns spatio-temporal prompt embeddings to localize anomalies in
+both time and space while suppressing background influence. TEVAD~\cite{chen2023tevad} takes a
+complementary route, augmenting visual features with text features derived from automatically
+generated video captions to capture semantics that appearance alone misses.
+AnomalyCLIP~\cite{zanella2024anomalyclip} analyses CLIP's latent space directly, isolating a
+normality subspace and scoring anomalies by directed distances in that space, and additionally
+addresses anomaly \emph{recognition} (classifying the anomaly type) alongside detection.
+
+Two aspects of this lineage matter for the present thesis. First, all of these methods are
+single-modality in the sense that every input signal ultimately derives from the RGB frames
+consumed by one visual backbone (plus, in some cases, its paired text encoder); none incorporates
+an explicit articulated-motion modality. Second, the strongest results in this family rely on
+text-branch supervision or backbone adaptation, whereas the pipeline studied here deliberately
+keeps the backbone frozen and uses no text branch---a design choice whose cost and benefits are
+quantified in Chapters~\ref{ch:05} and~\ref{ch:07}.
+
+\subsection{MLLM-Based and Training-Free Methods}
+
+The most recent shift leverages large language models and multi-modal LLMs.
+LAVAD~\cite{zanella2024lavad} is entirely training-free: off-the-shelf captioning models describe
+each frame, and an LLM aggregates and scores the resulting textual descriptions, producing
+anomaly estimates with no VAD-specific training at all. EventVAD~\cite{shao2025eventvad} likewise
+avoids task-specific training, first segmenting videos into events via dynamic graph analysis and
+then scoring events with a multi-modal LLM. Holmes-VAD~\cite{zhang2024holmesvad} and its
+successor Holmes-VAU~\cite{zhang2025holmesvau} fine-tune multi-modal LLMs on purpose-built
+instruction datasets to produce not only anomaly scores but textual explanations, moving toward
+anomaly \emph{understanding} at multiple temporal granularities. These systems demonstrate
+impressive flexibility, but their inference cost is orders of magnitude above a lightweight
+fusion head, and their scores are produced by generative reasoning rather than a calibrated
+ranking head---trade-offs discussed further in Chapter~\ref{ch:07}.
+
+\subsection{Recent Multi-Modal and Structured Directions}
+
+Current work increasingly enriches WSVAD with additional modalities or structured representations.
+PI-VAD~\cite{majhi2025pivad} augments RGB representations with five auxiliary modalities---including
+pose, depth, and optical flow---distilled into the backbone via a poly-modal inductor, notably
+using auxiliary modalities only at training time. DSANet~\cite{yin2026dsanet} disentangles
+scene-general from scene-specific semantics to tell apart visually similar events across contexts.
+GS-MoE~\cite{damicantonio2025gsmoe} routes features through a mixture of experts guided by Gaussian
+splatter representations, capturing fine-grained temporal structure. PiercingEye~\cite{leng2026piercingeye}
+learns in a dual Euclidean--hyperbolic space to model the hierarchical severity structure of
+violent events. On the audio-visual side, HyperVD~\cite{peng2024hypervd} embeds audio-visual
+features in hyperbolic space for violence detection on XD-Violence, and Ghadiya et
+al.~\cite{ghadiya2024crossmodal} fuse audio and visual streams with cross-modal attention,
+both exploiting XD-Violence's audio track, which purely visual methods (including ours) do not use.
+
+The pose-as-auxiliary-signal element of PI-VAD~\cite{majhi2025pivad} is the closest point of
+contact with this thesis, and the contrast is instructive: PI-VAD distills pose (among other
+modalities) into a single fused representation inside a trained backbone pipeline, whereas this
+thesis keeps the skeleton stream as an explicit, separately encoded modality entering a
+lightweight learned gate---which is precisely what enables the test-time modality routing of
+Chapter~\ref{ch:06}, an option unavailable when auxiliary modalities are absorbed at training
+time. To our knowledge, no prior WSVAD system combines a frozen skeleton-graph encoder with
+frozen vision-language features through a learned gate, nor evaluates such a system across
+multiple visual backbones.
+
+\section{Skeleton-Based Action Recognition and Anomaly Detection}
+\label{sec:rw-skeleton}
+
+Skeleton-based action recognition classifies actions from sequences of human body keypoints
+rather than raw pixels. The modern lineage begins with ST-GCN~\cite{yan2018stgcn}, which
+represents the skeleton sequence as a spatio-temporal graph---joints as nodes, bones and temporal
+continuity as edges---and applies graph convolutions over this fixed, anatomically defined
+topology. Subsequent work progressively relaxed the fixed topology; CTR-GCN~\cite{chen2021ctrgcn}
+represents the state of this progression, learning \emph{channel-wise topology refinement}: a
+shared base topology is refined per feature channel, so different channels can attend to
+different joint relationships (for example, hand--hand interactions for clapping versus
+hip--knee--ankle chains for kicking). CTR-GCN's strong performance on the NTU RGB+D benchmarks,
+together with the reproducible training recipes and pretrained checkpoints of the PYSKL
+toolbox~\cite{yan2022pyskl}, make it a natural frozen encoder choice; this thesis uses the PYSKL
+NTU RGB+D 120 checkpoint with all four input streams (joint, bone, joint motion, bone motion) as
+described in Chapter~\ref{ch:03}.
+
+Skeleton input must itself be extracted from video. This thesis uses
+RTMPose~\cite{jiang2023rtmpose}, a real-time top-down pose estimator: a person detector proposes
+boxes, and a lightweight pose network regresses seventeen COCO-format keypoints per person via
+SimCC-style coordinate classification, providing an accuracy--throughput operating point suitable
+for processing hundreds of hours of surveillance footage on a single GPU.
+
+In anomaly detection, skeleton representations have been explored primarily in single-modal
+settings. Doshi and Yilmaz~\cite{doshi2022skeleton} formulate anomaly detection over pose
+trajectories in a modular framework, arguing that pose-based signals are robust to appearance
+nuisances and privacy-preserving relative to pixel-based methods. Skeleton-only anomaly detection
+performs best in constrained scenes (fixed cameras, pedestrians at moderate scale) where pose
+estimation is reliable and anomalies are motion-defined. Its known weaknesses---missed detections
+at low resolution, crowded scenes, and non-human anomalies such as explosions or vehicle
+accidents---are precisely the cases where appearance-based features excel, motivating the fusion
+studied here rather than a choice between the two modalities. Classical multi-stream fusion in
+action recognition, such as two-stream I3D over RGB and optical flow~\cite{carreira2017i3d},
+established that complementary input encodings improve recognition; this thesis transposes that
+principle to the weakly supervised anomaly setting with skeleton and vision-language streams.
+
+\section{Vision-Language Backbones}
+\label{sec:rw-vlm}
+
+The visual features in this thesis come from frozen vision-language image encoders, all built on
+the Vision Transformer~\cite{dosovitskiy2021vit}, which processes an image as a sequence of
+patches with self-attention. CLIP~\cite{radford2021clip} trains such an encoder jointly with a
+text encoder by contrastive learning over 400 million web image--text pairs, producing
+representations whose semantic breadth transfers to downstream tasks without fine-tuning---the
+property WSVAD methods of the CLIP era exploit. SigLIP~\cite{zhai2023siglip} replaces CLIP's
+softmax-based contrastive objective with a pairwise sigmoid loss, which removes the need for a
+global normalization over the batch and improves training efficiency and small-batch behavior.
+SigLIP2~\cite{tschannen2025siglip2} extends this recipe into a multilingual family trained with
+additional objectives---captioning-based pretraining, self-supervised distillation, and masked
+prediction---yielding improved dense and localization features across a range of model scales,
+including a shape-optimized ${\sim}$400M-parameter encoder (SO400M) whose width/depth allocation
+follows compute-optimal scaling analysis, and a giant-scale variant.
+
+This thesis treats the backbone as an experimental variable rather than a fixed choice: the same
+pipeline is evaluated over CLIP ViT-B/16, SigLIP2 ViT-B/16, SigLIP2 SO400M, and SigLIP2 Giant
+(exact checkpoints in Chapter~\ref{ch:03}), spanning two training objectives and an order of
+magnitude in encoder capacity. Prior WSVAD work almost universally reports a single backbone;
+the cross-backbone and cross-dataset interactions this design exposes are reported in
+Chapter~\ref{ch:05}.
+
+\section{Test-Time Adaptation}
+\label{sec:rw-tta}
+
+Test-time adaptation (TTA) adjusts a deployed model using only unlabeled test data, aiming to
+recover accuracy lost to distribution shift---sensor noise, blur, compression, weather---without
+retraining on labeled source data. The corruption-robustness setting that frames most TTA
+research was standardized by ImageNet-C~\cite{hendrycks2019imagenetc}, which applies synthetic
+corruptions at graded severities to a clean test set; the UCF-Crime-C benchmark constructed in
+Chapter~\ref{ch:04} follows this parameterization style.
+
+Two families of TTA methods are relevant here. The first adapts \emph{normalization statistics}.
+Schneider et al.~\cite{schneider2020norm} showed that much of the corruption-induced accuracy
+loss in BatchNorm~\cite{ioffe2015batchnorm} networks can be removed simply by replacing the
+running activation statistics estimated on clean training data with statistics computed on the
+corrupted test batch---no gradients required. This works because BatchNorm layers store an
+explicit summary of the source distribution that becomes stale under shift. Relatedly,
+CORAL~\cite{sun2016coral} aligns the second-order statistics (covariance) of source and target
+features through a linear map---a classic, hyperparameter-light domain adaptation technique that
+can be applied at test time to whiten-and-recolor corrupted features toward clean statistics.
+
+The second family performs \emph{entropy minimization}. TENT~\cite{wang2021tent} adapts the
+affine parameters of normalization layers by minimizing the Shannon entropy of the model's
+predictions on each test batch, sharpening decision confidence under shift; it established
+fully test-time adaptation as a practical setting. SAR~\cite{niu2023sar} hardens this recipe for
+deployment conditions in which plain entropy minimization collapses---small batches, class-imbalanced
+streams, mixed shifts---by filtering out high-entropy (unreliable) samples from the update and
+seeking flat minima via sharpness-aware minimization~\cite{foret2021sam}.
+
+Both families were designed around BatchNorm. LayerNorm~\cite{ba2016layernorm}, which normalizes
+each sample independently and maintains \emph{no} running statistics, changes the picture
+structurally: there is no stale source summary to refresh, so statistic-replacement methods have
+no direct target, and entropy-based methods can only nudge the LayerNorm affine parameters. SAR
+itself reports results on LayerNorm-based vision transformers, where the affine parameters remain
+the adaptation surface. What happens when that surface is confined to a small \emph{frozen-model
+fusion head}---and the evaluation metric is a rank statistic (AUC) invariant to monotone score
+changes---has not been examined in the VAD literature. Chapter~\ref{ch:06} shows empirically that
+in this configuration entropy minimization leaves the metric essentially unchanged on every
+backbone, that CORAL/NORM-style feature restoration is rank-disruptive with a backbone-dependent
+sign, and that a label-free reweighting of the two modality streams---exploiting the dual-modal
+structure that single-stream TTA methods do not have---recovers corrupted-input accuracy where
+those baselines cannot.
