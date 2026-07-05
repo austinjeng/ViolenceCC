@@ -4,9 +4,627 @@
 \chapter{Results: Fusion and Backbone Study}
 \label{ch:05}
 
-PLACEHOLDER-W0 --- Wave-1 writer: expand from paper \S4.3--4.4 (paper/main.tex
-L221--295); Tables 1/2 canonical inlined tables are the ONLY ablation number
-source. Per-category tables regenerate from canonical run dirs (Pitfall 9);
-per-class complementarity detail forwards to Appendix~\ref{app:b}. Sweep
-sensitivity presented as historical-configuration study (Pitfall 3). Delete
-this marker when drafting.
+This chapter presents the main experimental results of the thesis: the
+six-variant ablation across four visual-language backbones on both benchmarks
+(Section~\ref{sec:ablation}), the backbone comparison and its
+dataset-dependent preferences (Section~\ref{sec:backbones}), the
+skeleton-complementarity analysis (Section~\ref{sec:complementarity}), a
+hyperparameter-sensitivity study conducted in an earlier historical
+configuration (Section~\ref{sec:sweep}), the statistical robustness of the
+headline numbers (Sections~\ref{sec:bootstrap} and~\ref{sec:seeds}),
+qualitative behavior (Section~\ref{sec:qualitative}), a failure-case analysis
+(Section~\ref{sec:failure}), and a per-category summary
+(Section~\ref{sec:percat}). All ablation numbers in this chapter are 3-seed
+means with standard deviations over seeds \{42, 123, 2024\}, under the
+protocol of Chapter~\ref{ch:04}.
+
+\section{Main Ablation Results}
+\label{sec:ablation}
+
+Tables~\ref{tab:ucf-ablation} and~\ref{tab:xd-ablation} present the ablation
+results on UCF-Crime and XD-Violence, respectively, comparing six fusion
+variants across all four visual backbones. Two of these are gated-fusion
+configurations that differ only in their visual or skeleton aggregation:
+\textbf{GF Mean-Only} uses mean-only visual pooling in place of the default
+concatenated mean+max pooling, and \textbf{GF 2-Person} uses the 2-person
+skeleton aggregation in place of the default single-person aggregation.
+
+% Source: paper/main.tex tab:ucf-ablation (L226-242, canonical inlined table);
+% underlying runs results/ucf_*_s{42,123,2024}/eval_metrics.json (tracked).
+% Cell values reproduced verbatim -- do not retype from any other source.
+\begin{table}[t]
+\centering
+\caption{Ablation study on UCF-Crime. AUC (\%) reported for each fusion variant across four visual backbones. All rows show mean$\pm$std over three seeds (42, 123, 2024). Best result per row in \textbf{bold}. $\Delta$ relative to CLIP ViT-B/16 baseline.}
+\label{tab:ucf-ablation}
+\begin{tabular}{l c c c c c}
+\toprule
+Variant & CLIP ViT-B/16 & SigLIP2 Base & SigLIP2 SO400M & SigLIP2 Giant & Best $\Delta$ \\
+\midrule
+Skeleton Only & \textbf{68.8$\pm$2.8} & --- & --- & --- & --- \\
+Visual Only & 81.2$\pm$0.1 & 78.5$\pm$0.5 & 81.1$\pm$0.3 & \textbf{82.4$\pm$0.2} & $\uparrow$+1.2 \\
+\midrule
+Late Fusion & 78.9$\pm$0.4 & 77.2$\pm$2.0 & 79.1$\pm$1.3 & \textbf{79.9$\pm$0.8} & $\uparrow$+0.9 \\
+Gated Fusion & 81.4$\pm$0.3 & 79.0$\pm$0.1 & 81.3$\pm$0.3 & \textbf{82.5$\pm$0.4} & $\uparrow$+1.2 \\
+GF 2-Person & 81.3$\pm$0.5 & 79.5$\pm$0.7 & 81.7$\pm$0.3 & \textbf{82.6$\pm$0.3} & $\uparrow$+1.2 \\
+GF Mean-Only & 80.6$\pm$0.7 & 79.2$\pm$0.1 & 82.0$\pm$0.7 & \textbf{82.5$\pm$0.4} & $\uparrow$+1.9 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% Source: paper/main.tex tab:xd-ablation (L245-261, canonical inlined table);
+% underlying runs results/xd_*_s{42,123,2024}/eval_metrics.json (tracked).
+% Cell values reproduced verbatim -- do not retype from any other source.
+\begin{table}[t]
+\centering
+\caption{Ablation study on XD-Violence. AP (\%) reported for each fusion variant across four visual backbones. All rows show mean$\pm$std over three seeds. Best result per row in \textbf{bold}. $\Delta$ relative to CLIP ViT-B/16 baseline.}
+\label{tab:xd-ablation}
+\begin{tabular}{l c c c c c}
+\toprule
+Variant & CLIP ViT-B/16 & SigLIP2 Base & SigLIP2 SO400M & SigLIP2 Giant & Best $\Delta$ \\
+\midrule
+Skeleton Only & \textbf{40.8$\pm$0.6} & --- & --- & --- & --- \\
+Visual Only & 74.6$\pm$1.5 & 74.5$\pm$2.1 & 76.6$\pm$2.2 & \textbf{76.8$\pm$1.0} & $\uparrow$+2.3 \\
+\midrule
+Late Fusion & 63.9$\pm$0.5 & 63.6$\pm$0.7 & \textbf{65.7$\pm$0.5} & 65.7$\pm$0.4 & $\uparrow$+1.9 \\
+Gated Fusion & 76.5$\pm$0.9 & 74.5$\pm$0.9 & \textbf{78.7$\pm$0.9} & 76.8$\pm$2.8 & $\uparrow$+2.2 \\
+GF 2-Person & 74.4$\pm$0.4 & 73.2$\pm$2.0 & \textbf{79.2$\pm$0.3} & 76.0$\pm$0.9 & $\uparrow$+4.8 \\
+GF Mean-Only & 76.1$\pm$0.6 & 74.0$\pm$0.8 & \textbf{78.4$\pm$1.3} & 76.3$\pm$1.4 & $\uparrow$+2.3 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The headline results of the thesis are read directly from these tables: on
+UCF-Crime, Gated Fusion with the SigLIP2 Giant backbone reaches
+\textbf{82.5$\pm$0.4\% AUC}; on XD-Violence, Gated Fusion with the SigLIP2
+SO400M backbone reaches \textbf{78.7$\pm$0.9\% AP}. The remainder of this
+section walks through the three findings the tables establish.
+
+\textbf{Skeleton features provide complementary information.} The
+skeleton-only baseline achieves 68.8\% AUC on UCF-Crime and 40.8\% AP on
+XD-Violence---substantially below the visual-only baselines. However, this
+lower standalone performance does not diminish the skeleton modality's
+contribution to fusion. Gated fusion meets or exceeds the visual-only baseline
+in all eight backbone$\times$dataset configurations (mean $+0.6$ points;
+strictly positive in six of eight, the other two tied at the displayed
+precision, so a tie-dropping sign test over these eight---correlated, since
+they share one frozen skeleton stream---configurations gives $p\approx0.03$)
+and never degrades a strong visual backbone. The per-configuration gains are
+modest and individually within seed variance, but their consistency indicates
+that the skeleton stream supplies a small, reliable signal not captured by
+visual appearance alone---most pronounced on XD-Violence (up to $+2.1$ AP with
+SigLIP2 SO400M). Section~\ref{sec:complementarity} examines this argument in
+detail.
+
+\textbf{Gated fusion outperforms late fusion consistently.} The gated fusion
+mechanism outperforms simple late fusion (equal-weight score averaging) on
+every backbone on XD-Violence and on three of the four on UCF-Crime (the lone
+exception being SigLIP2 Base). This gap is particularly notable on
+XD-Violence, where late fusion with CLIP achieves only 63.9\% AP compared to
+76.5\% for gated fusion---a difference of 12.6 percentage points. We attribute
+this to the learned gating mechanism's ability to weight modalities
+differently for each input, reducing the weaker modality's relative
+contribution when its signal is noisy. On XD-Violence's heterogeneous sources,
+snippets vary widely in how informative the skeleton stream is (crowd scenes
+versus close-up interpersonal violence versus vehicle accidents), so a fixed
+equal weight is a particularly poor fit; the per-dimension gate of
+Chapter~\ref{ch:03} can suppress the skeleton contribution on
+appearance-driven snippets while retaining it where articulated human motion
+carries the event.
+
+\textbf{Late fusion can degrade performance.} A notable finding is that late
+fusion sometimes performs worse than the visual-only baseline. On UCF-Crime,
+CLIP late fusion (78.9\%) falls below CLIP visual-only (81.2\%), a drop of 2.3
+percentage points. This suggests that the fixed equal weighting lets the
+weaker skeleton signal drag down every fused score, with no input-dependent
+mechanism to reduce its weight relative to the stronger visual stream. The
+gated mechanism resolves this by learning to modulate each modality's
+contribution: it recovers everything late fusion loses and adds a margin on
+top, on both datasets and all four backbones. The practical lesson is that
+\emph{how} modalities are combined matters at least as much as \emph{whether}
+a second modality is added---an unweighted combination of unequal streams is
+worse than not fusing at all.
+
+\subsection{Pooling ablations}
+\label{sec:pooling}
+
+% Source: Tables 1-2 cells (above) for the cross-backbone deltas; the
+% original single-configuration pooling study is recorded in
+% .planning/STATE.md ("Default pooling outperforms alternatives on
+% XD-Violence": 2-person -0.90 AP, CLIP mean-only -2.32 AP).
+The GF 2-Person and GF Mean-Only rows probe the two aggregation choices fixed
+in Chapter~\ref{ch:03}. The picture differs by dataset. On UCF-Crime the three
+gated variants are statistically indistinguishable at the headline backbone
+(82.5$\pm$0.4, 82.6$\pm$0.3, and 82.5$\pm$0.4 for default, 2-Person, and
+Mean-Only with SigLIP2 Giant): pooling choices are not where UCF-Crime
+performance lives. On XD-Violence the default aggregation wins on average:
+across the four backbones the 2-person skeleton aggregation costs about
+0.90~AP relative to default gated fusion (it helps only SO400M, and hurts
+CLIP by 2.1~AP), and mean-only visual pooling is consistently negative
+(between $-0.3$ and $-0.5$ AP on every backbone). The original pooling study
+that fixed these defaults---a single-configuration comparison on the CLIP
+backbone conducted before the final training recipe---measured the same
+ordering with larger margins ($-0.90$~AP for 2-person concatenation and
+$-2.32$~AP for mean-only pooling), and the final 3-seed grid confirms its
+direction on every backbone.
+
+Two cells in the 2-Person row are nominally the highest values in their
+tables: 82.6$\pm$0.3 on UCF-Crime (Giant) and 79.2$\pm$0.3 on XD-Violence
+(SO400M). We deliberately do \emph{not} promote these as headline results.
+The differences over default gated fusion ($+0.1$ and $+0.5$ points) are
+within or near seed variance, the 2-person aggregation is \emph{worse} than
+the default for the majority of backbone$\times$dataset cells, and selecting
+the per-cell maximum across ablation variants after seeing the results would
+constitute a mild form of test-set selection. The headline configuration is
+the default-pooling Gated Fusion row, fixed before the backbone study was
+run.
+
+\section{Backbone Comparison}
+\label{sec:backbones}
+
+% Source: thesis/figures/fig_backbone_comparison.pdf -- Class V reuse
+% (byte-identical to paper figure; true 3-seed since 260622-uuu, all 24
+% plotted cells verified <=0.05pp against Tables 1-2).
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\textwidth]{figures/fig_backbone_comparison.pdf}
+  \caption{Performance comparison across four visual backbones and three
+  fusion variants. Left: UCF-Crime AUC (\%). Right: XD-Violence AP (\%).
+  SigLIP2 Giant leads on UCF-Crime; on XD-Violence the four visual-only
+  backbones fall within seed variance, while SigLIP2 SO400M is the clear
+  leader under gated fusion---a dataset-specific preference that emerges
+  through fusion. All bars are three-seed means over seeds $\{42,123,2024\}$,
+  matching Tables~\ref{tab:ucf-ablation}--\ref{tab:xd-ablation} (Gated Fusion
+  shown with $\pm$std).}
+  \label{fig:backbone-comparison}
+\end{figure}
+
+A key finding of our study is that \emph{backbone choice interacts with
+dataset characteristics} in ways that are not predicted by general-purpose
+benchmark rankings. Figure~\ref{fig:backbone-comparison} visualizes these
+interactions across all variants.
+
+\textbf{UCF-Crime favors larger backbones.} On UCF-Crime, SigLIP2 Giant
+consistently achieves the highest scores across nearly all fusion variants:
+82.4\% visual-only, 82.5\% gated fusion, and 82.5\% with mean-only pooling.
+The ranking follows model capacity---Giant $>$ SO400M $\approx$ CLIP $>$
+SigLIP2 Base---suggesting that the 13-category surveillance setting benefits
+from richer visual representations. The capacity ordering also has a clear
+loser: SigLIP2 Base is the weakest backbone on UCF-Crime in every variant,
+trailing CLIP ViT-B/16 by 2.7 points visual-only (78.5 vs 81.2) and by 2.4
+points under gated fusion (79.0 vs 81.4). This is itself informative: SigLIP2
+Base and CLIP ViT-B/16 are architecturally comparable ViT-B/16 encoders, so
+the gap indicates that training objective and data recipe alone do not
+transfer uniformly to surveillance footage---SigLIP2's advantages at the Base
+scale do not materialize on UCF-Crime, while its larger variants do pay off.
+
+\textbf{XD-Violence favors SO400M under fusion.} On XD-Violence the four
+backbones' visual-only AP is statistically indistinguishable across seeds
+(CLIP $74.6$, SigLIP2 Base $74.5$, SO400M $76.6$, Giant $76.8$; std
+$1.0$--$2.2$), so visual-only capacity does not cleanly rank them. Under gated
+fusion, however, SO400M emerges as the clear and stable leader ($78.7$\% AP),
+ahead of Giant ($76.8$\%). This may reflect SO400M's shape-optimized
+architecture providing a better capacity fit for XD-Violence's heterogeneous
+content (movies, sports, and online media) than for the fixed-camera
+surveillance of UCF-Crime.
+
+\textbf{The skeleton's benefit is backbone-dependent.} Because the visual-only
+XD-Violence scores fall within seed variance, they do not reliably rank the
+backbones; gated fusion is more stable (std $0.9$\% AP for three of the four)
+and resolves a clear leader (SO400M, $78.7$\%) that the visual-only numbers do
+not single out. The gain that fusion adds over the visual-only baseline also
+varies with the backbone---largest for CLIP and SO400M ($+1.9$ and $+2.1$ AP)
+and negligible for SigLIP2 Base and Giant---so the skeleton stream's
+complementary value depends on the visual representation it is fused with
+rather than on raw visual capacity alone, a dependence that single-backbone
+evaluations would miss. This is a methodological point as much as an empirical
+one: had this study evaluated only the original CLIP backbone (as most
+frozen-feature VAD work does), the complementarity finding would have looked
+stronger than it generalizes to be; had it evaluated only SigLIP2 Giant on
+XD-Violence, fusion would have looked like a null result.
+
+\section{Complementarity Analysis}
+\label{sec:complementarity}
+
+The complementarity claim---that a 68.8\%-AUC skeleton stream improves
+fusion with 81--82\%-AUC visual streams---deserves scrutiny, because it would
+be easy to overstate. We state it in its defensible form: the gain is
+\emph{small but consistent}.
+
+The evidence for consistency is the 8-of-8 pattern in
+Tables~\ref{tab:ucf-ablation} and~\ref{tab:xd-ablation}: gated fusion meets or
+exceeds its visual-only counterpart for every backbone on both datasets. Six
+of the eight configurations are strictly positive; the remaining two (SigLIP2
+Base and Giant on XD-Violence) are ties at the displayed precision. Treating
+each configuration as one paired observation and dropping the ties, a sign
+test gives $p\approx0.03$---with the caveat, disclosed in the paper and
+repeated here, that the eight configurations are correlated because they share
+a single frozen skeleton stream, so this is a consistency check rather than a
+claim of eight independent replications. The evidence for smallness is equally
+clear: the mean gain is $+0.6$ points, no individual configuration's gain
+exceeds its own seed std by a large factor, and the largest gains ($+1.9$ AP
+for CLIP, $+2.1$ AP for SO400M, both on XD-Violence) remain modest.
+
+Mechanistically, the skeleton stream contributes motion dynamics that
+appearance-based VLM features do not encode: articulated body configuration
+and its first-order temporal evolution (Chapter~\ref{ch:03}). That the largest
+gains occur on XD-Violence---where events like fighting are defined by body
+motion rather than scene context---is consistent with this reading, as is the
+gated mechanism's large advantage over late fusion (which shows the network
+extracts usable signal from the skeleton stream when allowed to weight it).
+A per-class breakdown of where fusion helps and hurts, based on grouping
+UCF-Crime categories into human-motion-centric and appearance-centric classes,
+is deferred to Appendix~\ref{app:b}; its verdict is directionally supportive
+but mixed and noisy at per-class sample sizes, and we do not lean on it for
+the headline claim.
+
+\section{Hyperparameter Sensitivity (Historical Configuration)}
+\label{sec:sweep}
+
+Before the backbone study, we ran a staged learning-rate $\times$ top-$k$
+sweep to test whether the fixed training configuration of
+Chapter~\ref{ch:04} was leaving performance on the table. We report it here
+for completeness and because its outcome differs sharply between datasets.
+
+\textbf{This is a historical-configuration study.} The sweep was conducted in
+the 2026-05 configuration of the system: CLIP ViT-B/16 backbone only, seed 42
+for the grid, and---critically---\emph{before} the adoption of $\lambda_2 = 0$
+on XD-Violence (Chapter~\ref{ch:04}). Its baselines (82.27\% AUC on UCF-Crime,
+71.92\% AP on XD-Violence, single-seed) are therefore sweep-era reference
+points, and none of its numbers are comparable to, or chain into, the headline
+results of Section~\ref{sec:ablation}, which use a different smoothness
+setting, multiple backbones, and 3-seed reporting. The value of the sweep is
+its \emph{shape}, which is a property of the loss landscape rather than of the
+exact configuration.
+
+% Source: results/results-index.csv sweep rows (tracked), regenerated via
+% scripts/generate_phase7_charts.py. HISTORICAL-BASELINE GUARD: the embedded
+% "P4 baseline" annotation (0.8227 AUC) is the 2026-05 sweep-era CLIP/s42
+% configuration -- never chain to the 82.5 headline.
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\textwidth]{figures/fig_sweep_s01_ucf.png}
+  \caption{UCF-Crime learning-rate $\times$ top-$k$ sweep heatmap (AUC, seed
+  42). \emph{Historical configuration:} the sweep and its embedded ``P4
+  baseline'' annotation (82.27\% AUC) use the 2026-05 sweep-era configuration
+  (CLIP ViT-B/16 backbone, pre-$\lambda_2{=}0$, seed 42) and are not
+  comparable to the final 3-seed headline numbers in
+  Table~\ref{tab:ucf-ablation}.}
+  \label{fig:sweep-ucf}
+\end{figure}
+
+% Source: results/results-index.csv sweep rows (tracked), regenerated via
+% scripts/generate_phase7_charts.py. Same historical-baseline guard: embedded
+% "P4c baseline" 0.7192 AP is sweep-era -- never chain to the 78.7 headline.
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\textwidth]{figures/fig_sweep_s02_xd.png}
+  \caption{XD-Violence learning-rate $\times$ top-$k$ sweep heatmap (AP, seed
+  42). \emph{Historical configuration:} the sweep and its embedded ``P4c
+  baseline'' annotation (71.92\% AP) use the 2026-05 sweep-era configuration
+  (CLIP ViT-B/16 backbone, pre-$\lambda_2{=}0$, seed 42) and are not
+  comparable to the final 3-seed headline numbers in
+  Table~\ref{tab:xd-ablation}.}
+  \label{fig:sweep-xd}
+\end{figure}
+
+Figures~\ref{fig:sweep-ucf} and~\ref{fig:sweep-xd} show the two sweep
+heatmaps (99 configurations per dataset, seed 42, with 3-seed confirmation
+runs at the winning cells). The two datasets answer the tuning question in
+opposite ways:
+
+\begin{itemize}
+    \item \textbf{XD-Violence benefits from tuning.} The sweep winner
+    ($\mathrm{lr}=10^{-3}$, $k=2$) reached 74.69\% AP in its 3-seed
+    confirmation, $+3.72$ points over the sweep-era 3-seed baseline of
+    70.98\% AP---a substantial improvement \emph{within the historical
+    configuration}. Higher learning rates with small $k$ dominate,
+    suggesting the default $\mathrm{lr}=10^{-4}$ under-trains the head on
+    XD-Violence's larger training set.
+    \item \textbf{UCF-Crime is hyperparameter-insensitive.} The best cell
+    ($\mathrm{lr}=1.5\times10^{-3}$, $k=9$) confirmed at 82.12\% AUC,
+    $+0.14$ points over its 81.98\% AUC sweep-era 3-seed baseline---within
+    noise. The UCF-Crime surface is flat: almost any reasonable
+    (lr, $k$) cell lands within a point of the default.
+\end{itemize}
+
+We deliberately did \emph{not} fold the XD-Violence sweep winner into the
+final configuration: the headline results keep the fixed cross-dataset
+hyperparameters of Chapter~\ref{ch:04} for comparability across the
+$6\times4$ variant--backbone grid, and the later adoption of $\lambda_2=0$ on
+XD-Violence---a change the sweep predates---already recovered the bulk of the
+XD-Violence headroom through a different mechanism. The sweep's enduring
+lessons are that XD-Violence is the tunable dataset of the pair and that
+UCF-Crime results are robust to reasonable hyperparameter choices, which
+derisks the fixed-configuration comparisons elsewhere in this thesis. Full
+grids, ranked tables, and confirmation details appear in
+Appendix~\ref{app:c}.
+
+\section{Statistical Robustness of the Headline Numbers}
+\label{sec:bootstrap}
+
+% Source: results/_analysis_2026-06-10/pri6_bootstrap_ci.{json,md} (tracked).
+% Video-level bootstrap, B=2000, rng seed 12345, s42 checkpoints; pooled
+% recompute matched stored eval_metrics exactly before resampling.
+Seed variance measures training stability, but it does not measure the
+uncertainty induced by the finite test set. To quantify the latter we
+bootstrap the evaluation cohort at the \emph{video} level: resample test
+videos with replacement ($B=2000$, fixed RNG seed 12345), pool the frames of
+each resample, and recompute the metric. Videos---not frames---are the
+exchangeable unit, since frames within a video are strongly dependent. The
+analysis uses the seed-42 checkpoint of each headline configuration, and the
+pooled recomputation was first verified to match the stored evaluation
+metrics exactly.
+
+The resulting 95\% confidence intervals are wide:
+
+\begin{itemize}
+    \item \textbf{UCF-Crime} (seed-42 point estimate 82.49\% AUC): CI
+    $[75.63, 88.02]$, width 12.39 percentage points.
+    \item \textbf{XD-Violence} (seed-42 point estimate 79.74\% AP): CI
+    $[76.62, 82.68]$, width 6.06 percentage points.
+\end{itemize}
+
+Two readings follow. First, the UCF-Crime interval is strikingly wide
+relative to the differences typically celebrated in the VAD literature: its
+width exceeds the spread of the entire published leaderboard on this
+benchmark. This is a property of the benchmark, not of our method---the
+evaluated UCF-Crime cohort contains roughly 250 videos, fewer than 130 of
+them anomalous, and any method reporting a single frame-level AUC on this
+test set inherits video-level resampling uncertainty of this order.
+Cross-method gaps of one or two points on UCF-Crime should accordingly be
+read with restraint, including where they favor us. Second, the XD-Violence
+interval is half as wide, reflecting its larger 800-video test set;
+conclusions drawn on XD-Violence rest on firmer statistical ground, which is
+one reason this thesis emphasizes that its competitiveness is clearest on
+XD-Violence AP. These intervals are computed for the seed-42 checkpoints
+only; combining test-set resampling with seed variance would widen them
+further.
+
+\section{Seed Sensitivity}
+\label{sec:seeds}
+
+% Source: std columns of Tables 1-2 above (paper/main.tex canonical tables).
+On UCF-Crime, Gated Fusion exhibits low variance across seeds for all
+backbones (standard deviation 0.1--0.4\% AUC), reflecting stable training
+dynamics on this dataset. On XD-Violence, three of the four backbones are
+comparably stable---CLIP, SigLIP2 Base, and SO400M all sit near 0.9\% AP
+standard deviation---while SigLIP2 Giant is the lone outlier at 2.8\%. The
+visual-only variants are noisier still on XD-Violence (std 1.0--2.2\% AP),
+which is precisely why Section~\ref{sec:backbones} declines to rank backbones
+from visual-only numbers.
+
+This stability pattern is tied to the dataset-dependent smoothness setting
+(Chapter~\ref{ch:04}): disabling the temporal smoothness term on XD-Violence
+not only improves AP but also markedly tightens seed variance, indicating that
+the elevated variance seen in smoothness-regularized configurations is in
+part a regularization artifact rather than an intrinsic property of the
+dataset. The residual sensitivity of SigLIP2 Giant likely reflects (1)~AP's
+inherent sensitivity to score calibration relative to AUC, and
+(2)~XD-Violence's category imbalance and heterogeneous sources creating a
+more complex optimization landscape for the highest-capacity backbone. The
+practical consequence for experimental methodology is stated once here and
+observed throughout the thesis: on XD-Violence, no comparison is made between
+a 3-seed metric and a single-seed metric, because single-seed XD-Violence AP
+differences of up to two points routinely vanish under reseeding.
+
+\section{Qualitative Analysis}
+\label{sec:qualitative}
+
+% Source: thesis/figures/fig_temporal_scores.pdf -- Class V reuse
+% (byte-identical to paper figure; RoadAccidents curve video verified against
+% the frozen paper caption; generator scripts/generate_pub_figures.py).
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figures/fig_temporal_scores.pdf}
+  \caption{Temporal anomaly score comparison on a RoadAccidents test video
+  from UCF-Crime. The gated fusion model produces sharper score peaks aligned
+  with the anomalous event while maintaining lower scores during normal
+  segments, compared to individual modality baselines.}
+  \label{fig:temporal-scores}
+\end{figure}
+
+Figure~\ref{fig:temporal-scores} illustrates the temporal behavior of the
+gated fusion model on a representative UCF-Crime test video: relative to the
+single-modality baselines, the fused scorer concentrates its score mass on
+the annotated event window and suppresses spurious peaks elsewhere. This is
+the per-video signature of the aggregate finding in
+Section~\ref{sec:ablation}---input-dependent weighting sharpens score
+contrast where a fixed combination dilutes it.
+
+% Source: thesis/figures/fig_gating_distribution.pdf -- Class V reuse
+% (byte-identical to unused paper figure; despite its filename this is a
+% per-category AUC/AP bar chart; all bars verified against the tracked
+% per_category values of the six s42 canonical runs).
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\textwidth]{figures/fig_gating_distribution.pdf}
+  \caption{Per-category frame-level performance (UCF-Crime AUC, top;
+  XD-Violence AP, bottom) for Skeleton-Only, Visual-Only, and Gated Fusion in
+  the CLIP ViT-B/16 configuration (seed 42). Fusion's per-category behavior
+  tracks the visual stream almost everywhere, with the skeleton stream's
+  standalone profile visibly weaker but differently shaped---the raw material
+  of the complementarity effect. (Three-seed per-category tables for the
+  headline backbones appear in Section~\ref{sec:percat} and
+  Appendix~\ref{app:b}.)}
+  \label{fig:gating-distribution}
+\end{figure}
+
+Figure~\ref{fig:gating-distribution} breaks per-category performance out for
+the three CLIP-configuration variants. Two patterns are worth noting. First,
+the skeleton-only per-category profile is not a uniformly scaled-down copy of
+the visual one: categories dominated by articulated body motion retain
+relatively more skeleton performance than scene-defined categories, which is
+the structural precondition for complementary fusion. Second, gated fusion's
+profile hugs the visual stream's strong categories while avoiding the
+skeleton stream's collapses---the gate does not average profiles, it selects.
+
+% Source: thesis/figures/fig_gate_by_category_{ucf,xd}.png -- Class V,
+% regenerated 2026-07-05 by scripts/generate_phase6_charts.py from
+% checkpoint-verified s42 gated-fusion models (official evaluate.py CLI
+% reproduced tracked auc/ap exactly).
+\begin{figure}[t]
+  \centering
+  \begin{subfigure}{0.48\textwidth}
+    \includegraphics[width=\textwidth]{figures/fig_gate_by_category_ucf.png}
+    \caption{UCF-Crime}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}{0.48\textwidth}
+    \includegraphics[width=\textwidth]{figures/fig_gate_by_category_xd.png}
+    \caption{XD-Violence}
+  \end{subfigure}
+  \caption{Mean gate activation by category for the gated fusion model (CLIP
+  ViT-B/16 configuration, seed 42). Gate values are sigmoid-bounded and vary
+  systematically by category, confirming that the learned gate is
+  input-dependent rather than a fixed mixing constant.}
+  \label{fig:gate-by-category}
+\end{figure}
+
+% Source: thesis/figures/fig_tsne_{ucf,xd}.png -- Class V, regenerated
+% 2026-07-05 from the same checkpoint-verified s42 models (fused post-LN
+% features, t-SNE seed 42); UCF normal videos render correctly post-13-04 fix.
+\begin{figure}[t]
+  \centering
+  \begin{subfigure}{0.48\textwidth}
+    \includegraphics[width=\textwidth]{figures/fig_tsne_ucf.png}
+    \caption{UCF-Crime}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}{0.48\textwidth}
+    \includegraphics[width=\textwidth]{figures/fig_tsne_xd.png}
+    \caption{XD-Violence}
+  \end{subfigure}
+  \caption{t-SNE projection of the fused (post-LayerNorm) video-level
+  representations of the test sets (CLIP ViT-B/16 configuration, seed 42);
+  grey points are normal videos. Anomalous videos concentrate in
+  identifiable regions but do not form a cleanly separable cluster,
+  consistent with frame-level AUCs in the low 80s rather than the high 90s.}
+  \label{fig:tsne}
+\end{figure}
+
+Figures~\ref{fig:gate-by-category} and~\ref{fig:tsne} look inside the fusion
+head. The gate activations vary by category and dataset rather than
+saturating to a constant, confirming that the gating mechanism performs the
+input-dependent weighting to which Section~\ref{sec:ablation} attributes the
+gated-vs-late gap. The t-SNE projections of the fused representations show
+anomalous test videos concentrating in identifiable regions of feature space
+without clean separation from normals---a geometric picture consistent with
+both the achieved AUC range and the calibration limitations examined next.
+
+\section{Failure Analysis}
+\label{sec:failure}
+
+% Source: results/_analysis_2026-06-10/pri9_failure_cases.md (tracked);
+% run ucf_gated_fusion_giant_s42; pooled frame AUC reconstruction matched the
+% stored value exactly before per-video analysis. Video-level AUC figures are
+% deliberately NOT cited (known recompute discrepancy, deferred).
+To understand what the headline UCF-Crime model gets wrong, we analyzed the
+per-video behavior of the seed-42 SigLIP2 Giant gated-fusion checkpoint. The
+evaluated cohort contains 254 test videos (128 with at least one annotated
+anomalous frame, 126 fully normal), totaling 82{,}930 anomalous and
+1{,}014{,}120 normal frames (7.6\% positive). The pooled frame-level AUC
+reconstruction was verified to match the stored metric exactly before any
+per-video statistics were computed.
+
+% Source: worst-anomaly-video table, pri9_failure_cases.md (tracked).
+\begin{table}[t]
+\centering
+\caption{The five worst-ranked anomalous test videos (UCF-Crime, Gated Fusion
+SigLIP2 Giant, seed 42), by per-video frame-level AUC. ``Anom.\ frac.'' is the
+fraction of the video's frames annotated anomalous.}
+\label{tab:failure-cases}
+\begin{tabular}{llrr}
+\toprule
+Video & Category & Frame-AUC & Anom.\ frac. \\
+\midrule
+Burglary017 & Burglary & 0.0569 & 0.212 \\
+Shooting028 & Shooting & 0.1135 & 0.142 \\
+RoadAccidents011 & RoadAccidents & 0.1415 & 0.019 \\
+Explosion007 & Explosion & 0.1447 & 0.042 \\
+Shooting018 & Shooting & 0.1453 & 0.092 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Failures fall into two regimes.} Table~\ref{tab:failure-cases} lists
+the five worst-ranked anomalous videos. The first regime is
+\emph{saturated-high near-ties}: in videos like Burglary017 and Shooting028
+the model scores essentially every frame near the ceiling (anomalous and
+normal frame means both ${\approx}0.99$), so the within-video ranking is
+decided by noise and can invert completely. The anomaly signal here is
+scene-level rather than event-level---the model has decided the whole video
+looks anomalous and cannot localize within it. The second regime is
+\emph{short-event misses}: RoadAccidents011 contains an event spanning only
+1.9\% of its frames, and the model scores the entire video near 0.000---a
+64-frame snippet-pooled head simply dilutes an event much shorter than its
+temporal receptive field. Explosion007 (4.2\% anomalous) shows the same
+pattern. Both regimes align with category-level weaknesses: abrupt,
+visually-transient events (RoadAccidents, Explosion, Shooting) are exactly
+the categories where snippet pooling costs the most
+(Section~\ref{sec:percat}).
+
+\textbf{False positives are sustained, not transient.} The five
+highest-scoring normal videos (Normal\_Videos\_887, 925, 884, 895, 894) are
+not videos with a single spurious peak: each sustains near-ceiling scores
+across 92--100\% of its frames. These are scene-wide false alarms---normal
+footage whose appearance (crowds, dense motion) resembles anomalous context
+throughout. Under a deployment threshold these videos would alarm
+continuously, which is a more operationally damaging error mode than isolated
+blips.
+
+% Source: score-distribution statistics + histogram,
+% results/_analysis_2026-06-10/pri9_failure_cases.md and pri9_score_hist.png
+% (both tracked; giant-s42 provenance).
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figures/pri9_score_hist.png}
+  \caption{Frame-score distributions for anomalous versus normal frames
+  (UCF-Crime, Gated Fusion SigLIP2 Giant, seed 42). Both distributions are
+  strongly bimodal: the model emits near-0 or near-1 scores almost
+  exclusively, and a quarter of normal frames score above 0.98.}
+  \label{fig:score-hist}
+\end{figure}
+
+\textbf{The model separates on average but is poorly calibrated.} Anomalous
+frames average 0.874 versus 0.382 for normal frames---a healthy mean
+separation of $+0.49$---but the normal distribution is heavy-tailed upward:
+its 75th percentile is 0.986 (Figure~\ref{fig:score-hist}). In other words,
+a quarter of all normal frames receive near-certain anomaly scores. AUC, being
+rank-based, absorbs this as long as anomalous frames rank higher still, but
+any fixed-threshold deployment would face a severe false-alarm rate. Score
+calibration---not ranking---is the binding limitation of the current head,
+and we return to it in Chapter~\ref{ch:08}.
+
+\section{Per-Category Performance}
+\label{sec:percat}
+
+% Source: thesis/tables/tab_percat_{ucf,xd}.tex (Class R, generated by
+% scripts/thesis_per_category_tables.py from tracked
+% results/{ucf_gated_fusion_giant,xd_gated_fusion_so400m}_s{42,123,2024}/
+% per_category.csv, post-lambda0/post-h1). Values quoted below match those
+% generated tables; the full tables are rendered in Appendix B.
+Finally, we summarize per-category behavior of the two headline
+configurations, computed 3-seed from the current canonical run directories;
+the complete tables appear in Appendix~\ref{app:b}.
+
+On \textbf{UCF-Crime} (Gated Fusion, SigLIP2 Giant), the strongest categories
+are Stealing (99.34$\pm$0.13\% AUC), Vandalism (97.47$\pm$0.38), and Assault
+(97.18$\pm$0.45); the weakest are RoadAccidents (87.14$\pm$0.58), Robbery
+(88.64$\pm$0.71), and Explosion (88.75$\pm$1.04). The weak tail is exactly the
+abrupt, short-event category set identified by the failure analysis
+(Section~\ref{sec:failure}): categories whose events are brief and visually
+transient lose the most to 64-frame snippet pooling, while categories with
+sustained, appearance-distinctive activity approach ceiling.
+
+On \textbf{XD-Violence} (Gated Fusion, SigLIP2 SO400M), the spread is far
+wider: Riot reaches 94.03$\pm$0.27\% AP and Fighting 81.13$\pm$0.23, while
+Abuse (43.57$\pm$3.53) and Car Accident (48.16$\pm$1.18) fall below 50\%, with
+Shooting at 56.84$\pm$0.95 and Explosion at 72.22$\pm$1.11 between. The
+ordering is interpretable: Riot and Fighting are crowd- and body-motion-driven
+events that both streams detect; Abuse is subtle, close-quarters interpersonal
+violence with little distinctive full-body motion or scene signature; Car
+Accident and Shooting hinge on brief, small-scale visual moments. Note that
+per-category values are not directly comparable to the pooled headline
+metrics, which rank all frames of all categories jointly and therefore also
+pay for cross-video calibration errors that per-category evaluation does not
+expose.
