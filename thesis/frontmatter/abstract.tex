@@ -1,12 +1,47 @@
 %%
 %% frontmatter/abstract.tex -- thesis abstract
+%% Restructured from the frozen paper abstract (paper/main.tex L48-53), fixing
+%% review item T5-2: the ~285-word single dense paragraph becomes three
+%% paragraphs (context+method / results / TTA+takeaway), with the inline TTA
+%% mechanism detail deferred to Chapter 3. Headlines byte-identical to the
+%% paper and Chapter 9 (UCF AUC / XD AP, exactly once each in the body; the
+%% numbers appear nowhere else in this file); every honesty framing
+%% retained: no SOTA claim, ~88-91% field ceiling, gains in points not %,
+%% "small but consistent" complementarity, corrupted-AUC-only TTA gains,
+%% transductive disclosure, "+13.2 single most-degraded condition".
 %%
 \chapter*{Abstract}
 \addcontentsline{toc}{chapter}{Abstract}
 
-PLACEHOLDER-W0 --- Wave-2 writer: restructure the paper abstract
-(paper/main.tex L48--53), fixing review item T5-2 density (trim the ${\sim}285$-word
-single dense paragraph; defer the inline TTA mechanism to the body). Keep every
-honesty framing: no-SOTA disclosure, ${\sim}$88--91\% field-ceiling, gains in
-``points'' not ``\%'', ``small but consistent'' complementarity, transductive-TTA
-disclosure. Delete this marker when drafting.
+Weakly supervised video anomaly detection (VAD) localizes anomalous events
+from video-level labels alone, yet most existing systems rely on a single
+visual modality and assume fixed deployment conditions. This thesis presents
+a dual-modal fusion framework that combines skeleton dynamics from a frozen
+CTR-GCN encoder with features from frozen vision-language backbones, trained
+with a multiple-instance-learning ranking loss; only the lightweight fusion
+head is learned. The study spans four visual backbones --- CLIP ViT-B/16,
+SigLIP2 ViT-B/16, SigLIP2 SO400M, and SigLIP2 Giant --- on the UCF-Crime and
+XD-Violence benchmarks.
+
+Gated fusion with learned modality weighting achieves 82.5\% frame-level AUC
+on UCF-Crime (SigLIP2 Giant) and 78.7\% AP on XD-Violence (SigLIP2 SO400M),
+each a three-seed mean. Skeleton features add a small but consistent
+complementary gain: gated fusion meets or exceeds the visual-only baseline in
+all eight backbone--dataset settings, strictly positive in six, despite the
+skeleton's lower standalone performance. These numbers trail the field's
+fine-tuned and text-aligned leaders, which reach roughly 88--91\% UCF-Crime
+AUC --- a gap that follows from the deliberately frozen, no-text design. The
+contribution is a reproducible, single-GPU dual-modal pipeline and a
+label-free robustness study, not a new peak score.
+
+A second investigation studies test-time adaptation (TTA) under 20 synthetic
+corruption conditions over three seeds. Entropy-minimization TTA (TENT, SAR),
+restricted by the architecture to the fusion head's LayerNorm parameters,
+changes AUC by less than $0.1$ points on every backbone --- a structural null
+result analyzed in the thesis body. What does recover robustness is a
+proposed label-free, tuning-free discriminative-reliability reweighting that
+routes the gated fusion toward the corruption-robust skeleton stream when the
+visual-language stream's discriminative signal collapses: corrupted-input AUC
+improves on all four backbones (mean $+1.2$ points, up to $+13.2$ points in
+the single most-degraded condition), under a transductive protocol and with
+no gain claimed on clean data.

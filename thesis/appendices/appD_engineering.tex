@@ -1,11 +1,262 @@
 %%
 %% Appendix D: Engineering notes
+%% Narrative source: .planning/STATE.md Key Decisions log + critical-pitfalls table
+%% (git-tracked) and .planning/phases/04-baseline-evaluation-main-results/
+%% 04-VERIFICATION.md anti-pattern register (git-tracked). No result numbers
+%% originate here; the only quantities cited are infrastructure measurements
+%% recorded in the tracked STATE.md decision log.
 %%
 \chapter{Engineering Notes}
 \label{app:d}
 
-PLACEHOLDER-W0 --- Wave-2 writer: two/three-conda-environment strategy
-(mmcv 1.x vs PyTorch 2.x), Windows-specific quirks, extraction throughput
-(${\sim}21.6$ FPS, 99.3\% inference-bound), pitfall register (C1--C5, M5--M7),
-anti-pattern register highlights. Source: .planning/STATE.md Key Decisions
-(tracked). Delete this marker when drafting.
+This appendix records the engineering decisions and platform-specific obstacles
+behind the experimental infrastructure of Chapter~\ref{ch:04}. None of it is
+scientifically novel, but all of it cost real time, and a reader attempting to
+reproduce this work on similar hardware --- a single consumer GPU on Windows ---
+will encounter the same obstacles. The material is organized as four registers:
+the multi-environment dependency strategy (Section~\ref{sec:appd-envs}), the
+Windows-specific installation quirks (Section~\ref{sec:appd-windows}), the
+extraction-throughput analysis that shaped the project schedule
+(Section~\ref{sec:appd-throughput}), and the pitfall and anti-pattern registers
+maintained during development (Sections~\ref{sec:appd-pitfalls}
+and~\ref{sec:appd-antipatterns}).
+
+\section{The Three-Environment Strategy}
+\label{sec:appd-envs}
+
+% Source: .planning/STATE.md Key Decisions ("Three conda environments";
+% "PyTorch 1.12.1 conda wheel fails on Windows"; "numpy must be <2 in vcc-ctrgcn")
+% + CLAUDE.md version-compatibility matrix (tracked).
+The pipeline's three feature stages have mutually incompatible dependency
+closures, and no single Python environment can host all of them. The root
+conflict is that PYSKL --- the framework providing the pretrained CTR-GCN
+encoder and its exact graph topology --- requires \texttt{mmcv-full}~1.7.0,
+which only compiles against PyTorch~1.x, while the rest of the pipeline
+(feature extraction with \texttt{open-clip-torch}, MIL training, TTA
+evaluation) targets PyTorch~2.6. Rather than fight the conflict, we isolated
+it: three conda environments, each owning one stage, communicating exclusively
+through feature files on disk. Because every backbone is frozen
+(Chapter~\ref{ch:03}), the environments never need to exchange gradients or
+live objects --- cached \texttt{float32} arrays are the entire interface.
+
+\begin{table}[htbp]
+\centering
+\caption{Version matrix of the three conda environments. Each environment owns
+one pipeline stage; cached feature files on disk are the only interface between
+them. The \texttt{vcc-ctrgcn} environment is a deliberate legacy silo: its 2022
+PyTorch exists solely to run the frozen CTR-GCN forward pass.}
+\label{tab:appd-envs}
+% Source: CLAUDE.md version-compatibility matrix + .planning/STATE.md Key
+% Decisions (tracked); versions as pinned for the experiments in this thesis.
+\begin{tabular}{@{}llll@{}}
+\toprule
+Component & \texttt{vcc-skeleton} & \texttt{vcc-ctrgcn} & \texttt{vcc-main} \\
+\midrule
+Role & RTMPose extraction & CTR-GCN encoding & training / eval / TTA \\
+Python & 3.11 & 3.10 & 3.11 \\
+PyTorch & --- & 1.12.1 (cu113) & 2.6.0 (cu124) \\
+CUDA toolkit & 12.x (ONNX Runtime) & 11.3 & 12.4 \\
+cuDNN & 9.x & 8.x (PyTorch pin) & 9.x \\
+\texttt{mmcv-full} & --- & 1.7.0 (exact) & --- \\
+\texttt{rtmlib} / \texttt{onnxruntime-gpu} & 0.0.15 / 1.20.x & --- & --- \\
+\texttt{open-clip-torch} & --- & --- & 3.3.0 \\
+NumPy & $\geq$1.23 & $<$2 (required) & $\geq$1.23 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:appd-envs} gives the version matrix. Three consequences of this
+split are worth recording. First, the skeleton-extraction environment avoids
+the \texttt{mmpose}/\texttt{mmcv} stack entirely: \texttt{rtmlib} runs the
+RTMPose ONNX models directly through ONNX Runtime, so the extraction stage has
+no PyTorch dependency at all. Second, \texttt{vcc-ctrgcn} is frozen in 2022 ---
+PyTorch 1.12.1, \texttt{mmcv-full} 1.7.0, NumPy~1.x --- and must never be
+upgraded; it exists solely to execute a frozen forward pass, and every attempt
+to modernize any one of its pins breaks the binary interface of another.
+Third, the environment definitions in \texttt{envs/} are deliberately
+\emph{reference documents} rather than one-shot install targets: several
+components (conda-only packages, index-URL-specific PyTorch wheels) cannot be
+expressed in a portable \texttt{requirements.txt}, so the files document the
+working configuration with the non-pip steps recorded as comments.
+
+\section{Windows-Specific Quirks}
+\label{sec:appd-windows}
+
+% Source: .planning/STATE.md Key Decisions log (tracked) — each item below is a
+% recorded decision row; wording condensed for prose.
+Six platform-specific obstacles consumed disproportionate setup time. Each is
+recorded here with its resolution, in the order encountered.
+
+\begin{enumerate}
+    \item \textbf{PyTorch 1.12.1 conda wheel fails on Windows (WinError 182).}
+    The conda-distributed PyTorch 1.12.1 build aborts on import with a DLL
+    ordinal conflict. The pip wheel with the \texttt{+cu113} local version tag
+    works; \texttt{vcc-ctrgcn} must therefore install PyTorch via pip against
+    the official cu113 index even though the rest of the environment is
+    conda-managed.
+    \item \textbf{\texttt{mmpose}/PYSKL must be installed with
+    \texttt{-{}-no-deps}.} Their dependency \texttt{chumpy} (SMPL mesh
+    estimation) no longer builds under modern pip. Since skeleton-based
+    action recognition never touches SMPL, installing with
+    \texttt{-{}-no-deps} and supplying the actually-needed dependencies
+    manually is safe and was the only workable path.
+    \item \textbf{cuDNN 9 DLL layout.} ONNX Runtime's CUDA execution provider
+    requires cuDNN~9 on \texttt{PATH}, but the Windows cuDNN~9 distribution
+    organizes its DLLs by CUDA version in \emph{subdirectories}
+    (\texttt{v9.8/bin/12.8/} rather than \texttt{v9.8/bin/}). Until the
+    correct subdirectory is added to \texttt{PATH}, ONNX Runtime silently
+    falls back to CPU execution at roughly one-tenth the throughput --- a
+    failure mode that costs days if unnoticed on a multi-day extraction job.
+    \item \textbf{NumPy must be pinned below 2 in \texttt{vcc-ctrgcn}.}
+    \texttt{mmcv-full} 1.7.0 was compiled against the NumPy~1.x C API;
+    NumPy~2 changes the binary interface and produces import-time failures.
+    \item \textbf{No OpenCV in \texttt{vcc-main}.} \texttt{opencv-python}
+    lives only in the skeleton environment; the main environment loads
+    UCF-Crime's pre-extracted PNG frames through PIL instead
+    (\texttt{PIL.Image.open().convert("RGB")}), which is sufficient and
+    avoids a second heavyweight binary dependency.
+    \item \textbf{Console code-page failures under \texttt{conda run}.} On a
+    system locale using code page cp950, \texttt{conda run} crashes with
+    \texttt{UnicodeEncodeError} when child processes emit progress bars. The
+    failure is cosmetic --- the computation succeeds --- but any script whose
+    stdout must be captured is invoked through the environment's Python
+    executable directly rather than through \texttt{conda run}.
+\end{enumerate}
+
+Two further data-level notes belong in this register. The UCF-Crime
+distribution provides frames as $64\times64$-pixel PNGs pre-sampled at roughly
+3~FPS; this resolution is sufficient for CLIP/SigLIP2 preprocessing (which
+resizes anyway) and for pose estimation, but it rules out legible
+skeleton-overlay visualizations on UCF-Crime (Appendix~\ref{app:f}). And one
+XD-Violence source archive contained four CRC-corrupt video files ---
+pre-existing corruption in the distributed zip, affecting less than $0.1\%$ of
+the training data, which we accepted as-is rather than re-sourcing the
+archive.
+
+\section{Extraction Throughput}
+\label{sec:appd-throughput}
+
+% Source: .planning/STATE.md Key Decisions ("Skeleton extraction bottleneck is
+% 99.3% inference, 0.7% decode"; "No viable optimization for skeleton
+% extraction speed") — tracked infrastructure measurements.
+Skeleton extraction dominated the offline preprocessing budget of the entire
+project. Profiling the extraction loop showed the split plainly: 99.3\% of
+wall-clock time is model inference (YOLOX-m person detection plus RTMPose-m
+pose estimation, about 46\,ms per frame combined), and only 0.7\% is video
+decoding. On the RTX~4090 this yields roughly 21.6~FPS on single-person
+scenes, dropping toward 15~FPS when multiple persons are detected --- against
+video corpora comprising millions of frames, a multi-day job for each dataset.
+
+Three optimization avenues were evaluated and rejected. Batched inference is
+not exposed by \texttt{rtmlib}'s per-frame API; a TensorRT backend is likewise
+unavailable through its ONNX Runtime path; and temporal frame sampling --- the
+one lever that trivially cuts cost --- destroys exactly the first-order motion
+signal (joint and bone velocities) that CTR-GCN's motion streams encode, and
+was therefore ruled out on methodological grounds. The practical consequence
+was a scheduling decision rather than a technical one: UCF-Crime extraction
+completed first, all model development proceeded on UCF-Crime, and the
+XD-Violence extraction ran in the background for days before its experiments
+began. By contrast, the CLIP/SigLIP2 stage samples frames at ${\sim}1$~FPS by
+design (Chapter~\ref{ch:03}), so visual-language extraction was never the
+bottleneck --- even four backbones' worth of features cost less than one
+skeleton pass.
+
+\section{Pitfall Register}
+\label{sec:appd-pitfalls}
+
+% Source: .planning/STATE.md "Critical Pitfalls to Watch" table (C1–C5, M5–M7)
+% — tracked; maintained from the pre-experiment risk analysis through Phase 5.
+A register of anticipated failure modes was maintained from the project's risk
+analysis onward, each entry paired with a concrete prevention that was
+implemented in code or protocol. Table~\ref{tab:appd-pitfalls} reproduces the
+register. Several preventions became load-bearing: the coordinate-space
+assertion (C1) is what guarantees the frozen NTU-pretrained encoder receives
+inputs in its expected convention; the evaluation-isolation rule (C3) is
+enforced structurally (test annotations are loadable only by the evaluation
+entry point, an import guard that the test suite verifies); and the
+snippet-to-frame mapping utility (C4) is the single place where score
+expansion is defined, so the protocol of Chapter~\ref{ch:04} cannot drift
+between experiments.
+
+\begin{table}[htbp]
+\centering
+\caption{Critical-pitfall register (C = critical, M = medium) with the
+prevention implemented for each. Reproduced from the tracked project state
+log.}
+\label{tab:appd-pitfalls}
+% Source: .planning/STATE.md critical-pitfalls table (tracked), verbatim
+% content, prose lightly condensed to fit.
+\small
+\begin{tabular}{@{}p{0.6cm}p{6.2cm}p{6.6cm}@{}}
+\toprule
+ID & Risk & Prevention \\
+\midrule
+C1 & Skeleton coordinate-space mismatch (raw pixel vs.\ normalized) &
+Apply PreNormalize2D; assert coordinates lie in $[-1,1]$ \\
+C2 & Temporal misalignment in variable-FPS videos &
+Read per-video FPS; map snippet boundaries to wall-clock seconds \\
+C3 & Test-set leakage into hyperparameter tuning &
+Early stopping on validation MIL loss only; test annotations loadable only by
+the evaluation entry point \\
+C4 & Off-by-one in snippet-to-frame score expansion &
+Single shared mapping utility; assert
+$|\text{frame scores}| = |\text{frame labels}|$ \\
+C5 & MIL training collapse to trivial solutions &
+Monitor snippet-score variance; verify bag construction against the RTFM
+reference \\
+M5 & TTA entropy collapse on normal-heavy batches &
+SAR-style reliability filtering; entropy analysis by anomaly duration \\
+M6 & SAR $\rho$ ImageNet default too large for a scalar output head &
+Grid-search $\rho$ from 0.005 rather than adopting the ImageNet default \\
+M7 & Corruptions that alter geometry require skeleton re-extraction &
+Re-extract skeletons for motion blur and JPEG; reuse the clean skeleton cache
+only for noise and brightness \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Item M7 deserves one elaboration, since it silently shapes the TTA results of
+Chapter~\ref{ch:06}: because motion blur and JPEG compression corrupt the
+frames from which poses are estimated, their skeleton features are re-extracted
+from degraded frames and are themselves corrupted --- which is precisely the
+condition under which the skeleton-reliability gate of Section~\ref{sec:disc}
+withdraws trust from the skeleton stream. The 0.00 entries for those
+corruption families in the disc-reweight breakdown are the designed
+consequence of this data-generation choice, not an independent empirical
+finding.
+
+\section{Anti-Pattern Register Highlights}
+\label{sec:appd-antipatterns}
+
+% Source: .planning/phases/04-baseline-evaluation-main-results/
+% 04-VERIFICATION.md anti-pattern register (WR-01..WR-04) — tracked.
+The Phase-4 evaluation-harness code review produced a small anti-pattern
+register (WR-01 through WR-04) whose entries were triaged by impact rather
+than silently fixed --- the register itself is part of the audit trail. Its
+highlights:
+
+\begin{itemize}
+    \item \textbf{WR-01} (info): a duplicated singleton-initialization call on
+    one extraction path --- benign but misleading; recorded so a later reader
+    does not infer intent from the duplication.
+    \item \textbf{WR-02} (warning): a fragile string heuristic for selecting
+    the checkpoint state-dict branch in the CTR-GCN loader, which could
+    silently select the wrong branch on unexpected checkpoint layouts. Not
+    triggered in any experiment (features were extracted before the review),
+    but flagged for any future re-extraction.
+    \item \textbf{WR-03} (warning): a fixed random seed inside the temporal
+    resampling of short-video bags in the RTFM baseline's data path,
+    eliminating per-epoch augmentation diversity for those videos. Scoped to
+    the Appendix~\ref{app:a} reproduction runs; no impact on the primary
+    pipeline.
+    \item \textbf{WR-04} (warning): a hardcoded fallback category label for
+    unannotated XD-Violence videos in one early per-category code path ---
+    harmless for aggregate metrics but capable of producing misleading
+    per-category breakdowns; superseded when the real frame-level annotations
+    were wired in for the analyses of Appendix~\ref{app:b}.
+\end{itemize}
+
+The register's value was less in the individual findings than in the practice:
+every warning carries an explicit scope statement ("not triggered in this
+phase's paths"), which is what allowed later phases to consume earlier
+phases' outputs without re-auditing them from scratch.

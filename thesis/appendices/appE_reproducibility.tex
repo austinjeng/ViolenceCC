@@ -1,11 +1,255 @@
 %%
 %% Appendix E: Reproducibility guide (discharges review item T6-2)
+%% Every command below names a git-tracked entry point verified to exist in the
+%% repository (src/train.py, src/evaluate.py, src/tta/evaluate_tta.py,
+%% scripts/extract_*.py, scripts/generate_*.py, scripts/thesis_*.py,
+%% scripts/build_thesis.ps1). CLI flags match the scripts' argparse definitions.
 %%
 \chapter{Reproducibility Guide}
 \label{app:e}
 
-PLACEHOLDER-W0 --- Wave-2 writer: repo map; env setup $\to$ extraction $\to$
-training $\to$ evaluation $\to$ table/figure generation walkthrough; seeds,
-manifests (data/ucf\_total\_frames.json), config snapshots,
-results/results-index.csv, bit-identical rerun invariant. Delete this marker
-when drafting.
+This appendix is written for a reader who has never seen the codebase and
+wants to reproduce the results of this thesis --- from a clean checkout,
+through environment setup, feature extraction, training, and evaluation, to
+the regeneration of the tables and figures in this document. Every command
+below is a tracked entry point in the repository, quoted with its real
+command-line interface. Throughout, \texttt{python} denotes the interpreter of
+the conda environment named in each step (Appendix~\ref{app:d},
+Table~\ref{tab:appd-envs}).
+
+\section{Repository Map}
+\label{sec:appe-repomap}
+
+\begin{description}
+    \item[\texttt{src/}] The pipeline package. \texttt{src/train.py} and
+    \texttt{src/evaluate.py} are the training and evaluation entry points;
+    \texttt{src/tta/} contains the TTA implementations
+    (\texttt{tent.py}, \texttt{sar.py}, \texttt{disc\_reweight.py}) and their
+    shared evaluation entry point \texttt{evaluate\_tta.py};
+    \texttt{src/models/}, \texttt{src/losses/}, \texttt{src/data/}, and
+    \texttt{src/eval/} hold the fusion heads, the MIL objective, the bag
+    loaders, and the frame-level evaluation protocol respectively.
+    \item[\texttt{configs/}] One YAML file per training variant (45 files):
+    dataset $\times$ fusion variant $\times$ backbone $\times$ pooling, e.g.\
+    \texttt{gated\_fusion\_giant.yaml} (UCF-Crime, gated fusion, SigLIP2
+    Giant) or \texttt{gated\_fusion\_xd\_so400m.yaml} (XD-Violence
+    counterpart). A config fully determines a run up to the seed.
+    \item[\texttt{scripts/}] Offline tooling: feature extraction
+    (\texttt{extract\_skeletons.py}, \texttt{extract\_ctrgcn.py},
+    \texttt{extract\_clip.py}), corruption generation
+    (\texttt{corruption.py}, \texttt{batch\_extract\_corrupted.py}), figure
+    and table generators, and the document build scripts.
+    \item[\texttt{data/}] Split lists (\texttt{data/splits/}), annotation
+    files, and the evaluation manifests --- most importantly
+    \texttt{data/ucf\_total\_frames.json} (Section~\ref{sec:appe-eval}).
+    \item[\texttt{results/}] Run directories, one per training or TTA run.
+    The directory is gitignored \emph{except} for an explicitly tracked
+    provenance set: the master index \texttt{results/results-index.csv}, the
+    canonical run metrics (\texttt{eval\_metrics.json},
+    \texttt{per\_category.csv}) of every run cited in this thesis, and the
+    TTA analysis artifacts. Everything a number in this document traces to is
+    in version control.
+    \item[\texttt{tests/}] The pytest suite (unit and protocol tests,
+    including guards for the evaluation-isolation and score-expansion
+    invariants of Appendix~\ref{app:d}).
+    \item[\texttt{paper/}, \texttt{thesis/}] The workshop paper and this
+    document, each with its own build script;
+    \texttt{thesis/PROVENANCE.md} maps every number family and figure in
+    this document to its tracked source.
+    \item[\texttt{envs/}] Environment reference documents
+    (\texttt{requirements-\{skeleton,ctrgcn,main\}.txt} plus
+    \texttt{SETUP.md}).
+\end{description}
+
+\section{Environment Setup}
+\label{sec:appe-envs}
+
+Create the three conda environments of Appendix~\ref{app:d}:
+\texttt{vcc-skeleton} (Python 3.11) for pose extraction, \texttt{vcc-ctrgcn}
+(Python 3.10) for CTR-GCN encoding, and \texttt{vcc-main} (Python 3.11) for
+everything else. The files under \texttt{envs/} document the working package
+sets; the platform-specific installation caveats (pip-vs-conda PyTorch on
+Windows, \texttt{-{}-no-deps} installs, cuDNN \texttt{PATH} layout, the
+NumPy$<$2 pin) are listed in Appendix~\ref{app:d} and must be respected ---
+each one was discovered the hard way. The datasets themselves (UCF-Crime,
+XD-Violence) must be obtained from their original distributors and are not
+redistributed with the code; the split lists under \texttt{data/splits/}
+define exactly which videos belong to train, validation, and test.
+
+\section{Feature Extraction}
+\label{sec:appe-extract}
+
+Features are extracted once per dataset and cached as per-video
+\texttt{float32} arrays; all subsequent training reads only the cache. The
+three stages run in their respective environments, in order:
+
+\begin{verbatim}
+# 1. Skeletons (vcc-skeleton): RTMPose keypoints -> PYSKL pickles
+python scripts/extract_skeletons.py --dataset ucf --split train
+python scripts/extract_skeletons.py --dataset ucf --split test
+
+# 2. Skeleton features (vcc-ctrgcn): frozen CTR-GCN, 4 streams -> 256-d
+python scripts/extract_ctrgcn.py --dataset ucf --split train
+python scripts/extract_ctrgcn.py --dataset ucf --split test
+
+# 3. Visual features (vcc-main): frozen VLM backbone, mean+max pooling
+python scripts/extract_clip.py --dataset ucf --split train \
+    --backbone clip-vit-b-16 --pool mean_max
+\end{verbatim}
+
+The same commands with \texttt{-{}-dataset xd} process XD-Violence, and
+\texttt{-{}-backbone} selects among the four visual backbones of
+Chapter~\ref{ch:03} (each backbone writes to its own cache subdirectory). For
+the corruption benchmark of Chapter~\ref{ch:04}, the extraction scripts accept
+\texttt{-{}-corruption \{gaussian\_noise, jpeg\_compression, brightness,
+motion\_blur\} -{}-severity \{1..5\}}, applying the exact severity parameters
+of \texttt{scripts/corruption.py}; \texttt{scripts/batch\_extract\_corrupted.py}
+drives the full $4\times5$ grid. Skeletons are re-extracted only for motion
+blur and JPEG compression (the geometry-altering corruptions); Gaussian noise
+and brightness reuse the clean skeleton cache (Appendix~\ref{app:d}, pitfall
+M7).
+
+\section{Training}
+\label{sec:appe-train}
+
+Every experiment in Chapters~\ref{ch:05} and~\ref{ch:06} is a run of the
+single training entry point with a config file and a seed
+(environment: \texttt{vcc-main}):
+
+\begin{verbatim}
+python src/train.py --config configs/gated_fusion_giant.yaml --seed 42
+python src/train.py --config configs/gated_fusion_giant.yaml --seed 123
+python src/train.py --config configs/gated_fusion_giant.yaml --seed 2024
+\end{verbatim}
+
+The seed set $\{42, 123, 2024\}$ is fixed project-wide; every mean~$\pm$~std
+in this thesis is computed over exactly these three seeds. Each run creates a
+directory under \texttt{results/} named after the config and seed (e.g.\
+\texttt{ucf\_gated\_fusion\_giant\_s42/}) containing the model checkpoint
+(\texttt{best\_model.pth}, selected by validation MIL loss), the evaluation
+outputs, and --- critically --- \texttt{config\_snapshot.json}: a frozen copy
+of the fully resolved configuration, including a content hash, written at
+launch time. The snapshot is what makes a run self-describing: evaluation
+tools read the snapshot, never the live config file, so later edits to
+\texttt{configs/} cannot silently change what an existing run means. The
+sweep of Appendix~\ref{app:c} used the same entry point with the
+\texttt{-{}-lr} and \texttt{-{}-k-topk} overrides.
+
+\section{Evaluation}
+\label{sec:appe-eval}
+
+Frame-level evaluation runs against a completed run directory:
+
+\begin{verbatim}
+# UCF full-length frame grid is pinned by the committed manifest
+#   data/ucf_total_frames.json
+python src/evaluate.py --run-dir results/ucf_gated_fusion_giant_s42 \
+    --split test
+\end{verbatim}
+
+This writes \texttt{eval\_metrics.json} (AUC, AP, video counts) and
+\texttt{per\_category.csv} into the run directory and appends a row to the
+master index (Section~\ref{sec:appe-index}). Two protocol details are pinned
+by tracked artifacts. First, UCF-Crime is scored on the \emph{full-length}
+frame grid: per-video total frame counts come from the committed manifest
+\texttt{data/ucf\_total\_frames.json} (1{,}900 videos), so the UCF headline
+number is reproducible from the repository alone --- no access to the original
+videos is needed to re-derive the evaluation grid. Second, XD-Violence is
+scored on the snippet-aligned (truncated) grid, as disclosed in
+Chapter~\ref{ch:04}; the two grids are deliberately not mixed.
+
+\section{TTA Evaluation}
+\label{sec:appe-tta}
+
+The corruption-robustness experiments of Chapter~\ref{ch:06} run through a
+single TTA entry point that wraps a trained source run. One invocation scores
+one (corruption, severity, method) cell:
+
+\begin{verbatim}
+python src/tta/evaluate_tta.py \
+    --source-run results/ucf_gated_fusion_s42 \
+    --corruption gaussian_noise --severity 5 \
+    --method disc_reweight \
+    --protocol continual \
+    --output-dir results/tta_demo
+\end{verbatim}
+
+\texttt{-{}-method} selects among \texttt{source\_only}, \texttt{tent},
+\texttt{sar}, and \texttt{disc\_reweight} (the proposed reweighting of
+Section~\ref{sec:disc}); \texttt{-{}-lr} and \texttt{-{}-rho} expose the
+TENT/SAR hyperparameters swept in Chapter~\ref{ch:06};
+\texttt{-{}-protocol} switches between the episodic and continual protocols;
+\texttt{-{}-backbone} and \texttt{-{}-feature-root} point the wrapper at the
+matching corrupted feature cache. The aggregation scripts
+(\texttt{scripts/aggregate\_tta\_table.py},
+\texttt{scripts/pri5\_tta\_breakdown.py}) roll the per-cell outputs up into
+the three-seed tables of Chapter~\ref{ch:06}.
+
+\section{Tables and Figures}
+\label{sec:appe-figures}
+
+Every generated table and figure in this document has a tracked generator
+(environment: \texttt{vcc-main}):
+
+\begin{verbatim}
+# Publication figures (backbone comparison, temporal curves, TTA bars)
+python scripts/generate_pub_figures.py
+
+# Per-category appendix tables (App. B): 3-seed mean +/- std
+python scripts/thesis_per_category_tables.py
+
+# Corruption/severity heatmaps (Ch. 6)
+python scripts/thesis_severity_heatmap.py
+python scripts/thesis_corruption_heatmaps.py
+
+# Hyperparameter sweep heatmaps (Ch. 5 / App. C)
+python scripts/generate_phase7_charts.py --with-confirm
+\end{verbatim}
+
+The severity- and corruption-heatmap generators self-check their outputs
+against the tracked anchor values before writing --- a deliberate guard
+against regenerating a figure from drifted data. The sweep generator embeds
+its historical (2026-05, sweep-era) baselines by design; its outputs are
+labeled as historical-configuration sensitivity studies wherever they appear
+(Appendix~\ref{app:c}). Finally, this document itself builds
+non-interactively with:
+
+\begin{verbatim}
+powershell -NoProfile -ExecutionPolicy Bypass \
+    -File scripts/build_thesis.ps1 -Clean
+\end{verbatim}
+
+which cleans all build artifacts, recompiles \texttt{thesis/main.tex} via
+latexmk, and fails (non-zero exit) on any LaTeX error, undefined reference, or
+undefined citation found in the build log.
+
+\section{The Master Index and Rerun Invariants}
+\label{sec:appe-index}
+
+\textbf{Master index.} \texttt{results/results-index.csv} (git-tracked) is
+the append-only index of every run ever executed in this project --- 1{,}014
+rows spanning training runs, the hyperparameter sweep, and the full TTA grid.
+Each row records the run name, variant, dataset, seed, AUC/AP, video and
+frame counts, timestamps, the configuration hash from
+\texttt{config\_snapshot.json}, and (for TTA rows) the method, corruption,
+severity, and hyperparameters. Given a number in this thesis, the intended
+audit path is: locate its family in \texttt{thesis/PROVENANCE.md}, follow the
+tracked source (an \texttt{eval\_metrics.json}, an analysis CSV, or a table in
+the frozen paper), and cross-check the run in the master index.
+
+\textbf{Bit-identical rerun invariant.} Re-running evaluation on an existing
+run directory reproduces its stored metrics \emph{exactly} --- not
+approximately. Evaluation is deterministic by construction: the model is a
+fixed checkpoint, the feature cache is fixed, the frame grid is pinned by the
+manifest, and no sampling occurs at test time. The same holds for the
+proposed TTA method (a closed-form scalar per condition, no optimization) and
+was engineered into TENT/SAR adaptation as well, by keeping every dropout
+module in evaluation mode during adaptation (Chapter~\ref{ch:03}). This
+invariant is what the figure-provenance audit of this thesis leaned on: for
+every regenerated figure, the underlying scores or checkpoints were first
+re-validated by re-running the official evaluation and requiring an exact
+match (difference $0.0$) against the tracked metrics. A reproduction attempt
+should hold itself to the same standard: after retraining with the commands
+above, per-seed metrics will match the reported means within the reported
+seed standard deviations, and re-evaluation of any given checkpoint must
+match its stored metrics bit-for-bit.

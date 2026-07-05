@@ -1,10 +1,105 @@
 %%
 %% frontmatter/notation.tex -- abbreviations + symbol table
+%% Abbreviations restricted to terms used in two or more chapters (verified by
+%% grep over thesis/chapters/); symbols harvested from the Chapter 3 equations
+%% (lifted verbatim from the frozen paper) and their Chapter 6 usage.
 %%
 \chapter*{Notation and Abbreviations}
 \addcontentsline{toc}{chapter}{Notation and Abbreviations}
 
-PLACEHOLDER-W0 --- Wave-2 writer: build the abbreviation and symbol tables
-(harvest symbols from the eight methodology equations at paper/main.tex
-L157--L197; contents at Claude's discretion per 13-CONTEXT.md). Delete this
-marker when drafting.
+\section*{Abbreviations}
+
+\begin{center}
+\begin{tabular}{@{}lp{10.5cm}@{}}
+\toprule
+Abbreviation & Meaning \\
+\midrule
+AP      & average precision (frame-level, XD-Violence protocol) \\
+AUC     & area under the ROC curve (frame-level, UCF-Crime protocol) \\
+BN      & batch normalization (BatchNorm) \\
+CLIP    & Contrastive Language--Image Pre-training \\
+COCO    & Common Objects in Context (17-keypoint pose convention) \\
+CORAL   & correlation alignment (covariance-matching feature restoration) \\
+CTR-GCN & channel-wise topology refinement graph convolutional network \\
+FPS     & frames per second \\
+GCN     & graph convolutional network \\
+I3D     & inflated 3D convolutional network (video backbone) \\
+LN      & layer normalization (LayerNorm) \\
+MIL     & multiple instance learning \\
+NORM    & per-channel feature-statistic restoration (test-time
+          normalization-statistics adaptation) \\
+RQ      & research question (RQ1--RQ3, Chapter 1) \\
+SAR     & sharpness-aware and reliable entropy minimization (TTA method) \\
+SigLIP2 & sigmoid-loss language--image pretraining, version 2 \\
+TENT    & test-time adaptation by entropy minimization (TTA method) \\
+TTA     & test-time adaptation \\
+VAD     & video anomaly detection \\
+ViT     & Vision Transformer \\
+VLM     & vision-language model \\
+WSVAD   & weakly supervised video anomaly detection \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section*{Symbols}
+
+\begin{center}
+\begin{tabular}{@{}lp{10.5cm}@{}}
+\toprule
+Symbol & Meaning \\
+\midrule
+$\mathbf{s} \in \mathbb{R}^{256}$ & skeleton snippet feature (frozen CTR-GCN encoding) \\
+$\mathbf{v} \in \mathbb{R}^{d_v}$ & visual snippet feature (pooled VLM embedding) \\
+$d$, $d_v$ & backbone embedding width; pooled visual dimension $d_v = 2d$
+             (concatenated mean+max pooling) \\
+$\hat{\mathbf{s}}$, $\hat{\mathbf{v}}$ & projected, LayerNorm-normalized
+             modality features in the shared 256-d space \\
+$W_s, W_v, W_g$; $\mathbf{b}_s, \mathbf{b}_v, \mathbf{b}_g$ & learned
+             projection and gate weights / biases \\
+$\mathbf{g} \in [0,1]^{256}$ & per-dimension gating vector \\
+$\odot$ & element-wise (Hadamard) product \\
+$\mathbf{f}_{\text{gated}}$ & fused snippet representation \\
+$\text{LN}_s$, $\text{LN}_v$, $\text{LN}_f$ & the three LayerNorm modules of
+             the fusion head (skeleton projection, visual projection, fused
+             output) \\
+$\gamma$, $\beta$ & LayerNorm affine scale and shift (the TENT/SAR adaptation
+             surface) \\
+$a$, $a_i$, $a_{\text{late}}$ & snippet anomaly score; late-fusion score \\
+$\mathbf{a}_t$ & abnormal-bag anomaly-score vector at snippet position $t$
+             (sparsity term of Eq.~\ref{eq:loss}) \\
+$T$ & fixed training bag length (32 snippets) \\
+$T_f$, $M$, $V$, $C$ & skeleton tensor dimensions: frames, persons ($M=2$),
+             joints ($V=17$), channels ($C=3$) \\
+$k$ & top-$k$ selection size of the ranking loss \\
+$\mathcal{A}_k$, $\mathcal{N}_k$ & top-$k$ snippet index sets in the anomalous
+             / normal bag \\
+$\mathcal{L}_{\text{rank}}$, $\mathcal{L}$ & MIL ranking loss; total training
+             loss \\
+$\lambda_1$, $\lambda_2$ & sparsity and temporal-smoothness regularization
+             weights \\
+$p_{\mathrm{clip}}$ & LayerNorm-projected visual-language features (the
+             reweighting target) \\
+$s_{\mathrm{clip}}$ & solo visual snippet scores (fusion head run with the
+             skeleton stream zeroed) \\
+$\sigma(\cdot)$ & logistic sigmoid (gate computation,
+             Chapter~\ref{ch:03}); standard deviation pooled over a
+             corruption condition (reliability estimate,
+             Chapters~\ref{ch:03} and~\ref{ch:06}) --- context disambiguates \\
+$w_{\mathrm{vl}}$ & visual-reliability score (solo-score dispersion ratio,
+             clipped to $[0,1]$) \\
+$s$ (scalar) & skeleton-reliability gate in $[0,1]$ \\
+$z_{\mathrm{skel}}$, $z_0$ & skeleton features' mean per-channel shift under a
+             corruption condition; clean-train-to-clean-test reference shift \\
+$w$ & routing scalar scaling the visual stream,
+             $w = 1-(1-w_{\mathrm{vl}})\,s$ \\
+$\rho$ & SAR sharpness-aware step radius \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\medskip
+\noindent\textit{Remark.} Bold lowercase symbols denote vectors; plain
+lowercase symbols denote scalars. The scalar $s$ (skeleton-reliability gate)
+and the vector $\mathbf{s}$ (skeleton feature) are distinct quantities, as
+are the two context-dependent uses of $\sigma(\cdot)$ noted above; both
+conventions follow the notation paragraph of Chapter~\ref{ch:03}.
