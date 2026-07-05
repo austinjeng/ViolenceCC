@@ -222,30 +222,30 @@ column makes each row's regime explicit. Superscripts mark per-number caveats
 \toprule
 Method & Year & Venue & UCF AUC & XD AP & Setting \\
 \midrule
-GS-MoE$^{a}$~\cite{damicantonio2025gsmoe} & 2025 & ICCV'25 (arXiv)   & 91.58 & 82.89 & Frozen feats, no-text, frame; MoE experts \\ % VERIFIED 2026-06-22: GS-MoE 91.58 UCF / 82.89 XD AP confirmed from arXiv:2508.06318 Table 1 (I3D, RGB-only, no text); ICCV 2025 poster
+GS-MoE$^{a}$~\cite{damicantonio2025gsmoe} & 2025 & ICCV'25           & 91.58 & 82.89 & Frozen feats, no-text, frame; MoE experts \\ % VERIFIED 2026-07-05 (13-SOTA-EVIDENCE item 3): 91.58 UCF / 82.89 XD AP from arXiv:2508.06318; ICCV 2025 proceedings confirmed via ICCV virtual page + CVF supplemental
 PI-VAD~\cite{majhi2025pivad}              & 2025 & CVPR'25           & 90.33 & 85.37 & Frozen I3D + 5 train-only modalities, text(train), frame \\
-Holmes-VAD$^{b}$~\cite{zhang2024holmesvad} & 2024 & arXiv'24          & 89.51 & 90.67 & MLLM LoRA-tuned, text, frame; heavy VRAM \\ % RE-VERIFY: Holmes-VAD 89.51/90.67 arXiv preprint, no peer-reviewed venue; partial MLLM LoRA training (not frozen-feature)
+Holmes-VAD$^{b}$~\cite{zhang2024holmesvad} & 2024 & arXiv'24          & 89.51 & 90.67 & MLLM LoRA-tuned, text, frame; heavy VRAM \\
 DSANet~\cite{yin2026dsanet}               & 2026 & AAAI'26           & 89.44 & 86.95 & Frozen CLIP + V-L alignment, text, frame \\
-Holmes-VAU$^{c}$~\cite{zhang2025holmesvau} & 2025 & CVPR'25           & 88.96 & 87.68 & LoRA MLLM + sampler, text, \emph{VIDEO-level} \\ % RE-VERIFY: Holmes-VAU 88.96/87.68 are VIDEO-LEVEL (398-sample split), NOT frame-level; disclose or omit from frame-level head-to-head
+Holmes-VAU$^{c}$~\cite{zhang2025holmesvau} & 2025 & CVPR'25           & 88.96 & 87.68 & LoRA MLLM + sampler, text, \emph{VIDEO-level} \\
 STPrompt~\cite{wu2024stprompt}            & 2024 & ACM MM'24         & 88.08 & N/A$^{d}$ & Frozen CLIP + ST prompts, text, frame; XD not eval. \\
-FDPN$^{e}$~\cite{song2025fdpn}            & 2025 & WACV'25           & 88.03 & N/A$^{e}$ & I3D RGB, frame; self-report, XD not eval. \\ % RE-VERIFY: FDPN 88.03 LOW conf, niche WACV-25 paper's OWN method (+0.01 over VadCLIP self-report); XD not evaluated -- re-check primary or drop
+FDPN$^{e}$~\cite{song2025fdpn}            & 2025 & WACV'25           & 88.03 & N/A$^{e}$ & I3D RGB, frame; self-report, XD not eval. \\
 VadCLIP~\cite{wu2024vadclip}              & 2024 & AAAI'24           & 88.02 & 84.51 & Frozen CLIP + dual-branch, text, frame \\
 TPWNG~\cite{yang2024tpwng}                & 2024 & CVPR'24           & 87.79 & 83.68 & CLIP text-proj fine-tuned, text, frame; self-train \\
-CLIP-TSA~\cite{joo2023cliptsa}            & 2023 & ICIP'23           & 87.58 & 82.19$^{f}$ & Frozen CLIP \emph{visual-only}, no-text, frame \\ % RE-VERIFY: CLIP-TSA XD = 82.19 (primary AUC@PR); VadCLIP table = 82.17 (0.02 drift); NEVER the paper's own 94.02 (non-comparable protocol)
-MGFN~\cite{chen2023mgfn}                  & 2023 & AAAI'23           & 86.98 & 79.19$^{g}$ & Frozen I3D feats, no-text, frame \\ % RE-VERIFY: MGFN XD = 79.19 is the I3D-RGB AP (NOT 80.11, which is the VideoSwin variant); keep one backbone (I3D)
+CLIP-TSA~\cite{joo2023cliptsa}            & 2023 & ICIP'23           & 87.58 & 82.19$^{f}$ & Frozen CLIP \emph{visual-only}, no-text, frame \\
+MGFN~\cite{chen2023mgfn}                  & 2023 & AAAI'23           & 86.98 & 79.19$^{g}$ & Frozen I3D feats, no-text, frame \\
 UR-DMU~\cite{zhou2023urdmu}               & 2023 & AAAI'23           & 86.97 & 81.66 & Frozen I3D feats, no-text, frame; single-GPU \\
 PEL4VAD~\cite{pu2024pel4vad}              & 2024 & IEEE TIP'24       & 86.76 & 85.59 & Frozen I3D + CLIP text prompts, text, frame \\
-PiercingEye$^{h}$~\cite{leng2026piercingeye} & 2026 & IEEE TPAMI'26     & 86.64 & 88.82 & Frozen I3D+VGGish+text, \emph{audio}+text, frame \\ % RE-VERIFY: PiercingEye XD = 88.82 LOW conf (inferred from relative gains) and is AUDIO+visual+text; UCF 86.64 is visual-only
-AnomalyCLIP$^{i}$~\cite{zanella2024anomalyclip} & 2024 & CVIU'24           & 86.36 & 78.51 & Frozen CLIP latent dirs, text, frame \\ % RE-VERIFY: AnomalyCLIP 86.36/78.51 LOW conf (not re-verified from primary table); the ~90.3 leaderboard figure is recognition mAUC, a DIFFERENT task -- do not cite it as detection AUC
-TEVAD$^{j}$~\cite{chen2023tevad}          & 2023 & CVPRW'23          & 84.9  & 79.8  & Frozen I3D + caption text, text, frame \\ % RE-VERIFY: TEVAD XD ~= 79.8 MEDIUM precision (headline 79.8, ablation variants 79.3-79.76); disregard '88.28' web misattribution
+PiercingEye$^{h}$~\cite{leng2026piercingeye} & 2025 & arXiv'25 (subm.\ TPAMI) & 86.64 & 88.82 & Frozen I3D+VGGish+text, \emph{audio}+text, frame \\
+AnomalyCLIP$^{i}$~\cite{zanella2024anomalyclip} & 2024 & CVIU'24           & 86.36 & 78.51 & Frozen CLIP latent dirs, text, frame \\
+TEVAD$^{j}$~\cite{chen2023tevad}          & 2023 & CVPRW'23          & 84.9  & 79.8  & Frozen I3D + caption text, text, frame \\
 Light-WVAD~\cite{wang2024lightwvad}       & 2024 & Neurocomp.'24     & 84.7  & ---   & Frozen I3D, no-text, frame; consumer-GPU head (XD not evaluated) \\
 RTFM~\cite{tian2021rtfm}                  & 2021 & ICCV'21           & 84.30 & 77.81 & Frozen I3D feats, no-text, frame; lightweight \\
-EventVAD$^{k}$~\cite{shao2025eventvad}    & 2025 & ACM MM'25         & 82.03 & 64.04 & Training-free 7B MLLM, text, frame; 80GB A800 \\ % RE-VERIFY: EventVAD XD = 64.04 (AP); do NOT cite 87.51 (that is the XD ROC-AUC). Training-free != low-compute
+EventVAD$^{k}$~\cite{shao2025eventvad}    & 2025 & ACM MM'25         & 82.03 & 64.04 & Training-free 7B MLLM, text, frame; 80GB A800 \\
 \textbf{This work (dual-modal fusion)} & \textbf{2026} & \textbf{(thesis)} & \textbf{82.5} & \textbf{78.7} & \textbf{Frozen skel+CLIP/SigLIP2, no-text, frame; 1$\times$RTX 4090} \\
-LAVAD~\cite{zanella2024lavad}             & 2024 & CVPR'24           & 80.28 & 62.01 & Training-free 13B-LLM pipeline, text, frame \\ % RE-VERIFY: LAVAD XD = 62.01 (AP), NOT 85.36 (its XD ROC-AUC); double-check AP not AUC
-Sultani et al.$^{l}$~\cite{sultani2018ucfcrime} & 2018 & CVPR'18           & 75.41 & ---$^{l}$ & Frozen C3D, FC+MIL, no-text, frame; founding baseline \\ % RE-VERIFY: Sultani XD 73.20 is NOT from the 2018 paper -- it is Wu et al. ECCV 2020's re-impl; attribute correctly or omit the XD cell
-HyperVD$^{m}$~\cite{peng2024hypervd}      & 2024 & Image\,\&\,Vis.\,Comp.'24 & N/A$^{m}$ & 85.67 & Frozen I3D+VGGish, \emph{audio}, frame; UCF not rep. \\ % RE-VERIFY: HyperVD is AUDIO-VISUAL (85.67 AP); visual-only variant = 82.51; UCF not reported -- label modality if compared
-Ghadiya et al.$^{n}$~\cite{ghadiya2024crossmodal} & 2024 & CVPRW'24 (MULA)   & N/A$^{n}$ & 86.34 & Frozen I3D+VGGish, \emph{audio}, frame; UCF not rep. \\ % RE-VERIFY: Ghadiya 86.34 MEDIUM conf, AUDIO-VISUAL workshop preprint; UCF not reported -- not comparable to visual/skeleton-only
+LAVAD~\cite{zanella2024lavad}             & 2024 & CVPR'24           & 80.28 & 62.01 & Training-free 13B-LLM pipeline, text, frame \\
+Sultani et al.$^{l}$~\cite{sultani2018ucfcrime} & 2018 & CVPR'18           & 75.41 & ---$^{l}$ & Frozen C3D, FC+MIL, no-text, frame; founding baseline \\
+HyperVD$^{m}$~\cite{peng2024hypervd}      & 2024 & Image\,\&\,Vis.\,Comp.'24 & N/A$^{m}$ & 85.67 & Frozen I3D+VGGish, \emph{audio}, frame; UCF not rep. \\
+Ghadiya et al.$^{n}$~\cite{ghadiya2024crossmodal} & 2024 & CVPRW'24 (MULA)   & N/A$^{n}$ & 86.34 & Frozen I3D+VGGish, \emph{audio}, frame; UCF not rep. \\
 \bottomrule
 \end{tabular}%
 }
@@ -269,19 +269,21 @@ $^{c}$\,Holmes-VAU 88.96/87.68: \textbf{VIDEO-LEVEL} AUC/AP on a 398-sample spli
 work --- do not tabulate without disclosing the metric difference.
 $^{d}$\,STPrompt: XD-Violence is \emph{not} evaluated (benchmarks: UCF /
 ShanghaiTech / UBnormal); any XD value would be fabricated.
-$^{e}$\,FDPN 88.03: LOW confidence; the paper's own method, $+0.01$ over VadCLIP
-(a ``narrowly beats'' self-report); XD not evaluated.
-$^{f}$\,CLIP-TSA XD $=$ 82.19 (primary AUC@PR); the 82.17 that circulates is from
-VadCLIP's secondary table; the paper's own 94.02 uses a non-comparable protocol
---- do not use it.
+$^{e}$\,FDPN 88.03: verified from the WACV 2025 primary table; the paper's own
+method, $+0.01$ over VadCLIP (a ``narrowly beats'' self-report); XD not evaluated.
+$^{f}$\,CLIP-TSA XD $=$ 82.19, the paper's own AUC@PR (equivalent to AP); the
+82.17 that circulates is from VadCLIP's secondary table; the ``94.02'' figure
+circulating on leaderboards does not appear in the CLIP-TSA paper at all ---
+its only XD number is 82.19.
 $^{g}$\,MGFN XD $=$ 79.19 is the \textbf{I3D-RGB} AP; 80.11 is the VideoSwin
 variant. UCF 86.98 is I3D; we keep a single (I3D) backbone per row.
-$^{h}$\,PiercingEye XD $=$ 88.82 is \textbf{audio$+$visual$+$text}; UCF 86.64 is
-visual-only; LOW confidence (AP inferred/cross-checked).
-$^{i}$\,AnomalyCLIP 86.36/78.51: LOW confidence (detection-task numbers); the
+$^{h}$\,PiercingEye XD $=$ 88.82 is \textbf{audio$+$visual$+$text} (the paper's
+own multimodal frame-level AP); UCF 86.64 is visual-only; arXiv preprint,
+submitted to TPAMI but not yet published.
+$^{i}$\,AnomalyCLIP 86.36/78.51 are the paper's detection-task numbers; the
 $\sim$90.3 leaderboard figure is recognition mAUC, a different task.
-$^{j}$\,TEVAD XD $\approx$ 79.8: MEDIUM precision (ablation variants 79.3--79.76);
-the ``88.28'' web snippet is a misattribution.
+$^{j}$\,TEVAD XD $=$ 79.8 is the paper's own headline at its own one-decimal
+precision; the ``88.28'' web snippet is a misattribution.
 $^{k}$\,EventVAD XD $=$ 64.04 is the AP; the paper's XD ROC-AUC is 87.51 (different
 metric); training-free but runs a 7B MLLM on an 80GB A800.
 $^{l}$\,Sultani XD: the 73.20 AP often quoted is \emph{not} from the 2018 paper
@@ -289,8 +291,8 @@ $^{l}$\,Sultani XD: the 73.20 AP often quoted is \emph{not} from the 2018 paper
 attribute to Wu et al., not Sultani; XD cell omitted here.
 $^{m}$\,HyperVD UCF not reported (XD-focused); XD 85.67 is audio-visual
 (visual-only variant $=$ 82.51).
-$^{n}$\,Ghadiya et al.\ 86.34: MEDIUM confidence, audio-visual workshop preprint;
-UCF not reported --- not comparable to visual/skeleton-only methods.
+$^{n}$\,Ghadiya et al.\ 86.34: audio-visual (CVPR'24 MULA workshop); UCF not
+reported --- not comparable to visual/skeleton-only methods.
 \end{flushleft}
 \end{table}
 
