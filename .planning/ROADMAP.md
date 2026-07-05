@@ -353,7 +353,7 @@ Plans:
 | 10. SigLIP2 Giant-opt Backbone Comparison | 0/4 | Executing | - |
 | 11. Thesis Manuscript | 4/4 | Complete | 2026-05-30 |
 | 12. SOTA Comparison and Positioning | 3/3 | Complete | 2026-06-21 |
-| 13. Full Thesis Manuscript | 8/13 | In Progress|  |
+| 13. Full Thesis Manuscript | 10/13 | In Progress|  |
 
 ---
 
@@ -436,7 +436,7 @@ Plans:
   5. Honesty framings intact (no SOTA claim, transductive TTA disclosure, complementarity wording, etc.)
   6. Primary-source SOTA verification gate passed: evidence report user-approved; zero unresolved RE-VERIFY comments / bib TODOs; unverifiable external cells omitted (`---`) with omission footnotes
 
-**Plans:** 8/13 plans executed
+**Plans:** 10/13 plans executed
 
 Plans:
 - [x] 13-01-PLAN.md — Wave 0: thesis skeleton + preamble + vendored IEEEtranN.bst + build_thesis.ps1 + .latexmkrc + gitignore + bib superset (skeleton compiles)
@@ -447,8 +447,8 @@ Plans:
 - [x] 13-06-PLAN.md — Wave 1: chapters 4-6 (Experimental Setup, Results: Fusion, Results: Robustness & TTA)
 - [x] 13-07-PLAN.md — Wave 1: chapters 7-9 (Discussion + full SOTA, Limitations & FW, Conclusion)
 - [x] 13-08-PLAN.md — Wave 1 exit: merged clean build + scans + USER CHECKPOINT (chapter drafts)
-- [ ] 13-09-PLAN.md — Wave 2: appendices A-C (RTFM gap, per-category + Pri-7, sweep detail)
-- [ ] 13-10-PLAN.md — Wave 2: appendices D-F + frontmatter (titlepage, restructured abstract, notation)
+- [x] 13-09-PLAN.md — Wave 2: appendices A-C (RTFM gap, per-category + Pri-7, sweep detail)
+- [x] 13-10-PLAN.md — Wave 2: appendices D-F + frontmatter (titlepage, restructured abstract, notation)
 - [ ] 13-11-PLAN.md — Wave 2: SOTA primary-source verification gate + evidence report + USER SPOT-APPROVAL
 - [ ] 13-12-PLAN.md — Wave 3: RE-VERIFY resolution merge + bib finalization + integration pass
 - [ ] 13-13-PLAN.md — Wave 3: adversarial number audit + overclaim scan + final build + FINAL USER CHECKPOINT
