@@ -137,6 +137,62 @@ time. To our knowledge, no prior WSVAD system combines a frozen skeleton-graph e
 frozen vision-language features through a learned gate, nor evaluates such a system across
 multiple visual backbones.
 
+\subsection{Design-Space Synthesis}
+
+Table~\ref{tab:rw-taxonomy} summarizes the surveyed WSVAD lineage along the mechanism axes that
+matter for this thesis: the feature basis each method scores, any additional signal beyond a
+single visual stream, whether a text branch participates, and the nature of task-specific
+training. Three observations emerge. First, the field's feature basis has migrated twice---from
+action-recognition backbones (C3D, I3D) to frozen vision-language encoders, and most recently to
+multi-modal LLMs---while the weak-supervision protocol has remained essentially constant, which
+is why MIL ranking machinery from the first generation still underlies current systems. Second,
+where additional signals appear, they are predominantly \emph{textual} (prompts, captions,
+alignment branches) or \emph{auditory}; explicit articulated-motion signals are nearly absent,
+appearing only as one of several distilled training-time auxiliaries in
+PI-VAD~\cite{majhi2025pivad}. Third, no surveyed method keeps an auxiliary modality as a
+separately encoded stream behind a learned gate at \emph{inference} time---the structural
+property this thesis introduces and later exploits for test-time robustness
+(Chapter~\ref{ch:06}).
+
+% Source: mechanism-level design facts restated from the cited primary papers as surveyed in
+% Section 2.1 (verification record: .planning/phases/12-*/12-RESEARCH-sota.md S8). No
+% performance numbers appear in this table by design; quantitative comparison is Chapter 7.
+\begin{table}[t]
+\centering
+\caption{Design-space summary of the surveyed weakly supervised VAD methods (mechanism axes
+only; quantitative comparison appears in Chapter~\ref{ch:07}). ``Frozen VLM'' means the visual
+backbone is used as a fixed feature extractor. The final row positions this thesis.}
+\label{tab:rw-taxonomy}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{l l l c l}
+\toprule
+Method & Feature basis & Additional signal & Text & Training \\
+\midrule
+Sultani et al.~\cite{sultani2018ucfcrime} & C3D & --- & no & MIL head \\
+HL-Net~\cite{wu2020xdviolence} & I3D & audio & no & fusion + head \\
+RTFM~\cite{tian2021rtfm} & I3D & --- & no & temporal net + head \\
+UR-DMU~\cite{zhou2023urdmu} & I3D & memory banks & no & memory + head \\
+MGFN~\cite{chen2023mgfn} & I3D / Video Swin & --- & no & glance-focus net \\
+Light-WVAD~\cite{wang2024lightwvad} & I3D & --- & no & lightweight head \\
+CLIP-TSA~\cite{joo2023cliptsa} & frozen VLM (CLIP) & --- & no & temporal attention \\
+VadCLIP~\cite{wu2024vadclip} & frozen VLM (CLIP) & learnable prompts & yes & dual-branch head \\
+TPWNG~\cite{yang2024tpwng} & frozen VLM (CLIP) & pseudo-labels & yes & prompt + align \\
+PEL4VAD~\cite{pu2024pel4vad} & I3D & knowledge prompts & yes & context head \\
+STPrompt~\cite{wu2024stprompt} & frozen VLM (CLIP) & spatio-temp.\ prompts & yes & prompt head \\
+TEVAD~\cite{chen2023tevad} & I3D & auto captions & yes & fusion head \\
+AnomalyCLIP~\cite{zanella2024anomalyclip} & frozen VLM (CLIP) & normality subspace & yes & subspace head \\
+LAVAD~\cite{zanella2024lavad} & captioner + LLM & --- & yes & training-free \\
+EventVAD~\cite{shao2025eventvad} & MLLM & event graph & yes & training-free \\
+Holmes-VAD~\cite{zhang2024holmesvad} & MLLM & instruction data & yes & LoRA tuning \\
+PI-VAD~\cite{majhi2025pivad} & I3D & aux.\ modalities (train only) & no & inductor + head \\
+\midrule
+\textbf{This work} & frozen VLM (4 backbones) & frozen skeleton stream & no & gated fusion head \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
 \section{Skeleton-Based Action Recognition and Anomaly Detection}
 \label{sec:rw-skeleton}
 
@@ -173,6 +229,17 @@ action recognition, such as two-stream I3D over RGB and optical flow~\cite{carre
 established that complementary input encodings improve recognition; this thesis transposes that
 principle to the weakly supervised anomaly setting with skeleton and vision-language streams.
 
+One further property of the skeleton modality matters specifically for the robustness study of
+this thesis. Once extracted, pose keypoints are low-dimensional geometric quantities: pixel-domain
+corruptions can affect them only \emph{through} the pose estimator, and when skeleton features are
+computed from clean frames---or served from a cache extracted before corruption occurs---they are
+entirely untouched by degradation of the visual stream. The two modalities therefore fail under
+\emph{different} conditions: additive noise devastates dense visual embeddings while leaving a
+cached skeleton stream intact, whereas motion blur or aggressive compression can corrupt pose
+estimation itself. This asymmetric failure profile, largely incidental in prior skeleton-based
+anomaly work, becomes a structural asset in Chapter~\ref{ch:06}, where the fusion is routed toward
+whichever stream remains reliable under the deployed corruption.
+
 \section{Vision-Language Backbones}
 \label{sec:rw-vlm}
 
@@ -189,6 +256,21 @@ additional objectives---captioning-based pretraining, self-supervised distillati
 prediction---yielding improved dense and localization features across a range of model scales,
 including a shape-optimized ${\sim}$400M-parameter encoder (SO400M) whose width/depth allocation
 follows compute-optimal scaling analysis, and a giant-scale variant.
+
+Two practical properties of frozen vision-language features shape how they are used in WSVAD
+pipelines, including ours. First, frozen features are \emph{deterministic}: extracted once and
+cached, they make every downstream experiment cheap and exactly repeatable, which is what makes
+large ablation grids and multi-seed protocols affordable on a single GPU. Second, freezing
+decouples the representation from the task head, so comparisons between heads (or, in this
+thesis, between fusion mechanisms and backbones) are not confounded by divergent fine-tuning of
+the encoder. The cost is a ceiling: task-adapted or text-aligned systems consistently outperform
+frozen-feature ones, because the frozen representation cannot reshape itself around the anomaly
+signal. This thesis accepts that ceiling deliberately and quantifies it honestly
+(Chapters~\ref{ch:05} and~\ref{ch:07}). A further design choice within the frozen regime is
+whether to use the backbone's paired \emph{text} encoder: most CLIP-era WSVAD methods above do,
+through prompts or alignment branches, while this thesis uses only the image tower---keeping the
+pipeline free of prompt engineering and its associated tuning surface, at a measurable cost in
+headline accuracy.
 
 This thesis treats the backbone as an experimental variable rather than a fixed choice: the same
 pipeline is evaluated over CLIP ViT-B/16, SigLIP2 ViT-B/16, SigLIP2 SO400M, and SigLIP2 Giant
@@ -224,6 +306,18 @@ fully test-time adaptation as a practical setting. SAR~\cite{niu2023sar} hardens
 deployment conditions in which plain entropy minimization collapses---small batches, class-imbalanced
 streams, mixed shifts---by filtering out high-entropy (unreliable) samples from the update and
 seeking flat minima via sharpness-aware minimization~\cite{foret2021sam}.
+
+Beyond the choice of objective, TTA methods differ in \emph{protocol}, and the distinction is
+consequential. Episodic protocols reset the adapted parameters after each test unit (each video,
+in our setting), bounding error accumulation at the cost of adaptation capacity; continual-online
+protocols let adaptation accumulate along the test stream, which is the setting TENT and SAR were
+designed for but which exposes them to drift and collapse on long, imbalanced streams---the
+failure mode SAR's filtering explicitly targets. A second, less-discussed interaction is with the
+\emph{evaluation metric}: ranking metrics such as AUC are invariant to any strictly monotone
+transformation of the scores, so an adaptation step changes the metric only insofar as it
+\emph{reorders} test samples. Both distinctions---protocol validity and metric invariance---turn
+out to be central to the TTA analysis of this thesis (Section~\ref{sec:meth-tta} and
+Chapter~\ref{ch:06}).
 
 Both families were designed around BatchNorm. LayerNorm~\cite{ba2016layernorm}, which normalizes
 each sample independently and maintains \emph{no} running statistics, changes the picture
