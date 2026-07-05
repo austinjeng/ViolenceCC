@@ -31,12 +31,12 @@
 | 11 | RTFM | 84.30 / 77.81 | VERIFIED | Canonical I3D pair confirmed |
 | 12 | EventVAD | 82.03 / 64.04 | VERIFIED | 64.04 is AP; 87.51 is ROC-AUC (never AP); A800-80GB confirmed; full 14-author list recorded |
 | 12b | LAVAD | 80.28 / 62.01 | VERIFIED | 62.01 is AP; 85.36 is ROC-AUC (never AP) |
-| 13 | HyperVD | N-A / 85.67 | (pending batch 5 — do not merge) | — |
-| 13b | Ghadiya et al. | N-A / 86.34 | (pending batch 5 — do not merge) | — |
+| 13 | HyperVD | N-A / 85.67 | VERIFIED | Audio-visual label + visual-only 82.51 confirmed; UCF N/A confirmed; bib gains vol 151 / art 105286 / DOI |
+| 13b | Ghadiya et al. | N-A / 86.34 | VERIFIED | Audio-visual confirmed; UCF N/A confirmed (paper evaluates XD + NPDI only) |
 | 14 | STPrompt & FDPN XD cells | N/A cells | VERIFIED | Neither paper evaluates XD-Violence; N/A cells + footnotes d/e stand |
-| 15 | Light-WVAD attribution | 84.7 / `---` | (pending batch 5 — do not merge) | — |
-| 16 | PI-VAD & DSANet bib status | — | (pending batch 5 — do not merge) | — |
-| 17 | PI-VAD & DSANet author lists | — | (pending batch 5 — do not merge) | — |
+| 15 | Light-WVAD attribution | 84.7 / `---` | VERIFIED | Authors Wang/Zhou/Guan confirmed; UCF 84.7 confirmed; XD confirmed ABSENT from the paper (77.3 stays dead — see hallucination note) |
+| 16 | PI-VAD & DSANet bib status | 90.33/85.37 · 89.44/86.95 | VERIFIED (both `@inproceedings` stand) | PI-VAD = CVPR 2025 main conf (CVF poster + IEEE Xplore); DSANet = AAAI 2026 (arXiv comments); numbers confirmed; DSANet backbone is CLIP (not I3D) |
+| 17 | PI-VAD & DSANet author lists | — | CORRECTED (DSANet) / RESOLVED (PI-VAD) | DSANet first author is "Wenti Yin" NOT "Yang Yin"; both full lists recorded in Part D |
 
 ### GATE-13 bib entries (15)
 
@@ -51,8 +51,8 @@
 | leng2026piercingeye | CORRECTED | NOT published in TPAMI — "Submitted to IEEE TPAMI" only; retype `@misc` arXiv preprint, year 2025; full author names + full title recorded |
 | zanella2024anomalyclip | VERIFIED (+fields added) | add eprint 2310.02835, volume 249, article 104163, DOI 10.1016/j.cviu.2024.104163 |
 | chen2023tevad | VERIFIED | none — CVPRW 2023 (O-DRUM) + authors confirmed |
-| peng2024hypervd | (pending batch 5) | — |
-| ghadiya2024crossmodal | (pending batch 5) | — |
+| peng2024hypervd | VERIFIED (+fields added) | add volume 151, article 105286, DOI 10.1016/j.imavis.2024.105286 (Crossref-confirmed; aggregators showing vol. 148 are wrong) |
+| ghadiya2024crossmodal | VERIFIED | none — CVPRW 2024 MULA confirmed ("Accepted to CVPR'24 MULA Workshop"); authors exact match |
 | yan2018stgcn | VERIFIED | none ("Accepted by AAAI 2018") |
 | hendrycks2019imagenetc | VERIFIED | none ("ICLR 2019 camera-ready") |
 | sun2016coral | VERIFIED | none ("Full paper to appear in AAAI-16") |
@@ -172,11 +172,19 @@
 
 ### Item 13 — HyperVD
 
-- (PENDING batch 5 — placeholder; will be replaced before finalization.)
+- **CLAIM:** XD AP = 85.67 (AUDIO-VISUAL); visual-only variant = 82.51; UCF-Crime not reported (N/A cell).
+- **PRIMARY SOURCE URL:** https://arxiv.org/abs/2305.18797 + https://ar5iv.labs.arxiv.org/html/2305.18797 (Peng et al., Image and Vision Computing 2024) + Crossref record for DOI 10.1016/j.imavis.2024.105286.
+- **QUOTE:** Table 1, verbatim rows: "HyperVD (ours) | A + V | 85.67" and "HyperVD (ours) | V | 82.51".
+- **VERDICT:** VERIFIED — 85.67 (A+V) and 82.51 (visual-only) both confirmed; UCF-Crime is NOT evaluated (the paper uses XD-Violence only); metric is AP.
+- **NOTES:** Footnote $^m$ (audio-visual label + visual-only 82.51 + UCF N/A) stands exactly as drafted. Bib-ready journal facts (Crossref): Image and Vision Computing, **volume 151, article 105286, year 2024, DOI 10.1016/j.imavis.2024.105286** — note some aggregators show vol. 148, which is wrong. Authors match the bib exactly (7 authors, Xiaogang Peng ... Zizhao Wu).
 
 ### Item 13b — Ghadiya et al.
 
-- (PENDING batch 5 — placeholder; will be replaced before finalization.)
+- **CLAIM:** XD AP = 86.34 (AUDIO-VISUAL); UCF-Crime not reported (N/A cell); CVPRW 2024 MULA.
+- **PRIMARY SOURCE URL:** https://arxiv.org/abs/2412.20455 + https://ar5iv.labs.arxiv.org/html/2412.20455 (Ghadiya, Kar, Chudasama & Wasnik, Sony Research India).
+- **QUOTE:** proposed method reports "86.34%" on XD-Violence, described as an "audio-video modality-based weakly supervised" approach. arXiv Comments field verbatim: "Accepted to CVPR'24 MULA Workshop".
+- **VERDICT:** VERIFIED — 86.34 audio-visual AP confirmed; UCF-Crime is NOT reported (the paper evaluates XD-Violence and NPDI only).
+- **NOTES:** Venue confirmed via the authors' own arXiv comments field (a CVF open-access mirror for the workshop could not be reached — recorded as failed attempt; the comments field is the paper's own primary metadata). Footnote $^n$ stands; the "MEDIUM conf" hedge can be dropped. Authors match the bib exactly.
 
 ### Item 14 — STPrompt & FDPN XD cells (N/A confirmation)
 
@@ -188,15 +196,35 @@
 
 ### Item 15 — Light-WVAD attribution + XD cell
 
-- (PENDING batch 5 — placeholder; will be replaced before finalization.)
+- **CLAIM:** authors = Yang Wang, Jiaogen Zhou & Jihong Guan (NOT "Sun et al."); UCF AUC = 84.7 (I3D); XD cell stays `---` (the 77.3 previously in circulation was fabricated and removed in quick task 260622-ukd).
+- **PRIMARY SOURCE URL:** https://arxiv.org/abs/2310.05330 (the paper's arXiv preprint; v2 revision matches the Neurocomputing publication) + https://arxiv.org/html/2310.05330v1 + https://ar5iv.labs.arxiv.org/html/2310.05330; journal record DOI 10.1016/j.neucom.2024.128698 (Neurocomputing vol. 613, art. 128698).
+- **QUOTE:** Authors: "Yang Wang, Jiaogen Zhou, Jihong Guan". UCF Table 2: "Light-WVAD (ours) | I3D | 84.7". Abstract (both v1 and v2): "Our extensive experiments on two public datasets UCF-Crime and ShanghaiTech..." Experimental setup (v2): "We evaluate our model on two commonly used video anomaly detection benchmark datasets, ShanghaiTech and UCF-Crime."
+- **VERDICT:** VERIFIED on all three sub-claims — authors Wang/Zhou/Guan confirmed; UCF 84.7 confirmed (Table 2, I3D); **XD-Violence confirmed ABSENT** — the `---` cell is permanent and 77.3 must never be reinstated.
+- **NOTES:** **Hallucination documentation (important provenance record):** one leading-prompt fetch of the `arxiv.org/html/...v2` page confabulated an "XD-Violence Table 3 = 77.3". This was established as a fetch-model hallucination by four independent primary checks: (1) both abstracts name only two datasets; (2) the v2 setup sentence names only ShanghaiTech + UCF-Crime; (3) ar5iv and arXiv v1 renders both list Table III = "Model size comparison" and full-text greps find "XD-Violence" NOT PRESENT and "77.3" NOT PRESENT; (4) the confabulated table mislabeled its own metric and contradicted the same page's dataset sentence. This independently re-confirms the Phase-12 finding that the 77.3 was fabricated. Bib `wang2024lightwvad` is fully correct as-is (no GATE-13 marker; verified in Phase 12 and re-confirmed here).
 
 ### Item 16 — PI-VAD & DSANet publication status (checklist #16 / WR-02)
 
-- (PENDING batch 5 — placeholder; will be replaced before finalization.)
+**16a — PI-VAD (π-VAD):**
+- **CLAIM:** UCF AUC = 90.33; XD AP = 85.37 (I3D backbone); bib typed `@inproceedings` CVPR 2025 — is that right?
+- **PRIMARY SOURCE URL:** https://arxiv.org/html/2505.13123 (Table 1) + https://cvpr.thecvf.com/virtual/2025/poster/34670 (CVPR 2025 main-conference poster) + https://ieeexplore.ieee.org/document/11092984/ (IEEE Xplore proceedings entry).
+- **QUOTE:** Table 1, row "π-VAD (Ours)", I3D backbone: UCF-Crime AUC 90.33 (+2.75% over prior SOTA); XD-Violence AP 85.37 (+3.20%).
+- **VERDICT:** VERIFIED — both numbers confirmed on I3D; publication status VERIFIED as `@inproceedings` CVPR 2025 MAIN conference (not a workshop; arXiv abs carries no journal-ref but the CVF virtual site + IEEE Xplore proceedings entry are decisive). **Keep the current bib typing.**
+- **NOTES:** Full author list in Part D. Primary arXiv spelling is "Egor Bondarev" and "Francois Bremond" (one aggregator's "Bondarau" is wrong); add the diacritic "Brémond" only if used consistently across the bib.
+
+**16b — DSANet:**
+- **CLAIM:** UCF AUC = 89.44; XD AP = 86.95; bib typed `@inproceedings` AAAI 2026 — is that right?
+- **PRIMARY SOURCE URL:** https://arxiv.org/abs/2511.10334 (Comments: "Accepted to AAAI 2026. Code is available at...") + https://arxiv.org/html/2511.10334 (tables).
+- **QUOTE:** UCF-Crime AUC 89.44; XD-Violence AP 86.95 (CLIP features).
+- **VERDICT:** VERIFIED — both numbers confirmed; publication status VERIFIED as `@inproceedings` AAAI 2026 via the arXiv comments field. **Keep the current bib typing.** No pages/DOI assigned yet (AAAI-26 proceedings not yet paginated at check time) — leave blank.
+- **NOTES:** The reported backbone is **CLIP, not I3D** — the ch07 Setting cell "Frozen CLIP + V-L alignment, text, frame" is consistent with this; no change needed. First-author correction recorded under Item 17.
 
 ### Item 17 — PI-VAD & DSANet full author lists (checklist #17 / IN-02)
 
-- (PENDING batch 5 — placeholder; will be replaced before finalization.)
+- **CLAIM:** both bib entries carry `and others` placeholders (`Snehashis Majhi and others`; `Yang Yin and others`) to be replaced with full lists.
+- **PRIMARY SOURCE URL:** https://arxiv.org/abs/2505.13123 + https://arxiv.org/abs/2511.10334 (arXiv abs author records).
+- **QUOTE:** PI-VAD authors: Snehashis Majhi, Giacomo D'Amicantonio, Antitza Dantcheva, Quan Kong, Lorenzo Garattoni, Gianpiero Francesca, Egor Bondarev, Francois Bremond. DSANet authors: "Wenti Yin, Huaxin Zhang, Xiang Wang, Yuqing Lu, Yicheng Zhang, Bingquan Gong, Jialong Zuo, Li Yu, Changxin Gao, Nong Sang".
+- **VERDICT:** CORRECTED (DSANet) / RESOLVED (PI-VAD) — the DSANet first author is **"Wenti Yin", NOT "Yang Yin"**: the current bib author field `Yang Yin and others` contains a wrong name, not just a placeholder. PI-VAD's `Snehashis Majhi and others` expands without correction. Full BibTeX-ready strings in Part D.
+- **NOTES:** The bib KEY `yin2026dsanet` can stay (surname Yin is correct); only the author field changes.
 
 ---
 
@@ -258,10 +286,16 @@
 - **VERDICT:** VERIFIED.
 
 ### C.10 peng2024hypervd
-- (PENDING batch 5 — placeholder; will be replaced before finalization.)
+- **CLAIM (current bib):** `@article` Image and Vision Computing 2024, 7 authors, note arXiv:2305.18797.
+- **PRIMARY SOURCE URL:** https://arxiv.org/abs/2305.18797 + Crossref record for DOI 10.1016/j.imavis.2024.105286.
+- **QUOTE:** authors "Xiaogang Peng and Hao Wen and Yikai Luo and Xiao Zhou and Keyang Yu and Ping Yang and Zizhao Wu" (exact match, order and spelling); journal facts: Image and Vision Computing, volume 151, article 105286, year 2024, DOI 10.1016/j.imavis.2024.105286.
+- **VERDICT:** VERIFIED — enrich with `volume = {151}`, `pages/article = {105286}`, `doi = {10.1016/j.imavis.2024.105286}`. (Aggregators listing vol. 148 are wrong — Crossref is decisive.)
 
 ### C.11 ghadiya2024crossmodal
-- (PENDING batch 5 — placeholder; will be replaced before finalization.)
+- **CLAIM (current bib):** `@inproceedings` CVPRW 2024, authors Ayush Ghadiya, Purbayan Kar, Vishal Chudasama, Pankaj Wasnik, note arXiv:2412.20455.
+- **PRIMARY SOURCE URL:** https://arxiv.org/abs/2412.20455
+- **QUOTE:** Comments field verbatim: "Accepted to CVPR'24 MULA Workshop"; authors match exactly.
+- **VERDICT:** VERIFIED.
 
 ### C.12 yan2018stgcn
 - **CLAIM (current bib):** `@inproceedings` AAAI 2018, authors Sijie Yan, Yuanjun Xiong, Dahua Lin.
@@ -295,15 +329,36 @@
 |---------|--------|--------------------------------|
 | shao2025eventvad | RESOLVED | `Yihua Shao and Haojin He and Sijie Li and Siyu Chen and Xinwei Long and Fanhu Zeng and Yuxuan Fan and Muyang Zhang and Ziyang Yan and Ao Ma and Xiaochen Wang and Hao Tang and Yan Wang and Shuyan Li` |
 | damicantonio2025gsmoe | RESOLVED (order caveat) | `Giacomo D'Amicantonio and Snehashis Majhi and Quan Kong and Lorenzo Garattoni and Gianpiero Francesca and François Brémond and Egor Bondarev` (arXiv order; ICCV virtual page swaps the last two — recommend `... and Egor Bondarev and François Brémond`; USER SPOT-CHECK) |
-| majhi2025pivad | (pending batch 5) | — |
-| yin2026dsanet | (pending batch 5) | — |
+| majhi2025pivad | RESOLVED | `Snehashis Majhi and Giacomo D'Amicantonio and Antitza Dantcheva and Quan Kong and Lorenzo Garattoni and Gianpiero Francesca and Egor Bondarev and Francois Bremond` (arXiv/CVF spelling; diacritic "Brémond" optional but be consistent with damicantonio2025gsmoe) |
+| yin2026dsanet | RESOLVED + CORRECTED | `Wenti Yin and Huaxin Zhang and Xiang Wang and Yuqing Lu and Yicheng Zhang and Bingquan Gong and Jialong Zuo and Li Yu and Changxin Gao and Nong Sang` — first author is **Wenti Yin**, the current "Yang Yin" is WRONG |
 
 ---
 
 ## Part E — Cells to omit + omission footnotes
 
-(To be finalized in Task 2 — no UNVERIFIABLE result cells identified so far among items 1–12b/14; existing omissions confirmed correct: Sultani XD `---` [Item 10], STPrompt/FDPN XD N/A [Item 14].)
+**ZERO new omissions required.** Every result cell in `tab:sota-full` / `tab:sota-fair` survived primary-source verification — no UNVERIFIABLE verdicts. The four existing omissions/N-A cells were each re-confirmed as correct against the primary papers:
+
+| Cell | Status | Footnote (already drafted in ch07 — stands) |
+|------|--------|---------------------------------------------|
+| Sultani XD = `---` | Confirmed correct (Item 10) | $^l$: 73.20 AP is Wu et al. ECCV 2020's re-implementation, not the 2018 paper |
+| Light-WVAD XD = `---` | Confirmed correct (Item 15) | Setting note "(XD not evaluated)"; 77.3 confirmed absent from the paper — fabrication independently re-confirmed |
+| STPrompt XD = N/A | Confirmed correct (Item 14) | $^d$: benchmarks are UCF / ShanghaiTech / UBnormal |
+| FDPN XD = N/A | Confirmed correct (Item 8) | $^e$: XD not evaluated |
+| HyperVD UCF = N/A | Confirmed correct (Item 13) | $^m$: UCF not reported (XD-only paper) |
+| Ghadiya UCF = N/A | Confirmed correct (Item 13b) | $^n$: UCF not reported |
 
 ---
 
-*Draft status: Task 1 complete (items 1–9 + bib C.1–C.9, C.12–C.15). Items 13/13b/15/16/17 + C.10/C.11 + Part D rows 3–4 pending batch-5 completion; final verdict tally and Part E in Task 2.*
+## Final verdict tally
+
+**Worklist (19 verdict rows = items 1–17 incl. 12b/13b):**
+- Result-cell numbers (UCF/XD values): **19/19 VERIFIED — zero number corrections, zero UNVERIFIABLE, zero cells to omit.**
+- Metadata verdicts folded into those rows: **5 CORRECTED** — (i) GS-MoE venue → real ICCV 2025 proceedings (Item 3); (ii) PiercingEye venue → arXiv preprint "submitted to TPAMI", NOT TPAMI'26 (Item 6); (iii) FDPN bib title + full authors + pages (Item 8); (iv) DSANet first author "Wenti Yin" (Item 17); (v) CLIP-TSA footnote $^f$ rewording — 94.02 is not in the paper at all (Item 1).
+
+**GATE-13 bib entries: 12 VERIFIED / 3 CORRECTED** (song2025fdpn title+authors+pages; pu2024pel4vad "Lulu Yang"; leng2026piercingeye retype `@misc` preprint). Optional enrichments recorded for zanella2024anomalyclip and peng2024hypervd (vol/article/DOI).
+
+**`and others` expansions: 4/4 RESOLVED** (shao2025eventvad 14 authors; damicantonio2025gsmoe 7 authors with last-two-order caveat; majhi2025pivad 8 authors; yin2026dsanet 10 authors with first-author correction).
+
+**Confidence-flag clearances for 13-12:** PiercingEye XD 88.82 LOW→cleared (verbatim Table I); AnomalyCLIP LOW→cleared (Tables 2/3 detection rows); TEVAD MEDIUM→cleared (Table 4 headline); Ghadiya MEDIUM→cleared; FDPN "re-check or drop"→keep (verified).
+
+**Instruction to 13-12 (after user approval):** apply the 8 corrections + 4 author expansions + enrichments; remove all 17 `% RE-VERIFY` comments in ch07/ch08 and all 15 `% GATE-13` markers in references.bib; zero `and others` must remain.
