@@ -3,20 +3,425 @@
 %%
 \chapter{Methodology}
 \label{ch:03}
-% PERMANENT label: figures/fig_architecture.tex (verbatim paper copy)
-% references Sec.~\ref{sec:disc}. Wave-1 writer: MOVE this label onto the
-% disc_reweight section (paper S3.6 analog) when drafting -- do not delete it.
-\label{sec:disc}
 
-PLACEHOLDER-W0 --- Wave-1 writer: expand from paper \S3 (paper/main.tex
-L111--200); lift all eight equations VERBATIM (code-verified; never alter the
-math). Unpack \S3.7 TTA methods from .knowledge/tta-to-reweighting.html.
-Delete this marker when drafting. The figure below is the Wave-0 TikZ +
-one-column-width smoke test (RESEARCH A5); keep the figure, replace the caption.
+This chapter presents the dual-modal fusion framework in full. Section~\ref{sec:meth-overview}
+gives an end-to-end overview of the pipeline. Sections~\ref{sec:meth-skeleton}
+and~\ref{sec:meth-ctrgcn} describe the skeleton stream---keypoint extraction and graph-convolutional
+encoding---and Section~\ref{sec:meth-vlm} the visual-language stream. Section~\ref{sec:meth-fusion}
+defines the two fusion mechanisms under study, Section~\ref{sec:meth-mil} the weakly supervised
+training objective, and Section~\ref{sec:meth-tta} the test-time adaptation methods, including the
+proposed discriminative-reliability reweighting (Section~\ref{sec:disc}). All equations in this
+chapter are stated exactly as implemented in the released code.
+
+\section{Pipeline Overview}
+\label{sec:meth-overview}
 
 \begin{figure}[t]
   \centering
   \resizebox{\textwidth}{!}{\input{figures/fig_architecture}}
-  \caption{PLACEHOLDER-W0 architecture smoke test}
+  \caption{Overview of the dual-modal fusion pipeline. Two parallel \emph{frozen} streams extract complementary snippet features: RTMPose keypoints (top-2 persons) are encoded by a frozen CTR-GCN into 256-d skeleton features, while frames sampled at ${\sim}1$~FPS are embedded by a frozen vision-language backbone (CLIP ViT-B/16 or a SigLIP2 variant) and aggregated by concatenated mean+max pooling into a $2d$-dimensional (1024--3072-d) visual feature. The gated fusion module---together with the MIL head, the only trained component---projects each modality to a shared 256-d space (per-modality LayerNorm), blends them with a per-dimension learned gate, and retains both projected modalities through a residual connection followed by a third LayerNorm. The dashed annotation marks the test-time reliability reweighting that scales the visual stream by $w$ under corruption (Sec.~\ref{sec:disc}). The MIL head scores each snippet and is trained with the MIL ranking loss. Both streams share identical snippet boundaries, so skeleton and visual features are aligned by construction (Section~\ref{sec:meth-ctrgcn}).}
   \label{fig:architecture}
 \end{figure}
+
+Our framework processes surveillance videos through two parallel feature extraction
+streams---skeleton-based and visual-language-based---whose outputs are combined via a learned
+fusion mechanism and trained with MIL ranking loss. Figure~\ref{fig:architecture} illustrates the
+complete pipeline. Both backbone encoders are \emph{frozen}: the CTR-GCN skeleton encoder retains
+its NTU-pretrained weights, and the vision-language backbone retains its published pretraining
+weights. Only the fusion head and the anomaly-scoring head are trainable.
+
+The frozen-backbone design serves three purposes simultaneously. First, it respects the hardware
+constraint of this thesis (a single RTX 4090), under which end-to-end fine-tuning of a
+vision-language backbone at video scale is infeasible. Second, it isolates the experimental
+variable: because the backbones never change, every performance difference between fusion
+variants---and every difference across visual backbones---is attributable to the representation
+and the small learned head, not to divergent fine-tuning trajectories. Third, it makes the
+multi-backbone study of Chapter~\ref{ch:05} tractable: features are extracted once per video and
+cached, after which each of the dozens of training configurations completes in minutes.
+
+Concretely, each video is segmented into non-overlapping 64-frame snippets shared by both
+streams. The skeleton stream converts each snippet into a 256-dimensional feature vector
+(Sections~\ref{sec:meth-skeleton}--\ref{sec:meth-ctrgcn}); the visual stream converts the same
+snippet into a $2d$-dimensional vector, where $d$ is the backbone's embedding width
+(Section~\ref{sec:meth-vlm}). The fusion head maps the pair of snippet features to a single
+anomaly score per snippet (Section~\ref{sec:meth-fusion}), and training uses only video-level
+labels through the MIL ranking objective (Section~\ref{sec:meth-mil}).
+
+\textbf{Notation.} Bold lowercase symbols denote vectors: $\mathbf{s} \in \mathbb{R}^{256}$ is a
+skeleton snippet feature and $\mathbf{v} \in \mathbb{R}^{d_v}$ a visual snippet feature, with
+$d_v = 2d$ for backbone embedding width $d$. Hatted symbols ($\hat{\mathbf{s}}$,
+$\hat{\mathbf{v}}$) denote projected and normalized versions of the same quantities. Scalar $a$
+denotes a snippet anomaly score, $T$ the fixed bag length used in training, and $k$ the top-$k$
+selection size of the ranking loss. The three LayerNorm modules of the fusion head are named
+$\text{LN}_s$, $\text{LN}_v$, and $\text{LN}_f$ (skeleton projection, visual projection, and
+fused output respectively); these names are used consistently through the test-time adaptation
+analysis of Section~\ref{sec:meth-tta} and Chapter~\ref{ch:06}.
+
+\section{Skeleton Extraction with RTMPose}
+\label{sec:meth-skeleton}
+
+We extract 2D human pose keypoints from video frames using RTMPose-m~\cite{jiang2023rtmpose}, a
+real-time multi-person pose estimation model based on the top-down paradigm. The extraction
+pipeline proceeds in two stages: (1)~a YOLOX-m object detector localizes person bounding boxes in
+each frame, and (2)~RTMPose-m estimates 17 COCO-format keypoints (nose, eyes, ears, shoulders,
+elbows, wrists, hips, knees, ankles) for each detected person. The top-down design---detect
+persons first, then estimate pose inside each box---is preferable to bottom-up alternatives for
+surveillance footage, where person scale varies widely across the frame and per-box pose
+estimation normalizes that variation away. RTMPose-m occupies a deliberate accuracy--throughput
+operating point: accurate enough for reliable keypoints on medium-resolution surveillance frames,
+fast enough that extracting poses for hundreds of hours of video on one GPU remains practical.
+
+We retain the top-2 persons per frame ranked by mean keypoint confidence to maintain a fixed
+spatial dimension across all inputs. Two persons is a natural minimum for violence-oriented
+detection---fights, assaults, and robberies are typically interactions between at least two
+people---while keeping the tensor layout fixed and small. When fewer than 2 persons are detected,
+the remaining slots are zero-padded. The raw pixel coordinates are normalized to the $[-1, 1]$
+range about the image center via the PreNormalize2D transformation, matching the input convention
+of the NTU-pretrained CTR-GCN encoder; without this step, the frozen encoder would receive
+coordinates on a scale it never saw during pretraining.
+
+The extracted skeletons are organized as tensors of shape $(T_f, M, V, C)$ where $T_f$ is the
+number of frames, $M=2$ is the maximum person count, $V=17$ is the number of joints, and $C=3$
+includes the $(x, y)$ coordinates and a keypoint confidence score. The confidence channel is
+retained deliberately: it lets the downstream encoder discount uncertain keypoints (occlusions,
+motion blur, small scale) rather than treating all coordinates as equally reliable. The
+extraction runs at approximately 21.6 FPS on single-person scenes (about 15 FPS with multiple
+persons) on a single RTX 4090 using ONNX Runtime with CUDA acceleration; pose extraction
+dominates the offline preprocessing cost of the entire pipeline.
+
+\section{Skeleton Feature Encoding with CTR-GCN}
+\label{sec:meth-ctrgcn}
+
+Skeleton sequences are encoded using CTR-GCN~\cite{chen2021ctrgcn}, a graph convolutional network
+that refines the graph topology in a channel-wise manner. Fixed-topology GCNs such as
+ST-GCN~\cite{yan2018stgcn} assume a static skeleton graph derived from the anatomical bone
+structure, which constrains every feature channel to aggregate over the same joint neighborhoods.
+CTR-GCN instead learns channel-specific topology refinement matrices that adapt the adjacency
+structure for different feature channels, enabling the network to capture both local joint
+interactions (for example, wrist--elbow dynamics during a punch) and global body configurations
+(overall posture during a fall) in different channels of the same layer.
+
+We employ a CTR-GCN model pre-trained on NTU RGB+D 120~\cite{yan2022pyskl} for general action
+recognition, using it as a frozen feature extractor. The model processes four complementary input
+streams: joint positions (j), bone vectors (b), joint motion (jm), and bone motion (bm). Joint
+positions encode absolute spatial coordinates, bone vectors capture relative limb orientations,
+and the motion streams encode first-order temporal differences of each. Each stream produces a
+256-dimensional feature vector per temporal window, and the four are combined by weighted
+averaging with weights 1.0 (joint), 1.0 (bone), 0.5 (joint motion), and 0.5 (bone motion)---the
+static streams carry the primary signal, while the motion streams contribute a smaller refinement,
+following the relative stream strengths observed in skeleton action recognition practice.
+
+Following the PYSKL~\cite{yan2022pyskl} convention, we segment each video into non-overlapping 64-frame snippets and pool the backbone output over the person ($M$), temporal ($T_f$), and spatial ($V$) dimensions via global average pooling to produce a compact 256-d snippet representation. The four-stream features are combined by weighted averaging (joint and bone weighted 1.0, motion streams 0.5) to form the final 256-d skeleton representation. Videos shorter than 64 frames (172 videos in UCF-Crime, one in XD-Violence) are excluded from training and evaluation. Because UCF-Crime is distributed as frames pre-sampled at roughly 3~FPS (every tenth frame of its ${\sim}30$~FPS source video) while XD-Violence is decoded at its native ${\sim}24$~FPS, a 64-frame snippet spans about 20~s on UCF-Crime versus ${\sim}2.7$~s on XD-Violence; both streams use identical snippet boundaries, so the skeleton and visual features stay aligned by construction. (On UCF-Crime a single snippet thus pools skeleton motion over ${\sim}20$~s---far longer than the few-second action clips on which CTR-GCN was pre-trained---a plausible factor in the weaker UCF skeleton-only result reported below.)
+
+Two consequences of this design deserve emphasis. First, because both streams use identical
+snippet boundaries, no temporal registration step is needed anywhere in the pipeline: the fusion
+head always receives a skeleton feature and a visual feature describing exactly the same frames.
+Second, the frozen NTU-pretrained encoder was trained on short, single-action indoor clips; the
+20-second effective snippet duration on UCF-Crime stretches this encoder well outside its
+pretraining regime, an honest caveat for interpreting the skeleton-only results of
+Chapter~\ref{ch:05}.
+
+\section{Visual-Language Feature Extraction}
+\label{sec:meth-vlm}
+
+We extract visual features from video frames using frozen vision-language backbones. We evaluate
+four models spanning two architectural families:
+\begin{itemize}
+    \item \textbf{CLIP ViT-B/16}~\cite{radford2021clip}: The original contrastive language-image
+    model with a Vision Transformer (ViT-B/16) image encoder~\cite{dosovitskiy2021vit}, producing
+    512-d frame-level features.
+    \item \textbf{SigLIP2 ViT-B/16}~\cite{tschannen2025siglip2}: A sigmoid-loss variant trained on
+    multilingual data with improved dense prediction capabilities, producing 768-d features.
+    \item \textbf{SigLIP2 SO400M}: A shape-optimized ${\sim}400$M-parameter SigLIP2 encoder
+    (SoViT-400M), producing 1152-d features.
+    \item \textbf{SigLIP2 Giant}: The largest variant in the SigLIP2 family with an optimized
+    giant architecture, producing 1536-d features.
+\end{itemize}
+All four models share the Vision Transformer~\cite{dosovitskiy2021vit} architecture but differ in training objective, data scale, and embedding dimensionality. CLIP uses contrastive loss on 400M image-text pairs, while SigLIP2 employs a sigmoid-based pairwise loss and is trained on substantially larger multilingual corpora. The three SigLIP2 backbones use the open-clip checkpoints \texttt{ViT-B-16-SigLIP2-256}, \texttt{ViT-SO400M-16-SigLIP2-256}, and \texttt{ViT-gopt-16-SigLIP2-256} (all pretrained on WebLI), while CLIP ViT-B/16 uses the original OpenAI weights.
+
+These four backbones were selected to span two axes at once: training objective (CLIP's softmax
+contrastive loss versus SigLIP2's sigmoid pairwise loss with auxiliary objectives) and capacity
+(embedding widths from 512-d to 1536-d, encoder parameters across roughly an order of magnitude).
+Holding the entire remainder of the pipeline fixed while varying only this component is what
+allows Chapter~\ref{ch:05} to attribute performance differences to the backbone itself.
+
+For each 64-frame snippet, we extract frame-level features at approximately 1~FPS, yielding
+roughly 3 frames per snippet on XD-Violence and about 20 on UCF-Crime, reflecting the
+dataset-dependent snippet duration described in Section~\ref{sec:meth-ctrgcn}. The frame-level
+features are aggregated via concatenated mean and max pooling, producing a $2d$-dimensional
+snippet representation (e.g., 1024-d for CLIP's 512-d features, 3072-d for SigLIP2 Giant's 1536-d
+features). Mean pooling captures the average semantic content of the snippet, while max pooling
+preserves the most salient per-dimension activations, which may correspond to the most anomalous
+frame within the temporal window. The concatenation lets the fusion head weigh these two
+summaries independently rather than forcing a single pooling prior; the contribution of the max
+branch is ablated in Chapter~\ref{ch:05} (the ``mean-only'' pooling variant).
+
+\section{Fusion Mechanisms}
+\label{sec:meth-fusion}
+
+We investigate two fusion strategies for combining skeleton features $\mathbf{s} \in
+\mathbb{R}^{256}$ with visual features $\mathbf{v} \in \mathbb{R}^{d_v}$, where $d_v = 2d$ is the
+dimension of the concatenated mean--max visual representation (with $d$ the backbone embedding
+dimension). The two strategies sit at opposite ends of a design axis: late fusion commits to a
+fixed, input-independent combination rule, while gated fusion learns an input-dependent,
+per-dimension weighting.
+
+\textbf{Late Fusion.} The simplest approach scores each modality independently and averages the
+two snippet-level anomaly scores. Each modality is passed through its own classifier
+head---$h_s(\cdot)$ for the skeleton stream and $h_v(\cdot)$ for the visual stream---and the
+resulting per-snippet scores are combined with a fixed equal weight:
+\begin{equation}
+    a_{\text{late}} = \tfrac{1}{2}\, h_s(\mathbf{s}) + \tfrac{1}{2}\, h_v(\mathbf{v})
+\end{equation}
+This serves as a baseline that treats both modalities equally with a fixed weighting and no
+input-dependent adaptation. Its appeal is simplicity---the two heads can even be trained
+separately---but the fixed $\tfrac{1}{2}$ weight embeds a strong assumption: that both modalities
+are equally reliable on every input. Chapter~\ref{ch:05} shows this assumption failing in
+practice, with late fusion at times dragging performance below the visual-only baseline.
+
+\textbf{Gated Fusion.} To enable the network to learn input-dependent modality weighting, we
+employ a gated fusion mechanism. Each modality is first projected to a shared 256-d space and
+normalized:
+\begin{equation}
+    \hat{\mathbf{s}} = \text{LN}_s(W_s \mathbf{s} + \mathbf{b}_s), \quad \hat{\mathbf{v}} = \text{LN}_v(W_v \mathbf{v} + \mathbf{b}_v)
+\end{equation}
+Projection to a shared space is necessary because the raw feature dimensions are highly
+asymmetric ($256$ versus up to $3072$); the per-modality LayerNorms $\text{LN}_s$ and
+$\text{LN}_v$ additionally equalize the scale of the two projected representations, so that
+neither modality dominates the subsequent gate computation merely through feature magnitude.
+
+A gating vector $\mathbf{g} \in [0, 1]^{256}$ is computed per dimension from the concatenated
+projected features:
+\begin{equation}
+    \mathbf{g} = \sigma\left( W_g \left[ \hat{\mathbf{s}} \| \hat{\mathbf{v}} \right] + \mathbf{b}_g \right)
+\end{equation}
+The gate is per-dimension rather than scalar: different feature dimensions can encode different
+aspects of the scene (motion patterns, object semantics, context), and a scalar gate would force
+a single trust level across all of them. Because $\mathbf{g}$ is computed from both projected
+modalities jointly, the gate can react to the \emph{relationship} between the two streams on each
+input---for example, discounting the skeleton dimensions when no reliable pose was detected.
+
+The fused representation applies the gated blend together with a residual connection that retains
+both projected modalities, followed by dropout:
+\begin{equation}
+    \mathbf{f}_{\text{gated}} = \text{LN}_f\left( \mathbf{g} \odot \hat{\mathbf{s}} + (1 - \mathbf{g}) \odot \hat{\mathbf{v}} + \hat{\mathbf{s}} + \hat{\mathbf{v}} \right)
+\end{equation}
+where $\odot$ denotes element-wise multiplication and $\text{LN}_s$, $\text{LN}_v$, and
+$\text{LN}_f$ are LayerNorm~\cite{ba2016layernorm} layers (dropout is applied after
+$\text{LN}_f$). The residual term $\hat{\mathbf{s}} + \hat{\mathbf{v}}$ gives an effective
+per-dimension weighting of $(1 + \mathbf{g}) \odot \hat{\mathbf{s}} + (2 - \mathbf{g}) \odot
+\hat{\mathbf{v}}$, so the gate modulates each modality's \emph{relative} contribution over a
+baseline that always retains both, rather than suppressing either outright. This bounded-gate
+design is a safeguard: even a poorly calibrated gate cannot entirely delete a modality, so the
+worst case degrades gracefully toward an (unequal-weight) additive fusion rather than toward a
+single-modality model.
+
+The fusion head thus contains exactly three named LayerNorm modules---$\text{LN}_s$ and
+$\text{LN}_v$ on the two projected streams, and $\text{LN}_f$ on the fused output. The use of
+LayerNorm rather than BatchNorm~\cite{ioffe2015batchnorm} is motivated by the variable batch
+composition in MIL training: batches mix normal and anomalous bags whose score statistics differ
+systematically, so batch-level statistics would be unstable and semantically contaminated,
+whereas LayerNorm normalizes each snippet independently. This choice has structural consequences
+for test-time adaptation---LayerNorm maintains no running statistics that could be recalibrated
+under distribution shift---which are developed in Section~\ref{sec:meth-tta} and evaluated in
+Chapter~\ref{ch:06}.
+
+\section{MIL Training with Ranking Loss}
+\label{sec:meth-mil}
+
+We adopt the MIL ranking loss formulation from Sultani et al.~\cite{sultani2018ucfcrime} with the
+refinements introduced by RTFM~\cite{tian2021rtfm}. Each training batch consists of paired normal
+and anomalous video bags; each bag is a fixed-length sequence of $T=32$ snippet features (uniform
+segment sampling when the video is longer, sampling with replacement when shorter). For each bag,
+snippet-level anomaly scores are computed by the classifier head, and the top-$k$ scoring
+snippets are selected. Selecting the top-$k$ (rather than only the single maximum) makes the
+supervision signal less brittle to a single spuriously high-scoring snippet, while keeping the
+weak-label semantics: an anomalous video need only contain \emph{some} anomalous snippets. The
+ranking loss encourages the mean of the top-$k$ scores in the anomalous bag to exceed that of the
+normal bag by a margin:
+\begin{equation}
+    \mathcal{L}_{\text{rank}} = \max\left(0,\; 1 - \frac{1}{k}\sum_{i \in \mathcal{A}_k} a_i + \frac{1}{k}\sum_{j \in \mathcal{N}_k} a_j\right)
+\end{equation}
+where $\mathcal{A}_k$ and $\mathcal{N}_k$ are the top-$k$ snippet indices in the anomalous and
+normal bags, respectively, and $a$ denotes the predicted anomaly score. The total loss includes
+sparsity and temporal smoothness regularization terms:
+\begin{equation}
+    \mathcal{L} = \mathcal{L}_{\text{rank}} + \frac{\lambda_1}{T}\sum_{t=1}^{T} \left\| \mathbf{a}_t \right\|_2 + \lambda_2 \sum_i (a_i - a_{i+1})^2
+    \label{eq:loss}
+\end{equation}
+Here $\mathbf{a}_t$ is the vector of abnormal-bag anomaly scores at snippet position $t$ across
+the batch, so the sparsity term---following the feature-magnitude formulation of
+RTFM~\cite{tian2021rtfm}---is the mean over snippet positions of the per-position $\ell_2$ norm,
+computed over the abnormal bag. The sparsity term encourages most snippets to receive low anomaly
+scores, reflecting the prior that anomalous events occupy a small fraction of each video's
+duration. The smoothness term penalizes rapid fluctuations in adjacent snippet scores,
+encouraging temporally coherent predictions. We set the sparsity weight $\lambda_1 = 8 \times
+10^{-3}$; the smoothness weight $\lambda_2$ is dataset-dependent, as detailed in
+Chapter~\ref{ch:04}.
+
+During training, each batch consists of paired normal and anomalous video bags, with the training
+loader shuffling pairs to prevent class-ordering bias. The validation loader also uses shuffled
+batches to avoid single-class batch bias, which is important because the MIL ranking loss
+requires both normal and anomalous samples within each batch to compute the ranking gradient: a
+sequentially ordered validation set would produce long runs of single-class batches whose
+validation loss is degenerate, silently corrupting early stopping and checkpoint selection.
+Because training labels exist only at video level, model selection uses the validation MIL loss;
+frame-level information plays no role in any training or selection decision.
+
+\section{Test-Time Adaptation Methods}
+\label{sec:meth-tta}
+
+At deployment, surveillance input degrades in ways the training data does not cover: sensor
+noise, motion blur, compression artifacts, and lighting changes. This section defines the
+test-time adaptation methods studied in this thesis; their empirical evaluation on the
+UCF-Crime-C corruption benchmark appears in Chapter~\ref{ch:06}. Throughout, the deployed model
+is the trained gated-fusion detector of Sections~\ref{sec:meth-fusion}--\ref{sec:meth-mil} with
+\emph{all} learned parameters frozen; adaptation may use only unlabeled test data.
+
+\subsection{Entropy Minimization on LayerNorm Parameters: TENT and SAR}
+\label{sec:meth-tta-entropy}
+
+TENT~\cite{wang2021tent} performs fully test-time adaptation by minimizing the entropy of the
+model's predictions on each test batch, updating only normalization-layer parameters. In its
+original BatchNorm setting, adaptation acts through two channels at once: the BatchNorm layers
+re-estimate activation statistics on the shifted test data, and gradient descent on the entropy
+objective updates the affine parameters ($\gamma$, $\beta$). SAR~\cite{niu2023sar} hardens this
+recipe with reliability filtering---samples whose prediction entropy exceeds a margin are
+excluded from the update---and a sharpness-aware gradient step~\cite{foret2021sam} that seeks
+flat minima of the entropy surface.
+
+Transferring these methods to our architecture requires three adaptations, implemented in
+\texttt{src/tta/tent.py} and \texttt{src/tta/sar.py} (ported from the official SAR repository).
+First, the adaptation surface changes: the parameter collection targets \texttt{nn.LayerNorm}
+modules instead of BatchNorm. In the gated fusion head this yields exactly three LayerNorm
+modules ($\text{LN}_s$, $\text{LN}_v$, $\text{LN}_f$; Section~\ref{sec:meth-fusion}), each
+contributing a 256-d weight and a 256-d bias---six tensors totaling 1{,}536 adapted scalars. All
+other parameters, including the vision-language backbone, the CTR-GCN encoder, the projections,
+the gate, and the MIL head, remain frozen. Notably, LayerNorm removes one of BatchNorm's two
+adaptation channels entirely: there are no running statistics to re-estimate, so entropy descent
+on the affine parameters is the \emph{only} mechanism available. Second, the objective becomes
+binary entropy, $-(s\log s + (1-s)\log(1-s))$ per snippet score $s$, since the MIL head outputs
+sigmoid anomaly scores rather than a softmax class distribution; SAR's reliability margin is
+rescaled accordingly to the binary-entropy range. Third, adaptation is made deterministic: the
+model is placed in training mode only to enable gradient flow through the LayerNorms, while
+every dropout module is explicitly kept in evaluation mode, so that adaptation results are
+bit-reproducible across reruns.
+
+Two adaptation protocols are considered. Under the \emph{episodic} (per-video) protocol, the
+adapted parameters are reset to their source values after each video---the conservative protocol
+that prevents error accumulation. On UCF-Crime, however, this protocol is structurally inert:
+98.4\% of test videos contain at most $T=32$ snippets and are therefore scored in a single
+forward chunk, so the parameter update triggered by a video's own batch can never affect that
+video's already-computed scores, and the subsequent reset discards it. Under the
+\emph{continual-online} protocol---the setting TENT and SAR were designed for---parameters are
+reset once per corruption stream and adaptation accumulates across the videos of that stream, so
+that updates from earlier videos affect the scoring of later ones. Chapter~\ref{ch:06} reports
+results under the continual protocol, with the episodic inertness finding disclosed as part of
+the protocol analysis.
+
+\subsection{Feature-Statistic Restoration: NORM and CORAL}
+\label{sec:meth-tta-restore}
+
+If parameter adaptation cannot reach the corruption-induced shift, a second family of methods
+acts on the features themselves. Statistic-restoration approaches estimate summary statistics of
+the clean training features---per-channel means and standard deviations in the NORM
+tradition~\cite{schneider2020norm}, or the full feature covariance in the CORAL
+tradition~\cite{sun2016coral}---and, at test time, transform the corrupted features so that
+their statistics match the clean reference. In the per-channel form, each corrupted feature
+channel is standardized by the corrupted condition's statistics and re-scaled to the clean
+statistics; in the covariance form, features are whitened with the corrupted covariance and
+re-colored with the clean covariance. Applied to the pooled visual features of our pipeline,
+both forms are label-free and, like the reweighting method below, transductive (statistics
+pooled per corruption condition).
+
+The appeal of this family is that---unlike LayerNorm-affine updates---it operates directly in
+the space where the corruption shift actually lives. Its structural risk, however, is that a
+transformation chosen to match feature \emph{moments} is under no obligation to preserve the
+\emph{ordering} of the detector's output scores: whitening can rotate or rescale exactly the
+directions the frozen detection head relies on to separate anomalous from normal snippets.
+Chapter~\ref{ch:06} shows that this risk is realized in practice---restoration proves
+rank-disruptive, with an effect whose sign flips across backbones---which motivates the method
+of the next subsection.
+
+\subsection{Test-Time Discriminative-Reliability Reweighting}
+\label{sec:disc}
+
+The entropy-minimization route adapts parameters; the feature-statistic restoration route
+(Section~\ref{sec:meth-tta-restore}) moves features. The method proposed in this thesis does
+neither: it changes \emph{which modality
+the frozen fusion trusts}, exploiting the dual-modal structure that single-stream TTA methods do
+not have. It updates zero parameters, uses no labels, and has no tuned hyperparameters.
+
+At deployment the visual-language stream may degrade under input corruption while the skeleton stream remains comparatively robust. We adapt the gated fusion at test time, without labels or tuned hyperparameters, by reweighting the two streams according to a label-free estimate of visual-stream reliability. Let $p_{\mathrm{clip}}$ denote the LayerNorm-projected visual-language features. We estimate visual reliability from the dispersion of the visual stream's solo anomaly scores,
+\begin{equation}
+w_{\mathrm{vl}} = \min\!\Big(1,\ \sigma\big(s_{\mathrm{clip}}^{\mathrm{test}}\big) \big/ \sigma\big(s_{\mathrm{clip}}^{\mathrm{clean}}\big)\Big),
+\end{equation}
+where $s_{\mathrm{clip}}$ are the snippet scores produced by the fusion head with the skeleton stream zeroed and $\sigma(\cdot)$ is the standard deviation pooled over a corruption condition; $w_{\mathrm{vl}}\!\to\!0$ when corruption destroys the visual stream's ability to separate snippets and $w_{\mathrm{vl}}\!\to\!1$ when it is unaffected. A skeleton-reliability gate $s = \min\!\big(1, \max\big(0,\, (2 z_0 - z_{\mathrm{skel}})/z_0\big)\big)$ guards against this, where $z_{\mathrm{skel}}$ is the skeleton features' mean per-channel distribution shift (corruption condition vs.\ clean training) and $z_0$ is the analogous clean-train-to-clean-test shift used as a reference: $s\!\to\!1$ when the skeleton is no more shifted than the clean source data and $s\!\to\!0$ once its shift reaches $2 z_0$, so the fusion does not lean on a skeleton that is itself corrupted. The factor of two is a fixed anchor, not tuned to performance; under our corruptions $s$ saturates to $\{0,1\}$ (conditions that recompute the skeleton on degraded frames give $z_{\mathrm{skel}}\!\gg\!z_0$, those that reuse the clean skeleton cache give $z_{\mathrm{skel}}\!\approx\!z_0$), so its exact value does not affect the reported results. We scale the visual contribution by $w = 1-(1-w_{\mathrm{vl}})\,s$, applied to $p_{\mathrm{clip}}$ after its LayerNorm in both the gated and residual terms, so the fusion routes toward the corruption-robust skeleton exactly when the visual stream collapses and the skeleton remains clean. All statistics are pooled over the whole condition (transductive) and use no labels; the clean reference may be drawn from training or clean-test features.
+
+Unpacking this compressed description, the mechanism consists of three scalars per corruption
+condition, all computable from unlabeled data.
+
+\textbf{The visual-reliability score $w_{\mathrm{vl}}$.} The solo scores
+$s_{\mathrm{clip}}$ are obtained by running the trained fusion head with the skeleton stream
+zeroed out: the skeleton projection receives a zero vector, so the resulting snippet scores
+reflect the visual-language stream's discriminative ability alone. The standard deviation of
+these scores over a corruption condition measures how well the stream still \emph{separates}
+snippets---a discriminative signal, not a distributional one. This distinction is what
+separates the method from statistic-restoration approaches: corruption is detected by its effect
+on score separation, which is what the rank-based evaluation metric actually depends on, rather
+than by its effect on feature moments, which may shift without harming (or harm without
+shifting) the ranking. When corruption collapses the visual stream's score spread relative to
+the clean reference, $w_{\mathrm{vl}}$ falls below one; when the stream is unaffected, the ratio
+saturates at one and the mechanism stands down.
+
+\textbf{The skeleton-reliability gate $s$.} Routing toward the skeleton is only safe if the
+skeleton itself is clean. The gate compares the skeleton features' mean per-channel distribution
+shift under the corruption condition, $z_{\mathrm{skel}}$, against the natural
+clean-train-to-clean-test shift $z_0$ of the same features: shifts comparable to the natural
+level ($z_{\mathrm{skel}} \approx z_0$) leave $s \approx 1$, while shifts at twice the natural
+level or beyond drive $s$ to zero and disable rerouting entirely. The factor of two is a fixed
+anchor chosen a priori, not tuned to performance; under the corruption benchmark of
+Chapter~\ref{ch:04} the gate saturates to $\{0,1\}$---conditions that re-extract skeletons from
+degraded frames (motion blur, JPEG) produce $z_{\mathrm{skel}} \gg z_0$ and are shut off, while
+conditions that reuse the clean skeleton cache (Gaussian noise, brightness) sit at
+$z_{\mathrm{skel}} \approx z_0$ and are enabled---so its exact value does not affect the
+reported results.
+
+\textbf{The routing scalar $w$.} The combined scalar $w = 1-(1-w_{\mathrm{vl}})\,s$ scales the
+visual stream's projected features $p_{\mathrm{clip}}$, and its placement matters: the scaling
+is applied \emph{after} the visual LayerNorm $\text{LN}_v$, in both the gated term and the
+residual term of the gated fusion (Section~\ref{sec:meth-fusion})---scaling the input before the
+LayerNorm would be nulled by the normalization itself, which re-centers and re-scales per
+sample. The formula composes the two reliability estimates so that down-weighting occurs exactly
+when the visual stream has collapsed ($w_{\mathrm{vl}} < 1$) \emph{and} the skeleton is trusted
+($s > 0$); if either condition fails, $w = 1$ and the model is bit-identical to the unadapted
+source model. The method can therefore only act where it is safe to act, and its failure mode is
+to do nothing.
+
+All statistics are pooled over the whole corruption condition---a transductive assumption,
+standard in the corruption-robustness setting but disclosed as a limitation in
+Chapter~\ref{ch:08}; a streaming variant that estimates $w$ causally is future work. The clean
+reference statistics may be drawn from the training features or from clean test features, with
+equivalent results (Chapter~\ref{ch:06}); no configuration of the method observes any label. The
+mechanism is implemented in \texttt{src/tta/disc\_reweight.py} as pure helper functions (the
+routing computation, the skeleton-zeroed forward pass, and the $w$-scaled forward pass), invoked
+from the canonical evaluation entry point \texttt{src/tta/evaluate\_tta.py}.
+
+In summary, the complete test-time procedure for one corruption condition is:
+(1)~run the skeleton-zeroed forward pass over the condition's videos and compute the solo-score
+dispersion $\sigma\big(s_{\mathrm{clip}}^{\mathrm{test}}\big)$, alongside the analogous clean
+reference $\sigma\big(s_{\mathrm{clip}}^{\mathrm{clean}}\big)$;
+(2)~compute the skeleton features' mean per-channel shift $z_{\mathrm{skel}}$ for the condition
+and the clean reference shift $z_0$;
+(3)~form $w_{\mathrm{vl}}$, $s$, and $w$ from the definitions above;
+(4)~rescore the condition with the visual stream's projected features scaled by $w$ after
+$\text{LN}_v$. A single scalar per condition is the method's entire adaptation state: no
+gradient step, no optimizer, and no label is involved at any stage, and setting $w=1$ recovers
+the source model exactly---the property that makes the method safe to leave permanently enabled.
+
+Taken together, the three method families of this section span the design space that
+Chapter~\ref{ch:06} evaluates: adapting normalization parameters
+(Section~\ref{sec:meth-tta-entropy}), transforming features
+(Section~\ref{sec:meth-tta-restore}), and re-routing modality trust (this section). Only the
+third exploits the property that distinguishes this thesis's architecture from single-stream
+detectors---the presence of a second, differently-corrupted modality behind a learned gate.

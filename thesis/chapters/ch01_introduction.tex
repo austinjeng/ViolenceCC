@@ -4,7 +4,256 @@
 \chapter{Introduction}
 \label{ch:01}
 
-PLACEHOLDER-W0 --- Wave-1 writer: expand from paper \S1 (paper/main.tex
-L61--83): motivation, problem statement, gaps, explicit research questions
-RQ1--RQ3, the three contributions (L75--83), thesis organization roadmap.
-Sources per spec \S4 and 13-RESEARCH.md \S1. Delete this marker when drafting.
+\section{Motivation}
+\label{sec:intro-motivation}
+
+Video surveillance has become one of the most widely deployed sensing technologies in public and
+private spaces. Transportation hubs, retail environments, campuses, and city streets are now covered
+by camera networks whose combined output far exceeds what human operators can monitor: a single
+operator can attend to only a handful of feeds at a time, and attention degrades rapidly over
+sustained viewing. As the scale of these systems continues to expand, automated analysis of
+surveillance footage has shifted from a convenience to a necessity~\cite{sultani2018ucfcrime}.
+
+Within the space of events that automated systems should detect, violence-related anomalies occupy a
+special position. Fights, assaults, robberies, shootings, and road accidents are precisely the
+incidents for which a delayed response carries the highest human cost, and they are also
+comparatively rare---a property that makes them poor targets for conventional supervised
+classification, which requires abundant labeled examples of every class. Video anomaly detection
+(VAD) reframes the problem: rather than recognizing a fixed vocabulary of actions, the system
+assigns each frame an \emph{anomaly score} indicating how strongly it deviates from normal activity,
+so that rare and heterogeneous dangerous events can be surfaced without exhaustive per-class
+supervision.
+
+The central practical obstacle for VAD is annotation cost. Training a frame-level detector directly
+would require annotators to mark the exact temporal extent of every anomalous event in every
+training video---a task that is expensive, subjective at event boundaries, and infeasible at the
+scale of modern datasets containing thousands of hours of footage. The \emph{weakly supervised}
+formulation addresses this by requiring only \emph{video-level} labels: each training video is
+tagged as containing an anomaly somewhere, or as entirely normal. This paradigm, established by
+Sultani et al.~\cite{sultani2018ucfcrime} together with the UCF-Crime benchmark, casts training as
+multiple instance learning (MIL): a video is a \emph{bag} of temporal segments (instances), the bag
+label is known, but the instance labels are not. A ranking loss encourages the highest-scoring
+segments of an anomalous bag to score above the highest-scoring segments of a normal bag, allowing
+the network to localize anomalies at test time despite never seeing frame-level supervision during
+training. Subsequent refinements such as Robust Temporal Feature Magnitude learning
+(RTFM)~\cite{tian2021rtfm} strengthened this formulation, and weakly supervised VAD (WSVAD) has
+since become the dominant paradigm on the two principal violence-oriented benchmarks,
+UCF-Crime~\cite{sultani2018ucfcrime} and XD-Violence~\cite{wu2020xdviolence}.
+
+A second transformative development is the arrival of vision-language models (VLMs). Contrastively
+trained image encoders such as CLIP~\cite{radford2021clip} and the sigmoid-loss SigLIP
+family~\cite{zhai2023siglip,tschannen2025siglip2} produce semantically rich frame representations
+that transfer remarkably well to downstream tasks without fine-tuning. Methods such as
+VadCLIP~\cite{wu2024vadclip} demonstrated that \emph{frozen} CLIP features, combined with
+lightweight temporal modeling, are highly effective for WSVAD. Frozen-feature designs are especially
+attractive in resource-constrained research and deployment settings: the expensive backbone is run
+once per video as a feature extractor, and only a small head is trained.
+
+Yet appearance is not the whole story. Violence is fundamentally a phenomenon of \emph{motion}---the
+rapid, forceful, articulated body dynamics of fighting, striking, or falling. Skeleton-based action
+recognition, exemplified by graph convolutional networks over human pose sequences such as
+CTR-GCN~\cite{chen2021ctrgcn}, captures exactly this signal, is invariant to many appearance
+nuisances (clothing, background, lighting), and has been explored for anomaly detection in
+constrained settings~\cite{doshi2022skeleton}. This complementarity---semantic appearance from a
+VLM, articulated dynamics from a pose graph---motivates the dual-modal design studied in this
+thesis.
+
+Finally, deployment realism demands attention to \emph{robustness}. A model trained on curated
+benchmark footage will, in the field, encounter sensor noise from low-light cameras, motion blur,
+aggressive compression from bandwidth-limited transmission, and illumination changes. Test-time
+adaptation (TTA) methods such as TENT~\cite{wang2021tent} and SAR~\cite{niu2023sar} promise to
+recover accuracy under such distribution shift without labels, by adapting normalization-layer
+parameters through entropy minimization. Whether these promises survive contact with a frozen,
+LayerNorm-based~\cite{ba2016layernorm}, rank-evaluated VAD architecture is one of the questions this
+thesis answers---in the negative---before proposing an alternative that does work.
+
+\section{Problem Statement}
+\label{sec:intro-problem}
+
+This thesis addresses weakly supervised violence-oriented video anomaly detection under the
+following setting. Given a training corpus of untrimmed videos, each carrying only a binary
+video-level label (anomalous somewhere / entirely normal), the goal is to learn a scoring function
+that, at test time, assigns each frame of an unseen video an anomaly score. Performance is measured
+by frame-level ranking metrics against held-out temporal annotations: the area under the ROC curve
+(AUC) on UCF-Crime and average precision (AP) on XD-Violence, following each benchmark's standard
+protocol~\cite{sultani2018ucfcrime,wu2020xdviolence}.
+
+Within this setting, the thesis studies three interlocking problems:
+
+\begin{enumerate}
+    \item \textbf{Dual-modal fusion.} How should a frozen skeleton encoder (CTR-GCN over
+RTMPose~\cite{jiang2023rtmpose} keypoints) and a frozen vision-language encoder be combined so that
+the weaker-standalone skeleton stream \emph{adds} information rather than diluting the stronger
+visual stream? The design space ranges from fixed score averaging (late fusion) to learned,
+input-dependent gating.
+    \item \textbf{Backbone sensitivity.} Frozen-feature pipelines inherit the properties of their
+backbone. With four candidate visual backbones spanning two architectural families and an order of
+magnitude in capacity---CLIP ViT-B/16, SigLIP2 ViT-B/16, SigLIP2 SO400M, and SigLIP2 Giant---does
+the ranking of backbones transfer across datasets, and does fusion interact with backbone choice?
+    \item \textbf{Test-time robustness.} Under synthetic but realistic input corruptions, can the
+frozen dual-modal detector be adapted at test time---without labels, and without tuning
+hyperparameters on test data---to recover the accuracy lost to corruption? In particular, do
+entropy-minimization TTA methods designed for BatchNorm~\cite{ioffe2015batchnorm} networks transfer
+to a LayerNorm-based fusion head evaluated by a rank metric?
+\end{enumerate}
+
+All experiments are constrained to a single NVIDIA RTX 4090 GPU (24~GB), which rules out end-to-end
+backbone fine-tuning and motivates the frozen-feature design throughout: only a lightweight fusion
+head (0.50M--1.02M trainable parameters, depending on backbone) is learned, and each configuration
+trains in under five minutes. This constraint is not merely practical; it defines the regime the
+thesis characterizes---what a reproducible, single-GPU, frozen-feature dual-modal system can and
+cannot achieve.
+
+\section{Research Gaps}
+\label{sec:intro-gaps}
+
+Four gaps in the literature motivate this work.
+
+\textbf{Gap 1: Single-modality dominance in WSVAD.} The overwhelming majority of weakly supervised
+VAD methods score a single visual feature stream---C3D or I3D motion features in the earlier
+generation, frozen CLIP features in the current one. Skeleton-based anomaly detection exists as a
+separate line of work~\cite{doshi2022skeleton}, but the integration of skeleton dynamics with
+vision-language features in a unified weakly supervised framework remains largely unexplored.
+Whether pose dynamics carry signal that frozen VLM features miss---and whether that signal survives
+fusion with a much stronger visual stream---is an open empirical question.
+
+\textbf{Gap 2: CLIP-era methods overlook motion dynamics.} Vision-language backbones are trained on
+static image--text pairs; their per-frame features encode scene semantics, objects, and context, but
+only weakly encode articulated human motion. Violence-related anomalies---fighting, assault,
+vehicular collisions---are characterized by distinctive spatiotemporal motion patterns that static
+appearance features may not fully capture. CLIP-based WSVAD methods inherit this blind spot, and
+none of them measure what an explicit motion modality would add.
+
+\textbf{Gap 3: Backbone sensitivity is unstudied.} Nearly every published WSVAD method reports
+results with one fixed backbone, implicitly assuming its conclusions are backbone-independent. The
+rapid proliferation of VLM variants---CLIP, SigLIP, SigLIP2 at multiple
+scales~\cite{radford2021clip,zhai2023siglip,tschannen2025siglip2}---makes this assumption untenable:
+capacity, training objective, and training data all differ. No prior work systematically holds the
+WSVAD pipeline fixed and varies the visual backbone across two benchmarks, let alone examines how
+backbone choice interacts with multi-modal fusion.
+
+\textbf{Gap 4: Entropy-based TTA assumes BatchNorm; modern heads use LayerNorm.}
+TENT~\cite{wang2021tent} and SAR~\cite{niu2023sar} were designed for networks whose BatchNorm layers
+maintain running statistics of the source distribution; adaptation recalibrates those statistics and
+their affine transforms. Transformer-era architectures---including VLM backbones and the fusion head
+studied here---use LayerNorm~\cite{ba2016layernorm}, which normalizes per sample and keeps no
+running statistics. Whether entropy minimization confined to LayerNorm affine parameters can help a
+frozen, rank-evaluated detector has, to our knowledge, not been investigated in the VAD literature;
+nor has the question of what \emph{does} restore robustness when it cannot.
+
+\section{Research Questions}
+\label{sec:intro-rqs}
+
+The gaps above condense into three research questions.
+
+\begin{description}
+    \item[RQ1 (Dual-modal fusion value).] Does fusing frozen CTR-GCN skeleton features with frozen
+vision-language features improve weakly supervised violence detection over the visual-only
+baseline---and which fusion mechanism (fixed late fusion vs.\ learned gated fusion) is required for
+the skeleton stream to help rather than hurt?
+    \item[RQ2 (Backbone sensitivity).] How sensitive are fusion performance and its conclusions to
+the choice of visual backbone across CLIP ViT-B/16, SigLIP2 ViT-B/16, SigLIP2 SO400M, and SigLIP2
+Giant---and are backbone preferences consistent between UCF-Crime and XD-Violence?
+    \item[RQ3 (Entropy-TTA transfer to LayerNorm).] Do entropy-minimization TTA methods (TENT, SAR)
+transfer from their native BatchNorm setting to the LayerNorm-based fusion head of a frozen
+rank-evaluated VAD model under input corruption---and if not, what label-free, tuning-free
+alternative recovers corrupted-input accuracy?
+\end{description}
+
+Chapters~\ref{ch:05} and~\ref{ch:06} answer these questions empirically: RQ1 and RQ2 in
+Chapter~\ref{ch:05} through a six-variant, four-backbone, three-seed ablation study on both
+benchmarks, and RQ3 in Chapter~\ref{ch:06} through a 20-condition corruption study with a full TTA
+method comparison.
+
+\section{Contributions}
+\label{sec:intro-contributions}
+
+This thesis makes three contributions, extending the study reported in our CGW~'26 workshop paper.
+
+\textbf{1. A dual-modal skeleton--visual fusion framework for WSVAD.} We propose a pipeline that
+combines frozen CTR-GCN skeleton features with frozen vision-language features through learned gated
+fusion, trained with MIL ranking loss. The gated mechanism projects both modalities to a shared
+space, computes a per-dimension gate from their concatenation, and blends them over a residual
+connection that always retains both streams---so the gate modulates each modality's \emph{relative}
+contribution rather than suppressing either outright. Only the fusion head and scoring head are
+trained; both backbone encoders remain frozen. The framework achieves 82.5$\pm$0.4\% AUC on
+UCF-Crime (with SigLIP2 Giant) and 78.7$\pm$0.9\% AP on XD-Violence (with SigLIP2 SO400M), averaged
+over three seeds. The skeleton stream's contribution is deliberately characterized honestly: gated
+fusion meets or exceeds the visual-only baseline in all eight backbone$\times$dataset configurations
+(mean $+0.6$ points; strictly positive in six of the eight, the other two tied at the displayed
+precision)---a small but consistent complementary gain, not a transformative one. Equally
+informative is the negative half of the finding: naive equal-weight late fusion frequently
+\emph{degrades} performance below the visual-only baseline, establishing that learned,
+input-dependent gating is what allows a weak modality to help.
+
+\textbf{2. A systematic four-backbone study.} We evaluate the identical pipeline across four visual
+backbones---CLIP ViT-B/16, SigLIP2 ViT-B/16, SigLIP2 SO400M, and SigLIP2 Giant---on both UCF-Crime
+and XD-Violence, with three seeds per configuration. The study reveals dataset-specific backbone
+preferences that single-backbone evaluations cannot see: UCF-Crime's fixed-camera surveillance
+footage favors the largest backbone (Giant), whereas on XD-Violence's heterogeneous sources the four
+backbones are statistically indistinguishable visual-only and SO400M emerges as the clear leader
+only under gated fusion. The skeleton stream's complementary value itself varies with the backbone
+it is fused with---a dependence invisible to single-backbone studies and directly relevant to
+practitioners choosing a backbone from general-purpose benchmark rankings.
+
+\textbf{3. A test-time adaptation study for frozen dual-modal VAD, with a working alternative.} On a
+20-condition corruption benchmark (UCF-Crime-C: four corruption types at five severities), we show
+that entropy-minimization TTA (TENT, SAR) applied to the fusion head's LayerNorm affine
+parameters---1{,}536 scalars, the only adaptable surface in an otherwise frozen model---changes
+corrupted AUC by less than $0.1$ points on every backbone. We argue this is structural rather than a
+tuning artifact: the corruption shift lives upstream in the frozen backbone features, and affine
+nudges of this size cannot reorder the pooled snippet rankings on which AUC depends. We further show
+that naive feature-statistic restoration (NORM/CORAL-style) is rank-disruptive with a
+backbone-dependent sign. We then propose \emph{discriminative-reliability reweighting}: a
+label-free, tuning-free, zero-parameter-update method that detects when the visual-language stream's
+discriminative signal collapses---via the dispersion of its solo anomaly scores---and routes the
+gated fusion toward the corruption-robust skeleton stream, guarded by a skeleton-reliability gate.
+This improves corrupted AUC on all four backbones (mean $+1.2$ points over three seeds, up to
+$+13.2$ points in the single most-degraded condition), while leaving the model bit-identical to the
+source model wherever adaptation would be unsafe.
+
+\section{Scope and Honest Positioning}
+\label{sec:intro-scope}
+
+The results in this thesis should be read against an explicit statement of what they do and do not claim.
+
+\textbf{No peak-score claim.} The headline numbers---82.5$\pm$0.4\% UCF-Crime AUC and 78.7$\pm$0.9\%
+XD-Violence AP---trail the field's fine-tuned and text-aligned leaders, which reach roughly 88--91\%
+UCF-Crime AUC. That gap follows from deliberate design choices: both backbones frozen, no
+text-prompt branch, no temporal transformer, no auxiliary modalities, single-GPU training. The
+contribution is a reproducible, single-GPU dual-modal pipeline with a complete ablation and
+robustness analysis---not a new peak score. Chapter~\ref{ch:07} positions the system against the
+field in detail, including a like-for-like comparison against methods operating under comparable
+frozen-feature constraints.
+
+\textbf{Robustness gains are corrupted-AUC gains.} The test-time reweighting method of
+Chapter~\ref{ch:06} improves AUC \emph{under corruption} only; it leaves clean-data accuracy
+untouched by construction. Its reliability statistics are pooled over each corruption condition (a
+transductive assumption, standard in this benchmark setting but disclosed throughout); a streaming
+variant is future work (Chapter~\ref{ch:08}).
+
+\textbf{Reproducibility as a first-class goal.} Every reported number derives from fixed seeds (42,
+123, 2024), fixed train/validation splits, and a fixed evaluation protocol; results are reported as
+mean$\pm$std over the three seeds. The complete configuration provenance and reproduction guide
+appear in Appendix~\ref{app:e}.
+
+\section{Thesis Organization}
+\label{sec:intro-roadmap}
+
+The remainder of this thesis is organized as follows. Chapter~\ref{ch:02} surveys related work
+across the four lineages this thesis draws on: weakly supervised VAD from MIL ranking through the
+CLIP era to current multi-modal systems, skeleton-based action recognition, vision-language
+backbones, and test-time adaptation. Chapter~\ref{ch:03} presents the methodology: the dual-modal
+architecture, both feature extraction pipelines, the fusion mechanisms, MIL training, and the
+test-time adaptation methods including the proposed discriminative-reliability reweighting.
+Chapter~\ref{ch:04} details the experimental setup---datasets, evaluation protocol, the UCF-Crime-C
+corruption benchmark, implementation details, and infrastructure. Chapter~\ref{ch:05} reports the
+fusion and backbone results (RQ1, RQ2), including ablations, per-category analysis, statistical
+robustness checks, and failure analysis. Chapter~\ref{ch:06} reports the robustness and TTA results
+(RQ3), from the entropy-minimization null result through the reweighting method's evaluation.
+Chapter~\ref{ch:07} discusses the findings and positions the system against the state of the field.
+Chapter~\ref{ch:08} states limitations and future work, and Chapter~\ref{ch:09} concludes. Six
+appendices provide supporting material: the RTFM reproduction investigation (Appendix~\ref{app:a}),
+per-category and per-class complementarity tables (Appendix~\ref{app:b}), hyperparameter sweep
+detail (Appendix~\ref{app:c}), engineering notes (Appendix~\ref{app:d}), a reproducibility guide
+(Appendix~\ref{app:e}), and additional figures (Appendix~\ref{app:f}).
