@@ -4,9 +4,386 @@
 \chapter{Experimental Setup}
 \label{ch:04}
 
-PLACEHOLDER-W0 --- Wave-1 writer: expand from paper \S4.1--4.2 (paper/main.tex
-L204--219). UCF-Crime-C construction parameters MUST come from
-scripts/corruption.py:38--42, never from CLAUDE.md (Pitfall 5). Retain the
-64-frame exclusion sentences (main.tex L136/L206) and the $\lambda_2$
-smoothness-implementation footnote (L217) verbatim. Delete this marker when
-drafting.
+This chapter specifies the experimental protocol under which every result in
+Chapters~\ref{ch:05} and~\ref{ch:06} was produced: the two benchmark datasets
+and their splits, the frame-level evaluation protocol, the construction of the
+UCF-Crime-C corruption benchmark, the training configuration, the
+reproducibility protocol, and the computational infrastructure. Throughout the
+thesis we deliberately favor a fixed, fully-disclosed protocol over per-result
+tuning: the same splits, the same seeds, and the same evaluation code are used
+for every fusion variant and every backbone, so that cross-configuration
+comparisons measure the configurations rather than the harness.
+
+\section{Datasets}
+\label{sec:datasets}
+
+\subsection{UCF-Crime}
+
+\textbf{UCF-Crime}~\cite{sultani2018ucfcrime} contains 1,900 untrimmed
+surveillance videos spanning 13 anomaly categories (Abuse, Arrest, Arson,
+Assault, Burglary, Explosion, Fighting, RoadAccidents, Robbery, Shooting,
+Shoplifting, Stealing, Vandalism) plus a normal class. The training set
+contains 800 normal and 810 anomalous videos with only video-level binary
+labels---the weak-supervision setting that motivates the MIL formulation of
+Chapter~\ref{ch:03}. The test set contains 150 normal and 140 anomalous videos
+with frame-level temporal annotations, of which 254 meet the 64-frame minimum
+and are evaluated. Videos are sourced from real surveillance cameras and
+average approximately 4 minutes in length. The dataset is distributed as
+frames pre-sampled at roughly 3~FPS (every tenth frame of its ${\sim}30$~FPS
+source video), a property that interacts with snippet duration as discussed in
+Section~\ref{sec:protocol}.
+
+\subsection{XD-Violence}
+
+\textbf{XD-Violence}~\cite{wu2020xdviolence} is a larger multi-modal dataset
+containing 4,754 untrimmed videos across six violence categories: Fighting
+(B1), Shooting (B2), Riot (B4), Abuse (B5), Car Accident (B6), and Explosion
+(G). Unlike UCF-Crime's fixed-camera surveillance footage, XD-Violence draws
+from heterogeneous sources including movies, news broadcasts, sports events,
+and online media, resulting in greater visual diversity, faster editing, and
+more varied camera work. The training set contains 3,954 videos and the test
+set contains 800 videos with frame-level annotations. XD-Violence is decoded
+at its native ${\sim}24$~FPS. The two datasets therefore probe complementary
+deployment regimes: UCF-Crime approximates a stationary CCTV installation,
+while XD-Violence stresses generalization across production styles and scene
+types.
+
+\subsection{Data splits and model selection}
+
+For both datasets, we hold out 15\% of the training set as a stratified
+validation split, maintaining the normal/anomalous ratio across splits. The
+split is generated once with a fixed seed and committed before the first
+training run; every experiment in this thesis---all fusion variants, all four
+backbones, all three training seeds---uses the identical split, so no
+configuration can benefit from a more favorable validation partition.
+
+Because the training videos carry only video-level labels, the validation
+split is used for early stopping and per-run checkpoint selection via the
+validation MIL loss; frame-level model selection is not possible on this
+split. Frame-level test annotations are loaded exclusively inside the
+evaluation entry point (\texttt{src/evaluate.py}), never by the training code,
+so test-set information cannot leak into training or hyperparameter decisions.
+Following the standard UCF-Crime and XD-Violence evaluation protocol, the
+cross-backbone and ablation comparisons in Chapter~\ref{ch:05} report
+frame-level test-set metrics.
+
+\subsection{The 64-frame exclusion}
+
+The skeleton stream segments each video into non-overlapping 64-frame
+snippets (Chapter~\ref{ch:03}), which imposes a minimum video length. Videos
+shorter than 64 frames (172 videos in UCF-Crime, one in XD-Violence) are
+excluded from training and evaluation. On the UCF-Crime test set this leaves
+the 254 evaluated videos noted above; on XD-Violence the exclusion affects a
+single video. We disclose this exclusion prominently because it makes our
+UCF-Crime evaluation cohort slightly smaller than the nominal 290-video test
+set used by methods that operate on per-frame or 16-frame features; the
+excluded videos are the shortest clips in the dataset (at the distributed
+${\sim}3$~FPS frame rate, under ${\sim}21$ seconds of wall-clock time).
+
+\section{Evaluation Protocol}
+\label{sec:protocol}
+
+\subsection{Metrics}
+
+We evaluate using frame-level Area Under the ROC Curve (AUC) on UCF-Crime,
+following the standard protocol established by Sultani et
+al.~\cite{sultani2018ucfcrime}, and frame-level Average Precision (AP) on
+XD-Violence, following its benchmark protocol~\cite{wu2020xdviolence}. Both
+metrics are computed by pooling every frame of every test video into a single
+ranking problem. AUC is insensitive to class imbalance and score calibration,
+depending only on the relative ordering of anomalous versus normal frames; AP
+weights precision across the recall range and is therefore more sensitive to
+score calibration---a distinction that matters for the seed-sensitivity
+analysis in Chapter~\ref{ch:05}.
+
+\subsection{Snippet-to-frame expansion}
+
+The model scores 64-frame snippets, while the benchmarks are evaluated per
+frame. Snippet-level anomaly scores are expanded to frame-level predictions by
+assigning each frame the score of its enclosing 64-frame snippet. On
+UCF-Crime, the final snippet's score is repeated to cover any trailing frames
+of the full-length frame grid; on XD-Violence, evaluation is restricted to the
+snippet-aligned portion (a whole number of 64-frame windows), so any trailing
+partial window is dropped.
+
+We disclose this protocol asymmetry explicitly. The UCF-Crime full-length
+frame grid is reconstructed from a committed per-video frame-count manifest
+(\texttt{data/ucf\_total\_frames.json}, covering all 1,900 videos), which
+makes the reported UCF-Crime numbers reproducible from the repository alone;
+XD-Violence uses the truncated snippet-aligned grid without a manifest. The
+truncation on XD-Violence affects only trailing partial windows and is applied
+identically to every configuration, so within-dataset comparisons are
+unaffected; nevertheless, absolute numbers computed on the two grids are not
+interchangeable, and we carry this caveat wherever it matters (in particular
+for the corrupted-AUC tables of Chapter~\ref{ch:06}, which use the truncated
+grid).
+
+Because UCF-Crime is distributed at ${\sim}3$~FPS while XD-Violence is decoded
+at its native ${\sim}24$~FPS, a 64-frame snippet spans about 20~s on UCF-Crime
+versus ${\sim}2.7$~s on XD-Violence; both streams use identical snippet
+boundaries, so the skeleton and visual features stay aligned by construction.
+
+\section{The UCF-Crime-C Corruption Benchmark}
+\label{sec:ucfcrimec}
+
+Chapter~\ref{ch:06} studies deployment robustness under input corruption. No
+corruption benchmark existed for UCF-Crime, so we constructed
+\textbf{UCF-Crime-C} by applying four corruption types at five severity levels
+to the UCF-Crime test set, yielding 20 corruption conditions in total. The
+corruption families and their severity parameterizations follow the ImageNet-C
+protocol of Hendrycks and Dietterich~\cite{hendrycks2019imagenetc}: Gaussian
+noise (sensor noise from low-light cameras), motion blur (camera shake or
+fast-moving objects), JPEG compression (bandwidth-limited transmission), and
+brightness shift (illumination change). These four simulate the distribution
+shifts most plausible for surveillance deployment while remaining exactly
+reproducible.
+
+\subsection{Severity parameterization}
+
+Table~\ref{tab:corruption-params} lists the exact severity parameters as
+implemented in the tracked corruption module
+(\texttt{scripts/corruption.py}); these match the verified ImageNet-C
+reference values. Gaussian noise adds zero-mean noise with standard deviation
+$\sigma$ to the image normalized to $[0,1]$. JPEG compression runs an
+encode--decode cycle at the stated quality factor (lower is worse). Brightness
+shift is an \emph{additive} offset applied to the normalized $[0,1]$ image
+(not a multiplicative gain), followed by clipping. Motion blur convolves with
+a directional Gaussian kernel parameterized by kernel size and $\sigma$. All
+four transforms are implemented with \texttt{numpy} and \texttt{cv2} only, so
+the corruption pipeline is bit-identical across the extraction environments of
+Section~\ref{sec:infra}, and each transform is driven by a seeded random
+generator. A visual perceptual check on real UCF-Crime frames confirmed that
+each corruption type at severity 3 and above is clearly distinguishable from
+the clean frame.
+
+% Source: scripts/corruption.py lines 38-42 (tracked): GAUSSIAN_NOISE_SIGMA,
+% JPEG_QUALITY, BRIGHTNESS_FACTOR (additive on normalized [0,1]),
+% MOTION_BLUR_PARAMS; SKELETON_REEXTRACT_TYPES at line 30.
+% These are the implemented ImageNet-C-exact values. Do NOT replace with the
+% stale pre-implementation parameter lists in CLAUDE.md (Pitfall 5).
+\begin{table}[t]
+\centering
+\caption{UCF-Crime-C severity parameterization (severity 1 = mildest, 5 =
+harshest), as implemented in the tracked corruption module
+\texttt{scripts/corruption.py}. Brightness is an additive offset on the
+normalized $[0,1]$ image. The final column indicates whether skeleton features
+are re-extracted from the corrupted frames (Section~\ref{sec:reextraction});
+visual features are re-extracted for all 20 conditions.}
+\label{tab:corruption-params}
+\begin{tabular}{llcccccc}
+\toprule
+Corruption & Parameter & \multicolumn{5}{c}{Severity level} & Skeleton \\
+\cmidrule(lr){3-7}
+ & & 1 & 2 & 3 & 4 & 5 & re-extract \\
+\midrule
+Gaussian noise & $\sigma$ & 0.08 & 0.12 & 0.18 & 0.26 & 0.38 & no \\
+JPEG compression & quality & 25 & 18 & 15 & 10 & 7 & yes \\
+Brightness & additive offset & 0.1 & 0.2 & 0.3 & 0.4 & 0.5 & no \\
+Motion blur & (kernel, $\sigma$) & (10,3) & (15,5) & (15,8) & (15,12) & (20,15) & yes \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Feature re-extraction policy}
+\label{sec:reextraction}
+
+Corrupting the test set invalidates cached features, so features must be
+re-extracted from the corrupted frames. Visual-language features are
+re-extracted for all 20 conditions and all four backbones: the frozen VLM
+encoder sees the corrupted pixels directly, which is precisely the
+degradation pathway the robustness study targets.
+
+For the skeleton stream we made a measured cost decision. Skeleton features
+are re-extracted only for motion blur and JPEG compression
+(\texttt{SKELETON\_REEXTRACT\_TYPES} in \texttt{scripts/corruption.py}); for
+Gaussian noise and brightness shift, RTMPose produces effectively identical
+keypoints on the corrupted frames, so the clean skeleton cache is reused
+unchanged. This reflects the empirical robustness of top-down pose estimation
+to photometric perturbations---detection and keypoint regression survive
+additive noise and brightness offsets that severely disturb dense VLM
+embeddings---while spatially destructive corruptions (blur smearing limb
+boundaries, JPEG block artifacts) do change the extracted poses and therefore
+require re-extraction. Skeleton re-extraction is the most expensive stage of
+the pipeline (Section~\ref{sec:efficiency}), so restricting it to the two
+corruption families that need it kept the benchmark construction tractable on
+a single workstation. This asymmetry is not merely an engineering footnote: it
+creates the clean-skeleton/corrupted-visual asymmetry that the test-time
+reweighting mechanism of Chapter~\ref{ch:06} exploits, and we return to it
+there.
+
+\section{Implementation Details}
+\label{sec:impl}
+
+All experiments are conducted on a single NVIDIA RTX 4090 GPU (24~GB).
+Skeleton features are extracted using RTMPose-m~\cite{jiang2023rtmpose} with
+YOLOX-m detection at approximately 21.6 FPS, followed by
+CTR-GCN~\cite{chen2021ctrgcn} encoding with NTU-120 pre-trained
+weights~\cite{yan2022pyskl} across all four streams (joint, bone, joint
+motion, bone motion). Visual features are extracted at 1~FPS with the
+respective frozen backbone.
+
+The fusion head and anomaly classifier are trained using AdamW (weight decay
+$10^{-2}$) with a learning rate of $1 \times 10^{-4}$ for both datasets. The
+learning rate follows a linear warmup over the first 5 epochs, then
+cosine-annealing to zero. We use a batch size of 16 normal/anomalous pairs (32
+videos per batch) and train for a maximum of 50 epochs with early stopping
+(patience of 10 epochs on validation loss). Each video is represented as a
+fixed-length bag of $T=32$ snippets (uniform segment sampling when longer,
+sampling with replacement when shorter). The top-$k$ selection in MIL ranking
+uses $k=3$ for both datasets. We use a fixed hyperparameter configuration
+across both datasets (learning rate $1 \times 10^{-4}$, $k=3$, margin $1.0$)
+and a sparsity weight $\lambda_1 = 8 \times 10^{-3}$; the sensitivity of the
+headline results to this fixed configuration is analyzed in
+Chapter~\ref{ch:05}. The temporal smoothness weight $\lambda_2$ in the total
+training loss (Chapter~\ref{ch:03}) is the one dataset-dependent setting: we
+use $\lambda_2 = 8 \times 10^{-4}$ on UCF-Crime but $\lambda_2 = 0$ on
+XD-Violence. We found that penalizing adjacent-snippet score differences
+over-regularizes and destabilizes the AP metric on XD-Violence's
+heterogeneous, rapidly-cut sources (movies, news, sports), while providing a
+small benefit on UCF-Crime's continuous fixed-camera
+footage.\footnote{The reported UCF-Crime numbers were produced with an earlier
+implementation of the smoothness term; the released code applies the penalty
+strictly along the temporal (adjacent-snippet) axis. We verified that this
+change shifts the headline UCF-Crime AUC by at most 0.13 percentage
+points---within the 0.1--0.4\% seed variance reported in
+Chapter~\ref{ch:05}---so the UCF-Crime results are reported as run.}
+
+For all fusion variants we report mean and standard deviation over three
+random seeds (42, 123, 2024) to quantify training stability. The seed controls
+weight initialization, batch composition, and snippet sampling; feature
+extraction is deterministic and shared across seeds.
+
+\section{Reproducibility Protocol}
+\label{sec:repro}
+
+Every experiment in this thesis is designed to be re-runnable and auditable:
+
+\begin{itemize}
+    \item \textbf{Fixed seeds and splits.} All runs use the declared seeds
+    \{42, 123, 2024\} and the single committed 15\% stratified validation
+    split. No experiment was selected from a larger undisclosed pool.
+    \item \textbf{Per-run configuration snapshots.} Each run directory
+    contains a \texttt{config\_snapshot.json} capturing the exact
+    configuration the run executed with, so a result can always be traced to
+    its full hyperparameter set rather than to a config file that may have
+    changed since.
+    \item \textbf{Bit-identical re-run invariant.} Re-executing a training
+    configuration with the same seed reproduces the stored metrics; this
+    invariant was verified during development and is the basis for treating
+    single-run metrics as deterministic facts rather than samples.
+    \item \textbf{Master results index.} Every completed run appends a row to
+    \texttt{results/results-index.csv} (over 1,000 runs across the project),
+    which serves as the master index from which the sweep and TTA analyses of
+    Chapters~\ref{ch:05} and~\ref{ch:06} are derived.
+    \item \textbf{Evaluation manifest.} The UCF-Crime full-length frame grid
+    is reconstructed from the committed manifest
+    \texttt{data/ucf\_total\_frames.json} (Section~\ref{sec:protocol}), so the
+    headline UCF-Crime numbers are reproducible from the repository without
+    access to the raw videos.
+\end{itemize}
+
+Appendix~\ref{app:e} provides a complete reproduction walkthrough, from
+environment setup through feature extraction, training, evaluation, and
+regeneration of every table and figure in this thesis.
+
+\section{Computational Infrastructure}
+\label{sec:infra}
+
+The three-stage pipeline imposes mutually incompatible software requirements,
+which we resolved with three isolated conda environments on a single Windows
+11 workstation:
+
+\begin{itemize}
+    \item \textbf{vcc-skeleton} (Python 3.11): RTMPose-m + YOLOX-m skeleton
+    extraction via \texttt{rtmlib} and \texttt{onnxruntime-gpu} (CUDA 12).
+    Using the ONNX runtime avoids the full \texttt{mmpose}/\texttt{mmcv}
+    stack entirely for the pose stage.
+    \item \textbf{vcc-ctrgcn} (Python 3.10): the CTR-GCN forward pass through
+    PYSKL, which pins \texttt{mmcv-full}~1.7.0---a library that only compiles
+    against PyTorch 1.x. This environment is therefore a legacy silo running
+    PyTorch 1.12.1 (CUDA 11.3) solely for frozen skeleton encoding.
+    \item \textbf{vcc-main} (Python 3.11): everything else---CLIP/SigLIP2
+    feature extraction via \texttt{open-clip-torch}, MIL training, evaluation,
+    TTA, and figure generation---on PyTorch 2.6 (CUDA 12.4).
+\end{itemize}
+
+The split is forced by a hard incompatibility: PYSKL requires
+\texttt{mmcv-full}~1.x, which cannot coexist with the PyTorch 2.x that the
+modern VLM stack requires. Because all backbones are frozen, the environments
+communicate only through cached feature files on disk (one \texttt{.npy} per
+video per stream), which also guarantees that every training run across
+Chapters~\ref{ch:05} and~\ref{ch:06} consumes byte-identical inputs.
+Appendix~\ref{app:d} records the engineering pitfalls encountered in keeping
+these environments coexistent on Windows.
+
+\section{Efficiency Benchmarks}
+\label{sec:efficiency}
+
+A central design premise of this work is that the trainable component stays
+small enough to make exhaustive multi-seed, multi-backbone evaluation cheap.
+Table~\ref{tab:efficiency-heads} benchmarks the trainable heads of each fusion
+variant (in the CLIP ViT-B/16 configuration), and
+Table~\ref{tab:efficiency-backbones} lists the frozen extraction backbones
+they sit on.
+
+% Source: results/benchmark_models.csv (tracked). Trainable-head benchmark,
+% CLIP ViT-B/16 backbone configuration; latency/throughput measured on the
+% RTX 4090.
+\begin{table}[t]
+\centering
+\caption{Trainable-head efficiency benchmarks (CLIP ViT-B/16 backbone
+configuration), measured on a single RTX 4090. Per-sample latency and
+throughput refer to one snippet-feature forward pass. The head parameter count
+scales with the visual feature dimension: from 0.50M (CLIP ViT-B/16, shown
+here as Gated Fusion) up to 1.02M for SigLIP2 Giant.}
+\label{tab:efficiency-heads}
+\begin{tabular}{lrrrrr}
+\toprule
+Variant & Params (K) & MACs (M) & Latency (ms) & Throughput (samp/s) & GPU (MB) \\
+\midrule
+Skeleton-Only & 37.57 & 1.21 & 0.0315 & 31766.2 & 10.6 \\
+CLIP-Only & 595.65 & 19.07 & 0.0431 & 23180.7 & 14.8 \\
+Late Fusion & 633.22 & 20.29 & 0.0721 & 13874.0 & 17.8 \\
+Gated Fusion & 498.11 & 15.96 & 0.0656 & 15236.8 & 21.7 \\
+RTFM-I3D & 137.41 & 4.46 & 0.0287 & 34785.6 & 18.8 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% Source: results/backbone_bench_combined.csv (tracked). Frozen-backbone
+% inventory; "measured" rows benchmarked on the RTX 4090, "published" rows
+% taken from the respective papers.
+\begin{table}[t]
+\centering
+\caption{Frozen extraction backbones. Parameter counts marked ``measured''
+were benchmarked locally on the RTX 4090; ``published'' values are taken from
+the respective papers. I3D features (used only by the RTFM reproduction of
+Appendix~\ref{app:a}) are pre-extracted.}
+\label{tab:efficiency-backbones}
+\begin{tabular}{lrlrl}
+\toprule
+Backbone & Params (M) & Source & FLOPs (G) & Per-unit cost \\
+\midrule
+CLIP ViT-B/16 & 86.19 & measured & 22.54 & 1.059 ms/frame \\
+RTMPose-m + YOLOX & 13.0 & published & 3.22 & 30.07 ms/frame \\
+CTR-GCN (4-stream) & 5.684 & measured & --- & 154.2 ms/snippet \\
+I3D RGB & 25.0 & published & 107.9 & pre-extracted \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Three observations frame the results chapters. First, the trainable component
+is tiny: across the four visual backbones the gated fusion head spans
+0.50M--1.02M trainable parameters (scaling with the visual feature dimension),
+which is what makes the full $6 \times 4 \times 3$
+variant-backbone-seed grid of Chapter~\ref{ch:05} feasible---training
+completes in under 5 minutes per configuration on the single RTX 4090.
+Second, the run-time cost of the system is dominated not by the trainable head
+(sub-0.1~ms per snippet) but by frozen feature extraction, and within
+extraction by the skeleton stage: pose estimation runs at ${\sim}30$~ms per
+frame (about 21.6 FPS end-to-end, 99.3\% of it model inference), an order of
+magnitude slower per frame than CLIP embedding. Third, the gated fusion head
+is \emph{smaller} than the late-fusion head (498K vs 633K parameters in the
+CLIP configuration) while performing substantially better
+(Chapter~\ref{ch:05}), because it shares a single fused scorer instead of
+duplicating per-modality classifier heads.
