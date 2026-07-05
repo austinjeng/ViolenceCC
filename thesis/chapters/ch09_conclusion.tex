@@ -4,7 +4,94 @@
 \chapter{Conclusion}
 \label{ch:09}
 
-PLACEHOLDER-W0 --- Wave-1 writer: expand from paper \S7 (paper/main.tex
-L434--444): restate findings with canonical anchor numbers only (13-RESEARCH.md
-\S2), modularity/efficiency pitch, code availability. Delete this marker when
-drafting.
+This thesis has presented a dual-modal fusion framework for weakly supervised
+violence-oriented video anomaly detection that combines frozen skeleton
+dynamics from CTR-GCN with frozen vision-language features through a learned
+gated mechanism trained with MIL ranking loss. A systematic study across four
+visual backbones --- CLIP ViT-B/16 and three SigLIP2 variants --- on UCF-Crime
+and XD-Violence, followed by a corruption-robustness and test-time-adaptation
+investigation, yields direct answers to the three research questions posed in
+Chapter~\ref{ch:01}.
+
+\section{Answers to the Research Questions}
+\label{sec:conc-rq}
+
+\textbf{RQ1 --- Does fusing skeleton dynamics with frozen vision-language
+features add value over either stream alone?} Yes, with an honestly modest
+magnitude. Skeleton features add a small but consistent complementary gain
+over visual-only baselines: gated fusion meets or exceeds its visual-only
+counterpart in all eight backbone$\times$dataset configurations --- strictly
+positive in six, with two ties (tie-dropping sign test, $p \approx 0.03$) ---
+despite the skeleton modality's substantially lower standalone performance
+(68.8\% AUC on UCF-Crime). The value of the modality is only realized through
+learned, input-dependent gating: fixed equal-weight late fusion falls more
+than 10 AP points below gated fusion on XD-Violence on every backbone,
+confirming that \emph{how} the streams are combined matters as much as
+\emph{whether} they are combined. The headline results are $82.5$\% frame-level
+AUC on UCF-Crime (gated fusion, SigLIP2 Giant) and $78.7$\% AP on XD-Violence
+(gated fusion, SigLIP2 SO400M), each reported as a three-seed mean.
+
+\textbf{RQ2 --- How sensitive are these results to the choice of
+vision-language backbone?} Backbone choice interacts with dataset
+characteristics in non-trivial ways. SigLIP2 Giant achieves the best UCF-Crime
+result (82.5\% AUC), while SigLIP2 SO400M leads on XD-Violence (78.7\% AP);
+the visual-only XD-Violence backbones sit within seed variance of one another,
+so this preference emerges through fusion rather than from visual-only
+strength. These dataset-specific preferences underscore the importance of
+multi-backbone evaluation for VAD system design --- a backbone ranking taken
+from general-purpose benchmarks would not have predicted the fusion ranking
+observed here.
+
+\textbf{RQ3 --- Does entropy-minimization test-time adaptation transfer from
+BatchNorm networks to a frozen LayerNorm-based fusion head?} No. TENT- and
+SAR-style entropy minimization, restricted by the architecture to the 1{,}536
+LayerNorm affine scalars of the fusion head, leaves rank-based detection
+metrics essentially unchanged ($<0.1$ points across all four backbones under
+the three-seed continual protocol) --- a structural consequence of LayerNorm's
+lack of recalibratable batch statistics, not a tuning failure. What does
+recover robustness is changing which modality the frozen fusion trusts: the
+proposed label-free discriminative-reliability reweighting improves
+corrupted-AUC on all four backbones (mean $+1.21$ points, up to $+13.2$ points
+in the single most visually-degrading condition), concentrated where one
+modality remains reliable, without updating any parameters. The gains concern
+corrupted-input robustness under a transductive protocol --- not clean
+benchmark performance --- and are claimed as nothing more.
+
+\section{Modularity and Efficiency}
+\label{sec:conc-modularity}
+
+The framework provides a modular, computationally efficient approach to
+multi-modal VAD that requires training only the lightweight fusion head ---
+0.50M to 1.02M trainable parameters depending on backbone --- while leveraging
+frozen pre-trained encoders. Training completes in under 5 minutes per
+configuration on a single RTX 4090, which is what made the full study
+feasible: four backbones, six fusion variants, two datasets, and three seeds
+per configuration, plus the entire corruption and adaptation grid, all on one
+consumer GPU. The frozen-backbone design also future-proofs the pipeline:
+evaluating a newly released vision-language model requires one feature
+extraction pass and minutes of head training, without retraining anything
+else. We do not claim state-of-the-art benchmark performance --- Chapter
+\ref{ch:07} places the results honestly in a field whose strongest systems
+reach the high-80s to low-90s on UCF-Crime under heavier budgets --- but
+within the frozen, visual-plus-skeleton, single-GPU regime, the pipeline is a
+competitive and unusually reproducible operating point.
+
+\section{Code and Data Availability}
+\label{sec:conc-code}
+
+The codebase and experiment configurations will be released to support
+reproducibility and facilitate future multi-backbone VAD studies. All headline
+numbers are three-seed means on fixed splits under a single evaluation
+protocol, and the UCF-Crime headline is reproducible from a committed
+frame-count manifest; Appendix~\ref{app:e} provides the complete
+reproduction walkthrough, from environment setup through feature extraction,
+training, evaluation, and figure generation.
+
+\bigskip
+
+Together, these findings demonstrate that the combination of skeleton dynamics
+and visual-language semantics, coupled with careful backbone selection and
+honest evaluation of adaptation techniques, advances our understanding of
+practical weakly supervised violence detection systems --- and that a
+reproducible result a reader can trust, obtained under transparent
+constraints, is a contribution worth stating plainly.
