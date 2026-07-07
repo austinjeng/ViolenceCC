@@ -71,6 +71,10 @@ paper/*.toc
 paper/*.synctex.gz
 paper/*.cut
 
+# Talk-deck build artifacts (presentation/) — rebuilt by scripts/build_talk_pptx.py
+presentation/*.pptx
+presentation/assets/
+
 # LaTeX build artifacts (thesis/) — global *.log rule above already covers main.log
 # (\include emits per-chapter .aux files under chapters/ and appendices/)
 thesis/main.pdf
