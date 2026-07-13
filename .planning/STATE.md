@@ -21,7 +21,7 @@ progress:
 **Last updated:** 2026-07-07
 **Session:** Phase 13 COMPLETE — full-length master's thesis manuscript (thesis/main.pdf, 128pp / 110-page arabic body; 9 chapters + appendices A-F + frontmatter). 13/13 plans, 13-VERIFICATION.md passed 6/6, 13-AUDIT-numbers.md PASS (0 untraceable numbers, headlines 82.5/78.7 recomputed exact from tracked sources), 13-SOTA-EVIDENCE.md user-approved (31 VERIFIED / 8 metadata-CORRECTED / 0 UNVERIFIABLE; DSANet first author fixed to "Wenti Yin"; Light-WVAD 77.3 fabrication conclusively documented). Build: scripts/build_thesis.ps1 -Clean (non-interactive, vendored IEEEtranN.bst). 298 tracked provenance sources under results/ + thesis/PROVENANCE.md manifest (C7-3 discharged; T6-2 discharged via Appendix E). paper/ untouched. All four user checkpoints approved (final 2026-07-07).
 
-Last activity: 2026-07-13 - Completed quick task 260713-mkh: thesis P0 fixes from THESIS-REVIEW-2026-07-11 (Figure 5.2/paper-Fig-2 RoadAccidents127 erratum FIXED → Fighting047; C2-C6 content fixes; NTUST format batch S1-S4). Verification gate 19/19 PASS; thesis 131pp + paper 11pp rebuild clean. TODO-CONFIRM placeholders on cover (Chinese name/title, advisor 中文名, graduation month) await Austin
+Last activity: 2026-07-14 - Fast task: cover-page facts confirmed by Austin and applied (鄭暐瀚; Chinese title 雙模態骨架與視覺特徵融合於弱監督暴力偵測：多種骨幹網路之比較研究; 楊傳凱; dept = 資訊管理系/Information Management, was CSIE; graduation July 2026 → printed June 2026 per NTUST rule; zh abstract approved). All TODO-CONFIRM markers resolved; thesis rebuilt clean 131pp
 
 ---
 

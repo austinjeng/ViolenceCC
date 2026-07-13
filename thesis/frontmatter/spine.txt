@@ -2,12 +2,9 @@ NTUST thesis spine (書背) text -- for the print shop only. NOT \input by main.
 Set vertically along the spine, top-to-bottom, per the NTUST binding template.
 
 繁體中文（由上而下）：
-國立臺灣科技大學　資訊工程系　碩士論文　｜　基於骨架與視覺雙模態融合之弱監督暴力偵測：多骨幹網路研究　｜　鄭○○　｜　115
+國立臺灣科技大學　資訊管理系　碩士論文　｜　雙模態骨架與視覺特徵融合於弱監督暴力偵測：多種骨幹網路之比較研究　｜　鄭暐瀚　｜　115
 
 English reference (same order):
-NTUST  Dept. of Computer Science and Information Engineering  Master Thesis  |  Dual-Modal Skeleton-Visual Fusion for Weakly Supervised Violence Detection: A Multi-Backbone Study  |  Wei-Han Jeng  |  2026
+NTUST  Dept. of Information Management  Master Thesis  |  Dual-Modal Skeleton-Visual Fusion for Weakly Supervised Violence Detection: A Multi-Backbone Study  |  Wei-Han Jeng  |  2026
 
-TODO-CONFIRM (Austin):
-  - Chinese title wording (must match the cover page).
-  - Chinese given name of Wei-Han Jeng (replace 鄭○○).
-  - ROC year: 115 (= 2026). Confirm graduation year printed on the spine.
+All facts confirmed by the author 2026-07-14 (graduation July 2026 -> ROC year 115 / printed date June per NTUST July/Aug rule).
