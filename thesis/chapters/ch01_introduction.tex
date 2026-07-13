@@ -53,8 +53,11 @@ Yet appearance is not the whole story. Violence is fundamentally a phenomenon of
 rapid, forceful, articulated body dynamics of fighting, striking, or falling. Skeleton-based action
 recognition, exemplified by graph convolutional networks over human pose sequences such as
 CTR-GCN~\cite{chen2021ctrgcn}, captures exactly this signal, is invariant to many appearance
-nuisances (clothing, background, lighting), and has been explored for anomaly detection in
-constrained settings~\cite{doshi2022skeleton}. This complementarity---semantic appearance from a
+nuisances (clothing, background, lighting), and has driven a distinct line of skeleton-only
+anomaly detection---from reconstructing normal pose
+trajectories~\cite{morais2019skeleton}, through pose-graph
+clustering~\cite{markovitz2020gepc}, to normalizing-flow density
+models~\cite{hirschorn2023stgnf}. This complementarity---semantic appearance from a
 VLM, articulated dynamics from a pose graph---motivates the dual-modal design studied in this
 thesis.
 
@@ -112,8 +115,10 @@ Four gaps in the literature motivate this work.
 \textbf{Gap 1: Single-modality dominance in WSVAD.} The overwhelming majority of weakly supervised
 VAD methods score a single visual feature stream---C3D or I3D motion features in the earlier
 generation, frozen CLIP features in the current one. Skeleton-based anomaly detection exists as a
-separate line of work~\cite{doshi2022skeleton}, but the integration of skeleton dynamics with
-vision-language features in a unified weakly supervised framework remains largely unexplored.
+separate, largely unsupervised line of
+work~\cite{morais2019skeleton,markovitz2020gepc,hirschorn2023stgnf}, but the integration of
+skeleton dynamics with vision-language features in a unified weakly supervised framework remains
+largely unexplored.
 Whether pose dynamics carry signal that frozen VLM features miss---and whether that signal survives
 fusion with a much stronger visual stream---is an open empirical question.
 
@@ -168,7 +173,16 @@ method comparison.
 \section{Contributions}
 \label{sec:intro-contributions}
 
-This thesis makes three contributions, extending the study reported in our CGW~'26 workshop paper.
+This thesis makes three contributions, extending the study reported in our CGW~'26 workshop
+paper~\cite{jeng2026dualmodal}. Relative to that condensed workshop paper, the thesis adds:
+(a)~a full three-seed ablation grid across six fusion variants and four backbones
+(Tables~\ref{tab:ucf-ablation} and~\ref{tab:xd-ablation}), where the paper reported condensed,
+largely single-seed tables; (b)~per-category and failure analysis
+(Sections~\ref{sec:qualitative}--\ref{sec:percat}, Appendix~\ref{app:b}) together with the full
+RTFM reproduction study (Appendix~\ref{app:a}); (c)~the complete test-time-adaptation
+investigation---the six-strategy search, the NORM/CORAL eliminations, and the episodic-inertness
+diagnosis (Chapter~\ref{ch:06}, Section~\ref{sec:coral}); and (d)~the engineering and
+reproducibility documentation (Appendices~\ref{app:d} and~\ref{app:e}).
 
 \textbf{1. A dual-modal skeleton--visual fusion framework for WSVAD.} We propose a pipeline that
 combines frozen CTR-GCN skeleton features with frozen vision-language features through learned gated
@@ -209,8 +223,8 @@ label-free, tuning-free, zero-parameter-update method that detects when the visu
 discriminative signal collapses---via the dispersion of its solo anomaly scores---and routes the
 gated fusion toward the corruption-robust skeleton stream, guarded by a skeleton-reliability gate.
 This improves corrupted AUC on all four backbones (mean $+1.2$ points over three seeds, up to
-$+13.2$ points in the single most-degraded condition), while leaving the model bit-identical to the
-source model wherever adaptation would be unsafe.
+$+13.2$ points in the condition that most collapses the visual-language stream), while leaving the
+model bit-identical to the source model wherever adaptation would be unsafe.
 
 \section{Scope and Honest Positioning}
 \label{sec:intro-scope}

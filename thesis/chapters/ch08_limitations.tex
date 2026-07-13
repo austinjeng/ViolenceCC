@@ -44,8 +44,8 @@ the tables. Within the comparable regime --- frozen features, no text branch,
 a single-GPU-class head --- our 78.7\% XD-Violence AP is on par with
 RTFM~\cite{tian2021rtfm} (77.81\%) and the I3D variant of
 MGFN~\cite{chen2023mgfn} (79.19\%),
-and above the founding Sultani et al.~\cite{sultani2018ucfcrime} baseline
-(75.41\%). On UCF-Crime our 82.5\% clears Sultani but trails the other
+and above the founding Sultani et al.~\cite{sultani2018ucfcrime} baseline.
+On UCF-Crime our 82.5\% clears Sultani (75.41\% AUC) but trails the other
 frozen-feature methods (RTFM 84.30\%,
 Light-WVAD~\cite{wang2024lightwvad} 84.7\%, UR-DMU~\cite{zhou2023urdmu}
 86.97\%, MGFN 86.98\%,
@@ -61,6 +61,29 @@ and 13B multimodal LLM yet reach
 82.03\% and 80.28\% UCF AUC --- at or below our 82.5\% --- and fall far below
 us on XD-Violence AP
 (64.04\% / 62.01\% vs 78.7\%), at a far higher inference budget.
+
+\section{Score Calibration and Fixed-Threshold Deployment}
+\label{sec:lim-calibration}
+
+The headline metrics are rank-based (AUC and AP), and rank-based metrics reward
+only the \emph{ordering} of scores, not their absolute values. This masks a
+limitation of the current fusion head that Section~\ref{sec:failure} exposes
+directly: the normal-frame score distribution is heavily right-skewed, with a
+75th percentile of $0.986$ for the headline UCF-Crime configuration
+(Figure~\ref{fig:score-hist}). A quarter of all normal frames therefore receive
+near-certain anomaly scores. AUC absorbs this as long as anomalous frames still
+rank higher, but any deployment that acts on a \emph{fixed} score threshold ---
+the usual way an alarm is triggered in practice --- would face a severe and
+sustained false-alarm rate at any threshold low enough to catch the true
+events. Score calibration, not ranking, is thus the binding limitation of the
+head as trained. We do not address it in this thesis: our contribution is a
+comparison under standard rank-based protocols, and re-calibrating the head
+would not change any reported number. Making the pipeline deployable, however,
+would require either post-hoc calibration of the MIL head (for example,
+temperature scaling or isotonic regression fit on held-out normal frames) or a
+threshold-free alarm policy (for example, ranking within a sliding window
+rather than thresholding absolute scores). We flag both as concrete future
+work and note that neither requires re-training the backbones.
 
 \section{Seed Sensitivity on XD-Violence}
 \label{sec:lim-seeds}

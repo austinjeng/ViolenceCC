@@ -97,8 +97,10 @@ detail.
 
 \textbf{Gated fusion outperforms late fusion consistently.} The gated fusion
 mechanism outperforms simple late fusion (equal-weight score averaging) on
-every backbone on XD-Violence and on three of the four on UCF-Crime (the lone
-exception being SigLIP2 Base). This gap is particularly notable on
+every backbone on \emph{both} datasets: the UCF-Crime margins are $+2.5$,
+$+1.8$, $+2.2$, and $+2.6$ points and the XD-Violence margins are $+12.6$,
+$+10.9$, $+13.0$, and $+11.1$ points (CLIP, SigLIP2 Base, SO400M, Giant).
+This gap is particularly notable on
 XD-Violence, where late fusion with CLIP achieves only 63.9\% AP compared to
 76.5\% for gated fusion---a difference of 12.6 percentage points. We attribute
 this to the learned gating mechanism's ability to weight modalities
@@ -236,8 +238,9 @@ exceeds its visual-only counterpart for every backbone on both datasets. Six
 of the eight configurations are strictly positive; the remaining two (SigLIP2
 Base and Giant on XD-Violence) are ties at the displayed precision. Treating
 each configuration as one paired observation and dropping the ties, a sign
-test gives $p\approx0.03$---with the caveat, disclosed in the paper and
-repeated here, that the eight configurations are correlated because they share
+test gives $p\approx0.03$---with the caveat, disclosed in our workshop
+paper~\cite{jeng2026dualmodal} and repeated here, that the eight configurations
+are correlated because they share
 a single frozen skeleton stream, so this is a consistency check rather than a
 claim of eight independent replications. The evidence for smallness is equally
 clear: the mean gain is $+0.6$ points, no individual configuration's gain
@@ -572,7 +575,7 @@ a quarter of all normal frames receive near-certain anomaly scores. AUC, being
 rank-based, absorbs this as long as anomalous frames rank higher still, but
 any fixed-threshold deployment would face a severe false-alarm rate. Score
 calibration---not ranking---is the binding limitation of the current head,
-and we return to it in Chapter~\ref{ch:08}.
+and we return to it in Section~\ref{sec:lim-calibration}.
 
 \section{Per-Category Performance}
 \label{sec:percat}

@@ -42,10 +42,10 @@ configuration on a single RTX~4090, the full sweep was an overnight-scale
 experiment.
 
 As a reproducibility check, the sweep re-ran its own default cell
-($\mathrm{lr}=10^{-4}$, $k=3$): it reproduced the historical sweep-era
-baselines exactly---71.92\% AP on XD-Violence and 82.27\% AUC on
-UCF-Crime---confirming that the sweep harness and the runs that produced
-those historical baselines are consistent.
+($\mathrm{lr}=10^{-4}$, $k=3$): it reproduced the XD-Violence sweep-era
+baseline exactly (71.92\% AP) and the UCF-Crime baseline to within 0.02
+points (82.26\% versus the historical 82.27\% AUC), confirming that the sweep
+harness and the runs that produced those historical baselines are consistent.
 
 \section{Sweep Grids}
 \label{sec:appc-grids}
@@ -56,7 +56,7 @@ those historical baselines are consistent.
   \caption{UCF-Crime learning-rate $\times$ top-$k$ sweep grid (frame-level
   AUC, seed 42), 99 populated cells on the $19\times6$ canvas.
   \emph{Historical configuration:} the grid and its embedded ``P4 baseline''
-  annotation (82.27\% AUC) use the historical 2026-05 sweep-era
+  default cell (82.26\% AUC) use the historical 2026-05 sweep-era
   configuration (CLIP ViT-B/16 backbone, pre-$\lambda_2{=}0$, seed 42); the
   baseline is a labeled historical sweep-era reference, not a result of the
   final configuration.}
@@ -93,8 +93,8 @@ from the middle of the color scale.
 \caption{Top-10 sweep configurations by primary metric (seed 42, 0--1
 scale), \emph{historical} 2026-05 sweep configuration. Left: XD-Violence
 (AP); right: UCF-Crime (AUC). The generator's delta-vs-baseline columns are
-omitted; the corresponding labeled historical sweep-era baselines are
-0.7192 AP (XD) and 0.8227 AUC (UCF) at the default cell
+omitted; the corresponding stored historical sweep-era baseline constants
+are 0.7192 AP (XD) and 0.8227 AUC (UCF) at the default cell
 ($\mathrm{lr}=10^{-4}$, $k=3$).}
 \label{tab:appc-ranked}
 \begin{tabular}{rllr@{\hspace{2.5em}}llr}

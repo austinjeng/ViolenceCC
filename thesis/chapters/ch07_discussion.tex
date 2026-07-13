@@ -32,16 +32,25 @@ information: motion dynamics that appearance-based vision-language models do
 not capture, rather than a redundant re-encoding of what the visual stream
 already knows.
 
-The strongest single piece of evidence that the network extracts genuine
-signal from the skeleton stream is the gated mechanism's large advantage over
-fixed equal-weight late fusion on XD-Violence, where gating raises the CLIP
-backbone's AP from 63.9\% to 76.5\% --- a 12.6-point gap. A redundant or
-pure-noise modality could not produce this behavior: if the skeleton features
-carried no usable information, no input-dependent weighting scheme could
-recover 12 points of AP by consulting them. The gap instead indicates that the
-skeleton stream is informative for some inputs and misleading for others, and
-that the value of the modality is only realized when the network can decide,
-per input, how much to trust it.
+That the network extracts genuine signal from the skeleton stream is best
+argued by triangulation rather than by any single number. The largest raw
+gap---gating's 12.6-point advantage over equal-weight late fusion on
+XD-Violence with CLIP (63.9\% to 76.5\% AP)---is real but must be read
+carefully, because most of it is \emph{recovery} rather than \emph{extraction}.
+A gate that merely suppressed an uninformative skeleton stream would already
+lift late fusion back to the CLIP visual-only level of 74.6\% AP, accounting
+for 10.7 of the 12.6 points; equal-weight late fusion underperforms precisely
+because it has no input-dependent way to perform that suppression. The evidence that the skeleton contributes information
+\emph{beyond} what suppression alone recovers is therefore threefold:
+(a)~the $+1.9$-point gated-over-visual-only margin that remains once the
+recovery is subtracted; (b)~the 8-of-8 meet-or-exceed pattern across every
+backbone and dataset, whose consistency (sign test,
+Section~\ref{sec:complementarity}) is unlikely under a pure-noise stream even
+though each individual gain is small; and (c)~the category-structured gains
+analyzed below, which concentrate the skeleton's influence in
+human-motion-centric anomalies rather than spreading it uniformly. None of the
+three is decisive alone; together they indicate that the modality's value is
+realized only when the network can decide, per input, how much to trust it.
 
 The per-class analysis in Appendix~\ref{app:b} probes the mechanism directly.
 If skeleton features contribute motion information, the fusion gain should

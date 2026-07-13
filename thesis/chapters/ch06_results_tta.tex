@@ -38,8 +38,10 @@ full-length frame-grid numbers of Chapter~\ref{ch:05}.
   \includegraphics[width=\textwidth]{figures/fig_corruption_source.pdf}
   \caption{Source-only (unadapted) AUC of the gated fusion model across the
   20 UCF-Crime-C conditions and four backbones (3-seed means, truncated
-  snippet-aligned grid). Degradation deepens monotonically with severity in
-  every family; Gaussian noise at high severity is the most destructive
+  snippet-aligned grid). Degradation generally deepens with severity, but not
+  monotonically in every family---for example, SigLIP2 Base's Gaussian column
+  \emph{rises} with severity as score compression narrows its output range.
+  Gaussian noise at high severity is nonetheless the most destructive
   condition family for the visual-language stream.}
   \label{fig:corruption-source}
 \end{figure}
@@ -300,7 +302,8 @@ SigLIP2 Giant  & +1.69 & 0.00 & 0.00 & 0.00 \\
   ($\Delta$AUC in points, 3-seed means) over all 20 UCF-Crime-C conditions
   and four backbones. The gain concentrates in the Gaussian-noise column and
   grows with severity, peaking at $+13.2$ points for SigLIP2 SO400M at
-  severity 5---the single most-degraded condition; the zero rows are
+  severity 5---the condition that most collapses the visual-language stream;
+  the zero rows are
   conditions the reliability gate routes to the unmodified source model.}
   \label{fig:severity-heatmap}
 \end{figure}
@@ -326,7 +329,14 @@ Gaussian noise: $+4.83$
 points averaged across backbones and severities within that family (per
 backbone $+2.67$ / $+5.99$ / $+8.95$ / $+1.69$ for CLIP / Base / SO400M /
 Giant), growing with severity, and peaking at $+13.2$ points for SigLIP2
-SO400M at severity 5---the single most-degraded condition in the benchmark.
+SO400M at severity 5---the condition that most collapses the visual-language
+stream. Gaussian noise is not the lowest-AUC family in absolute terms (several
+JPEG cells sit lower still); it is, rather, where the visual-language stream's
+discriminative signal collapses while the reused skeleton cache stays intact.
+Under JPEG the skeleton cache is itself re-extracted from corrupted frames and
+therefore degraded, so no robust stream remains to route toward---which is why
+the gain concentrates on Gaussian noise rather than on the absolute worst
+cells.
 Three distinct aggregations appear in that sentence, and we keep them
 explicit because they are easily conflated: $+4.83$ is the cross-backbone
 Gaussian-family average, $+8.95$ is one backbone's (SO400M's) Gaussian-family

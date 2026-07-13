@@ -216,15 +216,23 @@ boxes, and a lightweight pose network regresses seventeen COCO-format keypoints 
 SimCC-style coordinate classification, providing an accuracy--throughput operating point suitable
 for processing hundreds of hours of surveillance footage on a single GPU.
 
-In anomaly detection, skeleton representations have been explored primarily in single-modal
-settings. Doshi and Yilmaz~\cite{doshi2022skeleton} formulate anomaly detection over pose
-trajectories in a modular framework, arguing that pose-based signals are robust to appearance
-nuisances and privacy-preserving relative to pixel-based methods. Skeleton-only anomaly detection
-performs best in constrained scenes (fixed cameras, pedestrians at moderate scale) where pose
-estimation is reliable and anomalies are motion-defined. Its known weaknesses---missed detections
-at low resolution, crowded scenes, and non-human anomalies such as explosions or vehicle
-accidents---are precisely the cases where appearance-based features excel, motivating the fusion
-studied here rather than a choice between the two modalities. Classical multi-stream fusion in
+In anomaly detection, skeleton representations have been explored primarily in single-modal,
+unsupervised settings that model the distribution of \emph{normal} pose dynamics and flag
+deviations. Morais et al.~\cite{morais2019skeleton} learn the regularity of normal pose
+trajectories with a recurrent encoder and score anomalies by reconstruction error; Markovitz et
+al.~\cite{markovitz2020gepc} embed pose graphs and cluster them, scoring by distance from the
+learned normal clusters; and Hirschorn and Avidan~\cite{hirschorn2023stgnf} model the density of
+normal poses directly with a spatio-temporal normalizing flow. These methods share the premise that
+pose-based signals are robust to appearance nuisances and privacy-preserving relative to
+pixel-based methods, and they perform best in constrained scenes (fixed cameras, pedestrians at
+moderate scale) where pose estimation is reliable and anomalies are motion-defined. Their known
+weaknesses---missed detections at low resolution, crowded scenes, and non-human anomalies such as
+explosions or vehicle accidents---are precisely the cases where appearance-based features excel,
+motivating the fusion studied here rather than a choice between the two modalities. A defining
+contrast with the present work is supervision and modality count: all three model skeletons as the
+\emph{sole} stream under an unsupervised normality objective, whereas this thesis uses skeletons as
+one stream in a \emph{weakly supervised} dual-modal fusion trained with video-level labels.
+Classical multi-stream fusion in
 action recognition, such as two-stream I3D over RGB and optical flow~\cite{carreira2017i3d},
 established that complementary input encodings improve recognition; this thesis transposes that
 principle to the weakly supervised anomaly setting with skeleton and vision-language streams.
