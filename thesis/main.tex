@@ -10,16 +10,24 @@
 \begin{document}
 
 %%
-%% Frontmatter
+%% Frontmatter -- NTUST R4 binding order:
+%% cover -> title -> 推薦書 -> 審定書 -> 中文摘要 -> 英文摘要 -> 誌謝 ->
+%% 目錄 -> 符號索引 -> 圖目錄 -> 表目錄 -> 正文.
+%% Cover through approval carry no page number (titlepage env /
+%% \thispagestyle{empty}); UPPERCASE Roman numbering (R3) begins at 中文摘要.
 %%
-\pagenumbering{roman}
+\input{frontmatter/cover}
 \input{frontmatter/titlepage}
+\input{frontmatter/recommendation}
+\input{frontmatter/approval}
+\pagenumbering{Roman}
+\input{frontmatter/abstract_zh}
 \input{frontmatter/abstract}
 \input{frontmatter/acknowledgments}
 \tableofcontents
+\input{frontmatter/notation}
 \listoffigures
 \listoftables
-\input{frontmatter/notation}
 \clearpage
 \pagenumbering{arabic}
 
@@ -37,6 +45,20 @@
 \include{chapters/ch09_conclusion}
 
 %%
+%% Bibliography (References before appendices, per NTUST R4 binding order).
+%% Vendored thesis/IEEEtranN.bst + natbib [numbers,sort&compress]. The Wave-0
+%% \nocite{*} smoke test was removed in Wave-3 integration (13-12): chapter
+%% \cite coverage is complete (45/45 bib keys cited; verified). Titled
+%% "References" and added to the TOC via \phantomsection + \addcontentsline.
+%%
+\clearpage
+\phantomsection
+\renewcommand{\bibname}{References}
+\addcontentsline{toc}{chapter}{References}
+\bibliographystyle{IEEEtranN}
+\bibliography{references}
+
+%%
 %% Appendices
 %%
 \appendix
@@ -46,13 +68,5 @@
 \include{appendices/appD_engineering}
 \include{appendices/appE_reproducibility}
 \include{appendices/appF_figures}
-
-%%
-%% Bibliography (vendored thesis/IEEEtranN.bst + natbib [numbers,sort&compress])
-%% The Wave-0 \nocite{*} smoke test was removed in Wave-3 integration (13-12):
-%% chapter \cite coverage is complete (45/45 bib keys cited; verified).
-%%
-\bibliographystyle{IEEEtranN}
-\bibliography{references}
 
 \end{document}

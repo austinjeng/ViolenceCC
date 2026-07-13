@@ -108,7 +108,7 @@ partial window is dropped.
 
 We disclose this protocol asymmetry explicitly. The UCF-Crime full-length
 frame grid is reconstructed from a committed per-video frame-count manifest
-(\texttt{data/ucf\_total\_frames.json}, covering all 1,900 videos), which
+(\texttt{data/\allowbreak ucf\_total\_frames.json}, covering all 1,900 videos), which
 makes the reported UCF-Crime numbers reproducible from the repository alone;
 XD-Violence uses the truncated snippet-aligned grid without a manifest. The
 truncation on XD-Violence affects only trailing partial windows and is applied
@@ -170,6 +170,7 @@ normalized $[0,1]$ image. The final column indicates whether skeleton features
 are re-extracted from the corrupted frames (Section~\ref{sec:reextraction});
 visual features are re-extracted for all 20 conditions.}
 \label{tab:corruption-params}
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{llcccccc}
 \toprule
 Corruption & Parameter & \multicolumn{5}{c}{Severity level} & Skeleton \\
@@ -181,7 +182,8 @@ JPEG compression & quality & 25 & 18 & 15 & 10 & 7 & yes \\
 Brightness & additive offset & 0.1 & 0.2 & 0.3 & 0.4 & 0.5 & no \\
 Motion blur & (kernel, $\sigma$) & (10,3) & (15,5) & (15,8) & (15,12) & (20,15) & yes \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
 \subsection{Feature re-extraction policy}
@@ -263,7 +265,7 @@ Every experiment in this thesis is designed to be re-runnable and auditable:
     \{42, 123, 2024\} and the single committed 15\% stratified validation
     split. No experiment was selected from a larger undisclosed pool.
     \item \textbf{Per-run configuration snapshots.} Each run directory
-    contains a \texttt{config\_snapshot.json} capturing the exact
+    contains a \texttt{config\_\allowbreak snapshot.json} capturing the exact
     configuration the run executed with, so a result can always be traced to
     its full hyperparameter set rather than to a config file that may have
     changed since.
@@ -272,7 +274,7 @@ Every experiment in this thesis is designed to be re-runnable and auditable:
     invariant was verified during development and is the basis for treating
     single-run metrics as deterministic facts rather than samples.
     \item \textbf{Master results index.} Every completed run appends a row to
-    \texttt{results/results-index.csv} (over 1,000 runs across the project),
+    \texttt{results/\allowbreak results-index.csv} (over 1,000 runs across the project),
     which serves as the master index from which the sweep and TTA analyses of
     Chapters~\ref{ch:05} and~\ref{ch:06} are derived.
     \item \textbf{Evaluation manifest.} The UCF-Crime full-length frame grid
@@ -337,6 +339,7 @@ throughput refer to one snippet-feature forward pass. The head parameter count
 scales with the visual feature dimension: from 0.50M (CLIP ViT-B/16, shown
 here as Gated Fusion) up to 1.02M for SigLIP2 Giant.}
 \label{tab:efficiency-heads}
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{lrrrrr}
 \toprule
 Variant & Params (K) & MACs (M) & Latency (ms) & Throughput (samp/s) & GPU (MB) \\
@@ -347,7 +350,8 @@ Late Fusion & 633.22 & 20.29 & 0.0721 & 13874.0 & 17.8 \\
 Gated Fusion & 498.11 & 15.96 & 0.0656 & 15236.8 & 21.7 \\
 RTFM-I3D & 137.41 & 4.46 & 0.0287 & 34785.6 & 18.8 \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
 % Source: results/backbone_bench_combined.csv (tracked). Frozen-backbone

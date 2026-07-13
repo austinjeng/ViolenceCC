@@ -20,6 +20,9 @@ Table~\ref{tab:appd-envs}).
 \section{Repository Map}
 \label{sec:appe-repomap}
 
+% \sloppy: these items pack many wide monospace \texttt path tokens; allow
+% looser interword spacing so long paths wrap instead of crossing the margin.
+\begingroup\sloppy
 \begin{description}
     \item[\texttt{src/}] The pipeline package. \texttt{src/train.py} and
     \texttt{src/evaluate.py} are the training and evaluation entry points;
@@ -57,9 +60,10 @@ Table~\ref{tab:appd-envs}).
     \texttt{thesis/PROVENANCE.md} maps every number family and figure in
     this document to its tracked source.
     \item[\texttt{envs/}] Environment reference documents
-    (\texttt{requirements-\{skeleton,ctrgcn,main\}.txt} plus
-    \texttt{SETUP.md}).
+    (\texttt{requirements-\allowbreak\{skeleton,\allowbreak ctrgcn,\allowbreak main\}.txt}
+    plus \texttt{SETUP.md}).
 \end{description}
+\endgroup
 
 \section{Environment Setup}
 \label{sec:appe-envs}
@@ -88,11 +92,11 @@ three stages run in their respective environments, in order:
 python scripts/extract_skeletons.py --dataset ucf --split train
 python scripts/extract_skeletons.py --dataset ucf --split test
 
-# 2. Skeleton features (vcc-ctrgcn): frozen CTR-GCN, 4 streams -> 256-d
+# 2. Skeleton features (vcc-ctrgcn): CTR-GCN 4-stream -> 256-d
 python scripts/extract_ctrgcn.py --dataset ucf --split train
 python scripts/extract_ctrgcn.py --dataset ucf --split test
 
-# 3. Visual features (vcc-main): frozen VLM backbone, mean+max pooling
+# 3. Visual features (vcc-main): frozen VLM, mean+max pool
 python scripts/extract_clip.py --dataset ucf --split train \
     --backbone clip-vit-b-16 --pool mean_max
 \end{verbatim}
@@ -101,8 +105,8 @@ The same commands with \texttt{-{}-dataset xd} process XD-Violence, and
 \texttt{-{}-backbone} selects among the four visual backbones of
 Chapter~\ref{ch:03} (each backbone writes to its own cache subdirectory). For
 the corruption benchmark of Chapter~\ref{ch:04}, the extraction scripts accept
-\texttt{-{}-corruption \{gaussian\_noise, jpeg\_compression, brightness,
-motion\_blur\} -{}-severity \{1..5\}}, applying the exact severity parameters
+\texttt{-{}-corruption \{gaussian\_noise,\allowbreak\ jpeg\_compression,\allowbreak\
+brightness,\allowbreak\ motion\_blur\}\allowbreak\ -{}-severity \{1..5\}}, applying the exact severity parameters
 of \texttt{scripts/corruption.py}; \texttt{scripts/batch\_extract\_corrupted.py}
 drives the full $4\times5$ grid. Skeletons are re-extracted only for motion
 blur and JPEG compression (the geometry-altering corruptions); Gaussian noise
@@ -117,9 +121,12 @@ single training entry point with a config file and a seed
 (environment: \texttt{vcc-main}):
 
 \begin{verbatim}
-python src/train.py --config configs/gated_fusion_giant.yaml --seed 42
-python src/train.py --config configs/gated_fusion_giant.yaml --seed 123
-python src/train.py --config configs/gated_fusion_giant.yaml --seed 2024
+python src/train.py --config configs/gated_fusion_giant.yaml \
+    --seed 42
+python src/train.py --config configs/gated_fusion_giant.yaml \
+    --seed 123
+python src/train.py --config configs/gated_fusion_giant.yaml \
+    --seed 2024
 \end{verbatim}
 
 The seed set $\{42, 123, 2024\}$ is fixed project-wide; every mean~$\pm$~std
@@ -143,7 +150,8 @@ Frame-level evaluation runs against a completed run directory:
 \begin{verbatim}
 # UCF full-length frame grid is pinned by the committed manifest
 #   data/ucf_total_frames.json
-python src/evaluate.py --run-dir results/ucf_gated_fusion_giant_s42 \
+python src/evaluate.py \
+    --run-dir results/ucf_gated_fusion_giant_s42 \
     --split test
 \end{verbatim}
 
@@ -192,7 +200,7 @@ Every generated table and figure in this document has a tracked generator
 (environment: \texttt{vcc-main}):
 
 \begin{verbatim}
-# Publication figures (backbone comparison, temporal curves, TTA bars)
+# Publication figures (backbones, temporal curves, TTA bars)
 python scripts/generate_pub_figures.py
 
 # Per-category appendix tables (App. B): 3-seed mean +/- std

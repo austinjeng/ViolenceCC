@@ -1,32 +1,36 @@
 %%
-%% frontmatter/titlepage.tex -- thesis title page
+%% frontmatter/titlepage.tex -- English thesis title page (書名頁)
 %% Facts (binding, from the frozen paper author block + 13-CONTEXT.md):
 %% NTUST, author Wei-Han Jeng, advisor Chuan-Kai Yang, title matching the
-%% paper's, year 2026.
+%% paper's. NTUST R2/R5: title 24pt bold; department + degree-program name +
+%% graduation year-month present (quick 260713-mkh, S4).
 %%
 \begin{titlepage}
   \centering
   \vspace*{2cm}
 
   {\large National Taiwan University of Science and Technology\par}
+  \vspace{0.3cm}
+  {\large Department of Computer Science and Information Engineering\par}
 
-  \vspace{2.5cm}
-  {\LARGE\bfseries Dual-Modal Skeleton--Visual Fusion for\\[0.4em]
+  \vspace{2.3cm}
+  {\fontsize{24}{29}\selectfont\bfseries Dual-Modal Skeleton--Visual Fusion for\\[0.4em]
    Weakly Supervised Violence Detection:\\[0.4em]
    A Multi-Backbone Study\par}
 
-  \vspace{2.5cm}
+  \vspace{2.3cm}
   {\large A thesis submitted in partial fulfillment\\
    of the requirements for the degree of\\[0.4em]
-   \textbf{Master}\par}
+   \textbf{Master of Science in Computer Science and Information Engineering}\par}
 
-  \vspace{2.5cm}
+  \vspace{2.3cm}
   {\large Author: Wei-Han Jeng\par}
   \vspace{0.6cm}
-  {\large Advisor: Chuan-Kai Yang\par}
+  {\large Advisor: Chuan-Kai Yang, Ph.D.\par}
 
   \vfill
   {\large Taipei, Taiwan\par}
   \vspace{0.4cm}
-  {\large 2026\par}
+  %% TODO-CONFIRM (Austin): graduation month -- July/Aug leavers print June per NTUST.
+  {\large June 2026\par}
 \end{titlepage}

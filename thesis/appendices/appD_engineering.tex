@@ -48,6 +48,7 @@ PyTorch exists solely to run the frozen CTR-GCN forward pass.}
 \label{tab:appd-envs}
 % Source: CLAUDE.md version-compatibility matrix + .planning/STATE.md Key
 % Decisions (tracked); versions as pinned for the experiments in this thesis.
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{@{}llll@{}}
 \toprule
 Component & \texttt{vcc-skeleton} & \texttt{vcc-ctrgcn} & \texttt{vcc-main} \\
@@ -62,7 +63,8 @@ cuDNN & 9.x & 8.x (PyTorch pin) & 9.x \\
 \texttt{open-clip-torch} & --- & --- & 3.3.0 \\
 NumPy & $\geq$1.23 & $<$2 (required) & $\geq$1.23 \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
 Table~\ref{tab:appd-envs} gives the version matrix. Three consequences of this

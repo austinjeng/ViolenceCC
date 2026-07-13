@@ -1,20 +1,27 @@
 %%
 %% preamble.tex -- package configuration for the ViolenceCC master's thesis
 %% Load order per 13-RESEARCH.md S7: standard packages -> natbib -> hyperref LAST.
+%% NTUST format batch (quick 260713-mkh, S1-S4): A4 3/2/3/3 cm margins,
+%% Times-compatible fonts (newtx), CJKutf8 for the Chinese front matter, and
+%% titlesec heading formats (centered 20pt chapters, left 18pt sections).
 %%
 
-%% Page layout
-\usepackage[margin=2.5cm]{geometry}
+%% Page layout -- NTUST: A4, top 3 / bottom 2 / left 3 / right 3 cm
+\usepackage[a4paper,top=3cm,bottom=2cm,left=3cm,right=3cm]{geometry}
 
-%% Fonts: scalable Latin Modern (T1). Required by microtype's font expansion
-%% -- the report class's default bitmap CM fonts abort pdfTeX with
-%% "auto expansion is only possible with scalable fonts".
+%% Fonts: NTUST requires Times New Roman for the English body. newtxtext +
+%% newtxmath give Times-compatible text and matching math under pdfLaTeX.
+%% amsmath MUST load before newtxmath; newtxmath supplies the AMS symbols, so
+%% amssymb is NOT loaded (it would clash). Fallback if newtx ever errors in the
+%% build log: replace the newtx lines with \usepackage{mathptmx} + \usepackage{amssymb}.
 \usepackage[T1]{fontenc}
-\usepackage{lmodern}
-
-%% Mathematics
 \usepackage{amsmath}
-\usepackage{amssymb}
+\usepackage{newtxtext}
+\usepackage{newtxmath}
+
+%% CJK for the bilingual front matter (cover, 摘要, 指導教授推薦書, 學位考試委員審定書).
+%% bkai approximates 標楷體; if the bkai font maps fail on MiKTeX, switch to bsmi.
+\usepackage{CJKutf8}
 
 %% Tables
 \usepackage{booktabs}
@@ -40,6 +47,16 @@
 
 %% Typography
 \usepackage{microtype}
+%% Last-resort line looseness so long unbreakable \texttt paths in prose wrap to
+%% the next line instead of running past the right margin (NTUST R10).
+\setlength{\emergencystretch}{3em}
+
+%% Heading formats (NTUST R8): chapter titles centered bold 20pt with a
+%% two-blank-line post-gap; sections left bold 18pt; subsections at class default.
+\usepackage{titlesec}
+\titleformat{\chapter}[display]{\centering\bfseries\fontsize{20}{24}\selectfont}{\chaptertitlename\ \thechapter}{12pt}{}
+\titlespacing*{\chapter}{0pt}{0pt}{30pt}
+\titleformat{\section}{\raggedright\bfseries\fontsize{18}{22}\selectfont}{\thesection}{1em}{}
 
 %% Bibliography: IEEEtranN.bst REQUIRES natbib -- never remove it.
 \usepackage[numbers,sort&compress]{natbib}
