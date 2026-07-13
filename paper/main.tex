@@ -267,13 +267,13 @@ GF Mean-Only & 76.1$\pm$0.6 & 74.0$\pm$0.8 & \textbf{78.4$\pm$1.3} & 76.3$\pm$1.
 \begin{figure}[t]
   \centering
   \includegraphics[width=\columnwidth]{figures/fig_temporal_scores.pdf}
-  \caption{Temporal anomaly score comparison on a RoadAccidents test video from UCF-Crime. The gated fusion model produces sharper score peaks aligned with the anomalous event while maintaining lower scores during normal segments, compared to individual modality baselines.}
+  \caption{Frame-level anomaly scores on the Fighting047 test video from UCF-Crime (seed 42). Inside the annotated ground-truth window (shaded), the gated fusion score rises to near $0.95$ and stays high, tracking or exceeding the visual-only stream while the skeleton-only score stays flat near zero; in the later normal segment the gated score collapses below the visual-only baseline, illustrating input-dependent suppression. Fighting is a visually salient category, so this is a well-localized example rather than a representative one.}
   \label{fig:temporal-scores}
 \end{figure}
 
 \textbf{Late fusion can degrade performance.} A notable finding is that late fusion sometimes performs worse than the visual-only baseline. On UCF-Crime, CLIP late fusion (78.9\%) falls below CLIP visual-only (81.2\%), a drop of 2.3 percentage points. This suggests that the fixed equal weighting lets the weaker skeleton signal drag down every fused score, with no input-dependent mechanism to reduce its weight relative to the stronger visual stream. The gated mechanism resolves this by learning to modulate each modality's contribution.
 
-Figure~\ref{fig:temporal-scores} illustrates the temporal behavior of our gated fusion model on a representative test video, demonstrating sharper anomaly score peaks compared to single-modality baselines.
+Figure~\ref{fig:temporal-scores} illustrates the temporal behavior of our gated fusion model on the Fighting047 test video: within the annotated event window the fused score peaks above the visual-only stream, and in the subsequent normal segment it drops below that stream to near zero, a downward correction that equal-weight late fusion cannot make.
 
 \subsection{Backbone Comparison}
 

@@ -381,25 +381,34 @@ differences of up to two points routinely vanish under reseeding.
 \label{sec:qualitative}
 
 % Source: thesis/figures/fig_temporal_scores.pdf -- Class V reuse
-% (byte-identical to paper figure; RoadAccidents curve video verified against
-% the frozen paper caption; generator scripts/generate_pub_figures.py).
+% (byte-identical to paper figure; curve video is Fighting047, selected by the
+% positive-alignment filter in scripts/generate_pub_figures.py and verified by
+% re-rendering; supersedes the RoadAccidents127 erratum).
 \begin{figure}[t]
   \centering
   \includegraphics[width=0.85\textwidth]{figures/fig_temporal_scores.pdf}
-  \caption{Temporal anomaly score comparison on a RoadAccidents test video
-  from UCF-Crime. The gated fusion model produces sharper score peaks aligned
-  with the anomalous event while maintaining lower scores during normal
-  segments, compared to individual modality baselines.}
+  \caption{Frame-level anomaly scores on the Fighting047 test video from
+  UCF-Crime (seed 42). Inside the annotated ground-truth window (shaded), the
+  gated fusion score (solid) rises to near $0.95$ and stays high, tracking or
+  exceeding the visual-only stream while the skeleton-only score stays flat
+  near zero. In the later normal segment the gated score collapses to near
+  zero---below the visual-only baseline there---illustrating input-dependent
+  suppression of an uninformative reading. Fighting is a visually salient
+  category, so this is a well-localized example rather than one representative
+  of the harder categories examined in Section~\ref{sec:percat}.}
   \label{fig:temporal-scores}
 \end{figure}
 
-Figure~\ref{fig:temporal-scores} illustrates the temporal behavior of the
-gated fusion model on a representative UCF-Crime test video: relative to the
-single-modality baselines, the fused scorer concentrates its score mass on
-the annotated event window and suppresses spurious peaks elsewhere. This is
-the per-video signature of the aggregate finding in
-Section~\ref{sec:ablation}---input-dependent weighting sharpens score
-contrast where a fixed combination dilutes it.
+Figure~\ref{fig:temporal-scores} shows the per-video temporal behavior of the
+gated fusion model on Fighting047. Within the annotated event window the fused
+score peaks above the visual-only stream, and in the subsequent normal segment
+it drops below that stream to near zero, whereas late fusion has no
+input-dependent mechanism to make that downward correction. This is the
+per-video signature of the aggregate finding in
+Section~\ref{sec:ablation}---input-dependent weighting sharpens score contrast
+where a fixed combination dilutes it. As a strong-category example it is not
+representative of the difficult categories in Section~\ref{sec:percat}, where
+both streams remain weak.
 
 % Source: thesis/figures/fig_gating_distribution.pdf -- Class V reuse
 % (byte-identical to unused paper figure; despite its filename this is a

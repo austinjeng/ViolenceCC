@@ -106,14 +106,31 @@ def _setup_style():
 # Figure 2: Temporal Anomaly Score Plot
 # =============================================================================
 
-def find_best_temporal_video() -> str:
+def find_best_temporal_video(video_id: str | None = None) -> str:
     """Find UCF test video where gated fusion shows clear temporal dynamics
     AND outperforms single-modality baselines.
 
-    Heuristic: score = range(gated) * (1 + advantage_over_both)
-    Prioritizes videos with high temporal variation in gated fusion scores
-    AND where fusion outperforms both skeleton-only and visual-only.
+    Heuristic: score = range(gated) * (1 + advantage_over_both), restricted to
+    videos whose gated curve is *positively aligned* with the ground-truth
+    window (mean score inside GT > mean score outside GT). The alignment filter
+    is mandatory: without it the raw range/advantage heuristic selected
+    RoadAccidents127, the single worst anti-aligned test video (in-GT mean
+    0.001 vs out-GT 0.743, gap -0.742) -- the C1 erratum this fix removes.
+
+    If ``video_id`` is given it is returned as-is (bypassing the heuristic).
+    The temporal figure pins ``Fighting047`` explicitly: it is the well-
+    localized, CGW-talk-validated example (in-GT 0.889 vs out-GT 0.407, gap
+    +0.483). Among positively-aligned videos the pure heuristic would instead
+    rank Stealing019 first, but that curve stays high (~0.92) during normal
+    segments too (out-GT mean 0.767) and is not a clean localization example.
     """
+    if video_id is not None:
+        print(f"  Temporal video (explicit): {video_id}")
+        return video_id
+
+    from src.eval.ucf_annotations import parse_annotations
+    annos = parse_annotations(PROJECT_ROOT / "data" / "annotations" / "ucf_temporal.txt")
+
     runs = {}
     for variant, run_name in [
         ("gated", "ucf_gated_fusion_s42"),
@@ -123,12 +140,12 @@ def find_best_temporal_video() -> str:
         path = RESULTS_DIR / run_name / "eval_scores.npz"
         if not path.exists():
             print(f"  [WARN] Missing {path}")
-            return "Shooting008"
+            return "Fighting047"
         runs[variant] = np.load(path)
 
     anom_vids = [k for k in runs["gated"].files if not k.startswith("Normal")]
 
-    best_vid, best_score = "Shooting008", -999
+    best_vid, best_score = "Fighting047", -999
     for vid in anom_vids:
         if vid not in runs["clip"].files or vid not in runs["skel"].files:
             continue
@@ -139,6 +156,17 @@ def find_best_temporal_video() -> str:
         adv = float(g.max()) - max(float(c.max()), float(s.max()))
         n_frames = len(g)
         if g_range < 0.3 or n_frames > 10000:
+            continue
+        # Hard alignment filter: reject videos whose gated score is not higher
+        # inside the GT window than outside it (rejects RoadAccidents127).
+        gt_mask = np.zeros(n_frames, dtype=bool)
+        if vid in annos:
+            for start, end in annos[vid].intervals:
+                if start is not None:
+                    gt_mask[max(0, int(start)):min(int(end), n_frames)] = True
+        if not gt_mask.any() or gt_mask.all():
+            continue
+        if float(g[gt_mask].mean()) <= float(g[~gt_mask].mean()):
             continue
         score = g_range * (1.0 + max(adv, 0.0))
         if score > best_score:
@@ -156,7 +184,8 @@ def fig_temporal_scores():
     from src.eval.ucf_annotations import parse_annotations
     annos = parse_annotations(PROJECT_ROOT / "data" / "annotations" / "ucf_temporal.txt")
 
-    video_id = find_best_temporal_video()
+    # Pin the well-localized, positively-aligned Fighting047 example (C1 fix).
+    video_id = find_best_temporal_video("Fighting047")
 
     # Load scores for 3 variants
     scores = {}
