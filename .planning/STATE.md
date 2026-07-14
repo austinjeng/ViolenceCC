@@ -21,7 +21,7 @@ progress:
 **Last updated:** 2026-07-07
 **Session:** Phase 13 COMPLETE — full-length master's thesis manuscript (thesis/main.pdf, 128pp / 110-page arabic body; 9 chapters + appendices A-F + frontmatter). 13/13 plans, 13-VERIFICATION.md passed 6/6, 13-AUDIT-numbers.md PASS (0 untraceable numbers, headlines 82.5/78.7 recomputed exact from tracked sources), 13-SOTA-EVIDENCE.md user-approved (31 VERIFIED / 8 metadata-CORRECTED / 0 UNVERIFIABLE; DSANet first author fixed to "Wenti Yin"; Light-WVAD 77.3 fabrication conclusively documented). Build: scripts/build_thesis.ps1 -Clean (non-interactive, vendored IEEEtranN.bst). 298 tracked provenance sources under results/ + thesis/PROVENANCE.md manifest (C7-3 discharged; T6-2 discharged via Appendix E). paper/ untouched. All four user checkpoints approved (final 2026-07-07).
 
-Last activity: 2026-07-14 - Completed quick task 260714-gd8: appendices A-F archived out of the thesis build per author decision (restorable via thesis/appendices_archived/README.md); 21 body cross-refs reworded; thesis now 98pp, gate green (0 broken refs, 45/45 cites, References last). Earlier same day: cover-page facts confirmed+applied (鄭暐瀚, IM dept, new Chinese title, June-2026 print rule)
+Last activity: 2026-07-14 - Fast task: ALL CGW '26 references removed from thesis per author decision ("thesis stands alone") — jeng2026dualmodal self-cite deleted (reverses part of P0 fix C3), ch01 §1.5 contributions lead-in rewritten standalone, ch05 sign-test caveat reworded, bib now 44/44; rebuilt clean 98pp, 0 broken refs, "CGW" absent from PDF. Earlier: quick 260714-gd8 appendices archived (98pp); cover facts applied (鄭暐瀚, IM dept)
 
 ---
 

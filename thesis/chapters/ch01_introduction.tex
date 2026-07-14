@@ -173,15 +173,13 @@ method comparison.
 \section{Contributions}
 \label{sec:intro-contributions}
 
-This thesis makes three contributions, extending the study reported in our CGW~'26 workshop
-paper~\cite{jeng2026dualmodal}. Relative to that condensed workshop paper, the thesis adds:
-(a)~a full three-seed ablation grid across six fusion variants and four backbones
-(Tables~\ref{tab:ucf-ablation} and~\ref{tab:xd-ablation}), where the paper reported condensed,
-largely single-seed tables; (b)~per-category and failure analysis
-(Sections~\ref{sec:qualitative}--\ref{sec:percat}) together with the RTFM
-baseline-reproduction investigation summarized in Section~\ref{sec:lim-gaps}; and (c)~the
-complete test-time-adaptation investigation---the six-strategy search, the NORM/CORAL
-eliminations, and the episodic-inertness diagnosis (Chapter~\ref{ch:06}, Section~\ref{sec:coral}).
+This thesis makes three contributions. All results rest on a uniform three-seed
+experimental protocol spanning six fusion variants and four backbones
+(Tables~\ref{tab:ucf-ablation} and~\ref{tab:xd-ablation}), complemented by
+per-category and failure analysis (Sections~\ref{sec:qualitative}--\ref{sec:percat})
+and a complete test-time-adaptation investigation---the six-strategy search, the
+NORM/CORAL eliminations, and the episodic-inertness diagnosis
+(Chapter~\ref{ch:06}, Section~\ref{sec:coral}).
 
 \textbf{1. A dual-modal skeleton--visual fusion framework for WSVAD.} We propose a pipeline that
 combines frozen CTR-GCN skeleton features with frozen vision-language features through learned gated
