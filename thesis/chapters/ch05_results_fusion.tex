@@ -260,9 +260,9 @@ gated mechanism's large advantage over late fusion (which shows the network
 extracts usable signal from the skeleton stream when allowed to weight it).
 A per-class breakdown of where fusion helps and hurts, based on grouping
 UCF-Crime categories into human-motion-centric and appearance-centric classes,
-is deferred to Appendix~\ref{app:b}; its verdict is directionally supportive
-but mixed and noisy at per-class sample sizes, and we do not lean on it for
-the headline claim.
+is examined in the discussion of Chapter~\ref{ch:07}; its verdict is
+directionally supportive but mixed and noisy at per-class sample sizes, and we
+do not lean on it for the headline claim.
 
 \section{Hyperparameter Sensitivity (Historical Configuration)}
 \label{sec:sweep}
@@ -283,11 +283,9 @@ setting, multiple backbones, and 3-seed reporting. The value of the sweep is
 its \emph{shape}, which is a property of the loss landscape rather than of the
 exact configuration.
 
-The two sweep heatmaps (99 configurations per dataset, seed 42, with 3-seed
-confirmation runs at the winning cells) appear at full scale in
-Appendix~\ref{app:c} as Figures~\ref{fig:appc-sweep-ucf}
-and~\ref{fig:appc-sweep-xd}. The two datasets answer the tuning question in
-opposite ways:
+The sweep spanned 99 configurations per dataset (seed 42, with 3-seed
+confirmation runs at the winning cells). The two datasets answer the tuning
+question in opposite ways:
 
 \begin{itemize}
     \item \textbf{XD-Violence benefits from tuning.} The sweep winner
@@ -312,9 +310,8 @@ XD-Violence---a change the sweep predates---already recovered the bulk of the
 XD-Violence headroom through a different mechanism. The sweep's enduring
 lessons are that XD-Violence is the tunable dataset of the pair and that
 UCF-Crime results are robust to reasonable hyperparameter choices, which
-derisks the fixed-configuration comparisons elsewhere in this thesis. Full
-grids, ranked tables, and confirmation details appear in
-Appendix~\ref{app:c}.
+derisks the fixed-configuration comparisons elsewhere in this thesis. The full
+ranked grids and per-cell confirmation details are omitted from this thesis.
 
 \section{Statistical Robustness of the Headline Numbers}
 \label{sec:bootstrap}
@@ -429,9 +426,8 @@ both streams remain weak.
   the CLIP ViT-B/16 configuration (seed 42). Fusion's per-category behavior
   tracks the visual stream almost everywhere, with the skeleton stream's
   standalone profile visibly weaker but differently shaped---the raw material
-  of the complementarity effect. (Three-seed per-category tables for the
-  headline backbones appear in Section~\ref{sec:percat} and
-  Appendix~\ref{app:b}.)}
+  of the complementarity effect. (Section~\ref{sec:percat} summarizes
+  three-seed per-category behavior for the headline backbones.)}
   \label{fig:gating-distribution}
 \end{figure}
 
@@ -588,10 +584,10 @@ and we return to it in Section~\ref{sec:lim-calibration}.
 % scripts/thesis_per_category_tables.py from tracked
 % results/{ucf_gated_fusion_giant,xd_gated_fusion_so400m}_s{42,123,2024}/
 % per_category.csv, post-lambda0/post-h1). Values quoted below match those
-% generated tables; the full tables are rendered in Appendix B.
+% generated tables; the full per-category tables are not rendered in the thesis body.
 Finally, we summarize per-category behavior of the two headline
 configurations, computed 3-seed from the current canonical run directories;
-the complete tables appear in Appendix~\ref{app:b}.
+the complete per-category tables are omitted here.
 
 On \textbf{UCF-Crime} (Gated Fusion, SigLIP2 Giant), the strongest categories
 are Stealing (99.34$\pm$0.13\% AUC), Vandalism (97.47$\pm$0.38), and Assault

@@ -24,9 +24,10 @@ PRD also set a baseline-reproduction gate --- reproducing RTFM to within one
 point of its published 84.30\% UCF-Crime AUC --- as a check on the evaluation
 pipeline; the RTFM reproduction study, carried out on the XD-Violence I3D
 configuration, reached 65.70\% AP against the published 77.81\% and was
-likewise accepted as a miss after a diagnostic investigation ruled out an
-evaluation bug and attributed the gap to feature-dimensionality and
-training-regime differences (Appendix~\ref{app:a}).
+likewise accepted as a miss after a diagnostic investigation cleared the
+evaluation harness against an independent snippet-versus-frame sanity anchor
+and localized the gap to the training side --- feature-dimensionality,
+multi-scale-temporal-network, and batch-size mismatches.
 
 \textbf{Why the gap exists.} Our best UCF-Crime result falls below the
 published performance of methods that use end-to-end fine-tuned backbones,

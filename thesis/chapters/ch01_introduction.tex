@@ -178,11 +178,10 @@ paper~\cite{jeng2026dualmodal}. Relative to that condensed workshop paper, the t
 (a)~a full three-seed ablation grid across six fusion variants and four backbones
 (Tables~\ref{tab:ucf-ablation} and~\ref{tab:xd-ablation}), where the paper reported condensed,
 largely single-seed tables; (b)~per-category and failure analysis
-(Sections~\ref{sec:qualitative}--\ref{sec:percat}, Appendix~\ref{app:b}) together with the full
-RTFM reproduction study (Appendix~\ref{app:a}); (c)~the complete test-time-adaptation
-investigation---the six-strategy search, the NORM/CORAL eliminations, and the episodic-inertness
-diagnosis (Chapter~\ref{ch:06}, Section~\ref{sec:coral}); and (d)~the engineering and
-reproducibility documentation (Appendices~\ref{app:d} and~\ref{app:e}).
+(Sections~\ref{sec:qualitative}--\ref{sec:percat}) together with the RTFM
+baseline-reproduction investigation summarized in Section~\ref{sec:lim-gaps}; and (c)~the
+complete test-time-adaptation investigation---the six-strategy search, the NORM/CORAL
+eliminations, and the episodic-inertness diagnosis (Chapter~\ref{ch:06}, Section~\ref{sec:coral}).
 
 \textbf{1. A dual-modal skeleton--visual fusion framework for WSVAD.} We propose a pipeline that
 combines frozen CTR-GCN skeleton features with frozen vision-language features through learned gated
@@ -248,8 +247,8 @@ variant is future work (Chapter~\ref{ch:08}).
 
 \textbf{Reproducibility as a first-class goal.} Every reported number derives from fixed seeds (42,
 123, 2024), fixed train/validation splits, and a fixed evaluation protocol; results are reported as
-mean$\pm$std over the three seeds. The complete configuration provenance and reproduction guide
-appear in Appendix~\ref{app:e}.
+mean$\pm$std over the three seeds. The complete configuration provenance---committed configs and
+data manifests, and tracked per-run metrics files---backs every reported number.
 
 \section{Thesis Organization}
 \label{sec:intro-roadmap}
@@ -266,8 +265,4 @@ fusion and backbone results (RQ1, RQ2), including ablations, per-category analys
 robustness checks, and failure analysis. Chapter~\ref{ch:06} reports the robustness and TTA results
 (RQ3), from the entropy-minimization null result through the reweighting method's evaluation.
 Chapter~\ref{ch:07} discusses the findings and positions the system against the state of the field.
-Chapter~\ref{ch:08} states limitations and future work, and Chapter~\ref{ch:09} concludes. Six
-appendices provide supporting material: the RTFM reproduction investigation (Appendix~\ref{app:a}),
-per-category and per-class complementarity tables (Appendix~\ref{app:b}), hyperparameter sweep
-detail (Appendix~\ref{app:c}), engineering notes (Appendix~\ref{app:d}), a reproducibility guide
-(Appendix~\ref{app:e}), and additional figures (Appendix~\ref{app:f}).
+Chapter~\ref{ch:08} states limitations and future work, and Chapter~\ref{ch:09} concludes.

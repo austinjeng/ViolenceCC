@@ -153,3 +153,7 @@ Writers must NEVER read numbers from these (spec §7 verbatim list + Pitfall 13)
 `results/phase7_summary.md`, `results/phase7_rtfm_gap_diagnostic.json`,
 `results/phase4_charts/` — none of these exist on disk; RTFM diagnostics cite the
 tracked `07-VERIFICATION.md`, sweep charts are regenerated from `results-index.csv`.
+
+---
+
+**2026-07-14 (quick 260714-gd8):** Appendices A–F were archived out of the thesis build to `thesis/appendices_archived/` (author decision; restorable via that directory's README). The number families above are unchanged and remain governed by this manifest.

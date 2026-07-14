@@ -284,7 +284,7 @@ Every experiment in this thesis is designed to be re-runnable and auditable:
     access to the raw videos.
 \end{itemize}
 
-Appendix~\ref{app:e} provides a complete reproduction walkthrough, from
+The repository provides a complete reproduction path, from
 environment setup through feature extraction, training, evaluation, and
 regeneration of every table and figure in this thesis.
 
@@ -315,8 +315,6 @@ modern VLM stack requires. Because all backbones are frozen, the environments
 communicate only through cached feature files on disk (one \texttt{.npy} per
 video per stream), which also guarantees that every training run across
 Chapters~\ref{ch:05} and~\ref{ch:06} consumes byte-identical inputs.
-Appendix~\ref{app:d} records the engineering pitfalls encountered in keeping
-these environments coexistent on Windows.
 
 \section{Efficiency Benchmarks}
 \label{sec:efficiency}
@@ -361,8 +359,8 @@ RTFM-I3D & 137.41 & 4.46 & 0.0287 & 34785.6 & 18.8 \\
 \centering
 \caption{Frozen extraction backbones. Parameter counts marked ``measured''
 were benchmarked locally on the RTX 4090; ``published'' values are taken from
-the respective papers. I3D features (used only by the RTFM reproduction of
-Appendix~\ref{app:a}) are pre-extracted.}
+the respective papers. I3D features (used only by the RTFM reproduction
+summarized in Section~\ref{sec:lim-gaps}) are pre-extracted.}
 \label{tab:efficiency-backbones}
 \begin{tabular}{lrlrl}
 \toprule
