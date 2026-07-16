@@ -1068,7 +1068,7 @@ def chart_D_gate_by_category(gate_outputs, annos, label_fn, dataset_label):
     # width in the thesis (0.48\textwidth subfigures), so the canvas is kept
     # small and fonts large enough that in-figure text stays >= 7 pt effective
     # (font_pt * 2.83 / fig_width_in >= 7). Data pipeline unchanged.
-    fig, ax = plt.subplots(figsize=(6, 4.5))
+    fig, ax = plt.subplots(figsize=(6, 3.6))
     sns.boxplot(
         data=df, x="category", y="mean_gate", hue="type",
         palette={"Normal": "#64748B", "Anomalous": "#EF4444"},
