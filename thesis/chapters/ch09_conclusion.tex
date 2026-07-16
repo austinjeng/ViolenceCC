@@ -1,7 +1,7 @@
 %%
-%% Chapter 9: Conclusion
+%% Chapter 8: Conclusion and Future Work
 %%
-\chapter{Conclusion}
+\chapter{Conclusion and Future Work}
 \label{ch:09}
 
 This thesis has presented a dual-modal fusion framework for weakly supervised
@@ -11,7 +11,8 @@ gated mechanism trained with MIL ranking loss. A systematic study across four
 visual backbones --- CLIP ViT-B/16 and three SigLIP2 variants --- on UCF-Crime
 and XD-Violence, followed by a corruption-robustness and test-time-adaptation
 investigation, yields direct answers to the three research questions posed in
-Chapter~\ref{ch:01}.
+Chapter~\ref{ch:01}. The chapter closes by outlining the follow-up tracks the
+thesis infrastructure leaves ready to run.
 
 \section{Answers to the Research Questions}
 \label{sec:conc-rq}
@@ -86,6 +87,79 @@ protocol, and the UCF-Crime headline is reproducible from a committed
 frame-count manifest. The released repository provides the complete
 reproduction path, from environment setup through feature extraction,
 training, evaluation, and figure generation.
+
+\section{Future Work}
+\label{sec:conc-future}
+
+The thesis infrastructure --- cached features, tracked run index, fixed
+splits, and a sub-five-minute training loop --- leaves several follow-up
+tracks ready to run. We list them as forward pointers only; none of the
+numbers below are results of this thesis.
+
+\textbf{Temporal modeling over snippets.} The fusion head scores each snippet
+independently; the analysis in Chapter~\ref{ch:07} attributes the residual gap
+to CLIP-TSA largely to its temporal self-attention machinery. A lightweight
+temporal module (a TCN or single transformer layer over the snippet sequence)
+is the largest single untapped headroom, but it changes the headline
+architecture and would cascade through every table, so it was deliberately
+deferred to a thesis extension rather than bolted on late.
+
+\textbf{XD-Violence test-score smoothing (verified, deliberately not
+adopted).} A simple post-hoc temporal smoothing of XD-Violence test scores
+over a 64-frame window --- matching the native snippet length --- was verified
+to add $+0.57$ points AP ($78.72 \to 79.29$, consistent across all three
+seeds).\footnote{Tracked in the repository review artifact
+\texttt{.planning/REVIEW-2026-06-10.md}, Section~5 (Pri-3), together with the
+window-plateau analysis.} It is \emph{not} incorporated into any number in
+this thesis: it was identified after the result freeze, and adopting a
+post-hoc protocol change that moves the headline would undercut the
+reproducibility discipline the thesis argues for. The follow-up is to
+pre-register the smoothing window (showing the flat plateau around $w=64$
+preempts the tuning objection) and adopt it in a future revision of the
+pipeline.
+
+\textbf{Skeleton-head ensemble routing.} The current reweighting routes
+\emph{within} the frozen gated-fusion head. Routing instead to a separately
+trained skeleton-only head (a reliability-routed score-level ensemble) is
+estimated to add another 1--2 points to the corrupted-AUC mean, because the
+skeleton stream's clean cache remains intact under the corruption families
+where the fused head bottoms out; it would also likely convert the single-seed
+SigLIP2-Base over-routing disclosure into a positive result.
+
+\textbf{Streaming reliability estimation.} The routed signal is two scalars
+per condition, which should converge quickly over a stream of test snippets. A
+causal, streaming estimate of the routing weight would discharge the
+transductive limitation above and upgrade the claim class from transductive to
+online; until that experiment is run, no online claim is made.
+
+\textbf{JPEG-family rescue diagnostic.} The reweighting is exactly zero on the
+JPEG family by gate construction, because both streams degrade there --- the
+largest untouched pool in the corruption study. Corrupted skeleton caches for
+this family already exist, so a skeleton-only diagnostic would settle, with a
+pre-registered kill criterion, whether any routing-based mechanism can help
+where the skeleton stream itself is damaged.
+
+\textbf{Text-prompt alignment branch.} The vision-language text tower is
+entirely unused in this thesis. A lightweight VadCLIP-style alignment branch
+over the cached joint-space features is the natural way to test whether the
+text modality's gains survive the frozen-backbone constraint, and is the
+flagship candidate for a follow-on extension.
+
+\textbf{Adapter-based test-time adaptation.} Given the LayerNorm barrier
+identified in Chapter~\ref{ch:07}, adaptation mechanisms that alter the
+features themselves --- LoRA-style low-rank adapters or visual prompt tuning
+--- are the principled next step for test-time robustness, as they sidestep
+the affine-parameter bottleneck entirely.
+
+\textbf{Audio for XD-Violence.} XD-Violence provides audio annotations that
+our visual-skeleton pipeline does not exploit; audio cues are highly
+discriminative for categories such as Shooting and Explosion, and the fusion
+architecture extends naturally to a third stream.
+
+\textbf{Additional backbones and datasets.} The frozen design makes new
+vision-language backbones cheap to evaluate as they are released, and
+extending the study to ShanghaiTech or CUHK Avenue would test how much of the
+skeleton-complementarity finding is specific to violence-oriented anomalies.
 
 \bigskip
 

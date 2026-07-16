@@ -64,6 +64,10 @@ to bring the appendices back:
    ```
    (or `git checkout 484b84b -- thesis/chapters/ch01_introduction.tex …` for the
    specific files) and re-apply the `\ref{app:*}` / `\ref{fig:appc-*}` pointers.
+   Note: label `ch:08` no longer exists in the build (the standalone Limitations
+   chapter was dissolved on 2026-07-16, quick `260716-n1r`); `appA_rtfm.tex:17`
+   references it, so on restore retarget that `\ref{ch:08}` to `sec:lim-gaps`
+   (or `sec:disc-limitations`).
 4. **Rebuild:**
    ```powershell
    powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build_thesis.ps1 -Clean
