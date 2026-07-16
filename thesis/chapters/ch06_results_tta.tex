@@ -58,8 +58,11 @@ a frozen VLM stream but a collapse of much of its discriminative signal.
 Second, the damage is uneven across backbones: SigLIP2 Base loses the most
 and CLIP the least, and the backbone ranking under corruption does not match
 the clean ranking---robustness is its own axis. Third, the damage is uneven
-across families: Gaussian noise at high severities is the deepest failure
-mode, while brightness shift leaves the stream comparatively intact. This
+across families: Gaussian noise at high severities is the
+deepest failure mode for the visual-language stream (in absolute fused
+AUC several JPEG cells sit lower still;
+Section~\ref{sec:disc-results}), while brightness
+shift leaves the stream comparatively intact. This
 unevenness---which stream is damaged, and when---is exactly the structure the
 reweighting method of Section~\ref{sec:disc-results} exploits.
 
@@ -407,8 +410,8 @@ restoration (Section~\ref{sec:coral}) shows the problem is not access: NORM/
 CORAL-style alignment operates directly in the feature space where the shift
 lives, yet degrades AUC because label-free whitening reorders discriminative
 directions---rank disruption, with a sign that flips across backbones. The
-per-video episodic protocol shows the problem is not adaptation volume
-either: even unlimited per-condition adaptation (continual protocol) moves
+continual protocol shows the problem is not adaptation volume
+either: even unlimited per-condition adaptation moves
 nothing once the reachable parameters are limited to LN affines. The lesson
 is not that the corruptions are benign---Section~\ref{sec:source-degradation}
 shows they cost twenty points---but that adaptation confined to LayerNorm

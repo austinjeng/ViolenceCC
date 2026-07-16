@@ -270,7 +270,8 @@ a video-level metric (see Setting / notes), so a bare head-to-head against them
 is not apples-to-apples (Table~\ref{tab:sota-fair}).\par\smallskip
 \textit{Per-number caveats.}
 $^{a}$\,GS-MoE 91.58\,/\,82.89: confirmed from the arXiv:2508.06318 primary table
-(I3D, RGB-only, no text); ICCV 2025 poster. Omitted from the main comparison only
+(I3D, RGB-only, no text); ICCV 2025 poster. Omitted from the fair-subset comparison
+(Table~\ref{tab:sota-fair}) only
 because its trained per-category mixture-of-experts head exceeds the single-GPU-class regime.
 $^{b}$\,Holmes-VAD 89.51/90.67: arXiv preprint (no confirmed peer-reviewed venue);
 MLLM LoRA fine-tuned --- not a frozen-feature head.
@@ -400,7 +401,8 @@ dual-modal VAD: it shows that entropy-minimization TTA
 improve rank-based detection metrics, and proposes a label-free
 discriminative-reliability reweighting that improves \emph{corrupted-AUC}
 (robustness, not clean-benchmark AUC) on all four backbones (mean $+1.2$ points, up
-to $+13.2$ points on the hardest corruption). None of the higher-AUC methods above
+to $+13.2$ points in the condition that most collapses the visual-language
+stream). None of the higher-AUC methods above
 report a corruption-robustness or test-time-adaptation study of this kind, so
 the work occupies a complementary niche rather than competing for the top
 leaderboard slot.
@@ -539,9 +541,10 @@ highest-capacity backbone (SigLIP2 Giant, 2.8\% AP standard deviation); the
 other three backbones are stable (near 0.9\%), comparable to UCF-Crime
 (maximum 0.4\%). As noted in Chapter~\ref{ch:04}, this variance is sensitive
 to the temporal smoothness regularizer, which we disable on XD-Violence; the
-residual Giant sensitivity suggests that AP's calibration dependence and
-XD-Violence's imbalanced categories still create a challenging optimization
-landscape for the largest backbone. Practically, this means single-seed
+residual Giant sensitivity suggests that AP's sensitivity to the ordering
+among the highest-ranked frames under XD-Violence's low anomaly prevalence,
+together with its imbalanced categories, still creates a challenging
+optimization landscape for the largest backbone. Practically, this means single-seed
 XD-Violence results for high-capacity backbones should be treated with
 caution --- a lesson this thesis internalized by reporting all headline and
 ablation numbers as three-seed means --- and future work should investigate
