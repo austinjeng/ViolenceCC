@@ -11,10 +11,11 @@ skeleton stream still helps a strong visual-language stream, why the two
 benchmarks prefer different visual backbones, why fixed-weight late fusion
 fails where learned gating succeeds, what the failure of entropy-minimization
 test-time adaptation reveals about LayerNorm-based fusion heads, and what the
-frozen-backbone design costs and buys computationally. The chapter closes with
+frozen-backbone design costs and buys computationally. The chapter then gives
 a full comparison against the published state of the art
 (Section~\ref{sec:sota}), including the fair-subset analysis that defines the
-regime in which this work's numbers are directly comparable.
+regime in which this work's numbers are directly comparable, and closes by
+stating the limitations of the study (Section~\ref{sec:disc-limitations}).
 
 \section{The Complementarity Argument}
 \label{sec:disc-complementarity}
@@ -497,28 +498,15 @@ training cost substantially on our single-GPU setup.
 
 \textbf{Positioning within the published landscape.} Section~\ref{sec:sota}
 (Tables~\ref{tab:sota-full} and~\ref{tab:sota-fair}) places these numbers in
-the full published landscape; we summarize the read here rather than repeating
-the tables. Within the comparable regime --- frozen features, no text branch,
-a single-GPU-class head --- our 78.7\% XD-Violence AP is on par with
-RTFM~\cite{tian2021rtfm} (77.81\%) and the I3D variant of
-MGFN~\cite{chen2023mgfn} (79.19\%),
-and above the founding Sultani et al.~\cite{sultani2018ucfcrime} baseline.
-On UCF-Crime our 82.5\% clears Sultani (75.41\% AUC) but trails the other
-frozen-feature methods (RTFM 84.30\%,
-Light-WVAD~\cite{wang2024lightwvad} 84.7\%, UR-DMU~\cite{zhou2023urdmu}
-86.97\%, MGFN 86.98\%,
-CLIP-TSA~\cite{joo2023cliptsa} 87.58\%),
-so our competitiveness within this regime is clearest on XD-Violence AP and
-weakest on UCF-Crime AUC. We attribute the residual UCF gap to CLIP-TSA ---
-the closest frozen-CLIP analogue --- to the temporal self-attention and
+the full published landscape and works through the comparable-regime read in
+detail; here we restate only the conclusion that matters as a limitation.
+Within the comparable regime --- frozen features, no text branch, a
+single-GPU-class head --- the work is competitive on XD-Violence AP but
+trails every modern method in the same frozen-feature band on UCF-Crime AUC.
+We attribute the residual UCF gap to CLIP-TSA~\cite{joo2023cliptsa} --- the
+closest frozen-CLIP analogue --- to the temporal self-attention and
 multi-crop aggregation it adds and our minimal head omits, but we do not
-isolate this experimentally and leave a controlled ablation to future work. A
-heavier budget is also not automatically decisive: the training-free methods
-EventVAD~\cite{shao2025eventvad} and LAVAD~\cite{zanella2024lavad} run a 7B
-and 13B multimodal LLM yet reach
-82.03\% and 80.28\% UCF AUC --- at or below our 82.5\% --- and fall far below
-us on XD-Violence AP
-(64.04\% / 62.01\% vs 78.7\%), at a far higher inference budget.
+isolate this experimentally and leave a controlled ablation to future work.
 
 \subsection{Score Calibration and Fixed-Threshold Deployment}
 \label{sec:lim-calibration}
