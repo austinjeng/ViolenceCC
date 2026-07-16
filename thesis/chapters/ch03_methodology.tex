@@ -55,7 +55,12 @@ denotes a snippet anomaly score, $T$ the fixed bag length used in training, and 
 selection size of the ranking loss. The three LayerNorm modules of the fusion head are named
 $\text{LN}_s$, $\text{LN}_v$, and $\text{LN}_f$ (skeleton projection, visual projection, and
 fused output respectively); these names are used consistently through the test-time adaptation
-analysis of Section~\ref{sec:meth-tta} and Chapter~\ref{ch:06}.
+analysis of Section~\ref{sec:meth-tta} and Chapter~\ref{ch:06}. Two symbols are
+context-overloaded in this chapter: $\sigma(\cdot)$ denotes the logistic sigmoid in the gate
+equation (Section~\ref{sec:meth-fusion}) but the standard deviation pooled over a corruption
+condition in the test-time reweighting method (Section~\ref{sec:disc}); and the plain scalar $s$
+denotes the skeleton-reliability gate of Section~\ref{sec:disc}, distinct from the bold skeleton
+feature vector $\mathbf{s}$.
 
 \section{Skeleton Extraction with RTMPose}
 \label{sec:meth-skeleton}
@@ -111,7 +116,7 @@ averaging with weights 1.0 (joint), 1.0 (bone), 0.5 (joint motion), and 0.5 (bon
 static streams carry the primary signal, while the motion streams contribute a smaller refinement,
 following the relative stream strengths observed in skeleton action recognition practice.
 
-Following the PYSKL~\cite{yan2022pyskl} convention, we segment each video into non-overlapping 64-frame snippets and pool the backbone output over the person ($M$), temporal ($T_f$), and spatial ($V$) dimensions via global average pooling to produce a compact 256-d snippet representation. The four-stream features are combined by weighted averaging (joint and bone weighted 1.0, motion streams 0.5) to form the final 256-d skeleton representation. Videos shorter than 64 frames (172 videos in UCF-Crime, one in XD-Violence) are excluded from training and evaluation. Because UCF-Crime is distributed as frames pre-sampled at roughly 3~FPS (every tenth frame of its ${\sim}30$~FPS source video) while XD-Violence is decoded at its native ${\sim}24$~FPS, a 64-frame snippet spans about 20~s on UCF-Crime versus ${\sim}2.7$~s on XD-Violence; both streams use identical snippet boundaries, so the skeleton and visual features stay aligned by construction. (On UCF-Crime a single snippet thus pools skeleton motion over ${\sim}20$~s---far longer than the few-second action clips on which CTR-GCN was pre-trained---a plausible factor in the weaker UCF skeleton-only result reported below.)
+Following the PYSKL~\cite{yan2022pyskl} convention, we segment each video into non-overlapping 64-frame snippets and pool the backbone output over the person ($M$), temporal ($T_f$), and spatial ($V$) dimensions via global average pooling to produce a compact 256-d snippet representation. Videos shorter than 64 frames (172 videos in UCF-Crime, one in XD-Violence) are excluded from training and evaluation. Because UCF-Crime is distributed as frames pre-sampled at roughly 3~FPS (every tenth frame of its ${\sim}30$~FPS source video) while XD-Violence is decoded at its native ${\sim}24$~FPS, a 64-frame snippet spans about 20~s on UCF-Crime versus ${\sim}2.7$~s on XD-Violence; both streams use identical snippet boundaries, so the skeleton and visual features stay aligned by construction.
 
 Two consequences of this design deserve emphasis. First, because both streams use identical
 snippet boundaries, no temporal registration step is needed anywhere in the pipeline: the fusion
@@ -300,7 +305,7 @@ other parameters, including the vision-language backbone, the CTR-GCN encoder, t
 the gate, and the MIL head, remain frozen. Notably, LayerNorm removes one of BatchNorm's two
 adaptation channels entirely: there are no running statistics to re-estimate, so entropy descent
 on the affine parameters is the \emph{only} mechanism available. Second, the objective becomes
-binary entropy, $-(s\log s + (1-s)\log(1-s))$ per snippet score $s$, since the MIL head outputs
+binary entropy, $-(a\log a + (1-a)\log(1-a))$ per snippet anomaly score $a$, since the MIL head outputs
 sigmoid anomaly scores rather than a softmax class distribution; SAR's reliability margin is
 rescaled accordingly to the binary-entropy range. Third, adaptation is made deterministic: the
 model is placed in training mode only to enable gradient flow through the LayerNorms, while

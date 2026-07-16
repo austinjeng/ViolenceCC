@@ -92,9 +92,10 @@ XD-Violence, following its benchmark protocol~\cite{wu2020xdviolence}. Both
 metrics are computed by pooling every frame of every test video into a single
 ranking problem. AUC is insensitive to class imbalance and score calibration,
 depending only on the relative ordering of anomalous versus normal frames; AP
-weights precision across the recall range and is therefore more sensitive to
-score calibration---a distinction that matters for the seed-sensitivity
-analysis in Chapter~\ref{ch:05}.
+weights precision across the recall range, depends on class prevalence, and
+concentrates weight on the highest-ranked frames, making it more sensitive to
+small ranking changes among top-scored frames---a distinction that matters for
+the seed-sensitivity analysis in Chapter~\ref{ch:05}.
 
 \subsection{Snippet-to-frame expansion}
 
@@ -382,9 +383,11 @@ variant-backbone-seed grid of Chapter~\ref{ch:05} feasible---training
 completes in under 5 minutes per configuration on the single RTX 4090.
 Second, the run-time cost of the system is dominated not by the trainable head
 (sub-0.1~ms per snippet) but by frozen feature extraction, and within
-extraction by the skeleton stage: pose estimation runs at ${\sim}30$~ms per
-frame (about 21.6 FPS end-to-end, 99.3\% of it model inference), an order of
-magnitude slower per frame than CLIP embedding. Third, the gated fusion head
+extraction by the skeleton stage: pose estimation costs ${\sim}30$~ms per
+frame in isolation (Table~\ref{tab:efficiency-backbones}), and the full
+extraction loop sustains about 21.6~FPS on single-person scenes
+(Chapter~\ref{ch:03}), 99.3\% of that time being model inference---an order
+of magnitude slower per frame than CLIP embedding. Third, the gated fusion head
 is \emph{smaller} than the late-fusion head (498K vs 633K parameters in the
 CLIP configuration) while performing substantially better
 (Chapter~\ref{ch:05}), because it shares a single fused scorer instead of

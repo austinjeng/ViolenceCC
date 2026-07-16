@@ -149,16 +149,17 @@ CLIP by 2.1~AP), and mean-only visual pooling is consistently negative
 (between $-0.3$ and $-0.5$ AP on every backbone). The original pooling study
 that fixed these defaults---a single-configuration comparison on the CLIP
 backbone conducted before the final training recipe---measured the same
-ordering with larger margins ($-0.90$~AP for 2-person concatenation and
-$-2.32$~AP for mean-only pooling), and the final 3-seed grid confirms its
-direction on every backbone.
+default-wins ordering, with a much larger mean-only margin ($-2.32$~AP); the
+final 3-seed grid confirms the mean-only direction on every backbone, while
+the 2-person cost on XD-Violence spans the three non-SO400M backbones.
 
 Two cells in the 2-Person row are nominally the highest values in their
 tables: 82.6$\pm$0.3 on UCF-Crime (Giant) and 79.2$\pm$0.3 on XD-Violence
 (SO400M). We deliberately do \emph{not} promote these as headline results.
 The differences over default gated fusion ($+0.1$ and $+0.5$ points) are
 within or near seed variance, the 2-person aggregation is \emph{worse} than
-the default for the majority of backbone$\times$dataset cells, and selecting
+the default in half of the backbone$\times$dataset cells, including three of
+the four XD-Violence backbones, and selecting
 the per-cell maximum across ablation variants after seeing the results would
 constitute a mild form of test-set selection. The headline configuration is
 the default-pooling Gated Fusion row, fixed before the backbone study was
@@ -339,8 +340,9 @@ The resulting 95\% confidence intervals are wide:
 
 Two readings follow. First, the UCF-Crime interval is strikingly wide
 relative to the differences typically celebrated in the VAD literature: its
-width exceeds the spread of the entire published leaderboard on this
-benchmark. This is a property of the benchmark, not of our method---the
+width rivals the spread of the entire published leaderboard on this
+benchmark and exceeds the spread of the modern frozen-feature methods it is
+compared against in Chapter~\ref{ch:07}. This is a property of the benchmark, not of our method---the
 evaluated UCF-Crime cohort contains roughly 250 videos, fewer than 130 of
 them anomalous, and any method reporting a single frame-level AUC on this
 test set inherits video-level resampling uncertainty of this order.
@@ -538,11 +540,12 @@ looks anomalous and cannot localize within it. The second regime is
 \emph{short-event misses}: RoadAccidents011 contains an event spanning only
 1.9\% of its frames, and the model scores the entire video near 0.000---a
 64-frame snippet-pooled head simply dilutes an event much shorter than its
-temporal receptive field. Explosion007 (4.2\% anomalous) shows the same
-pattern. Both regimes align with category-level weaknesses: abrupt,
-visually-transient events (RoadAccidents, Explosion, Shooting) are exactly
-the categories where snippet pooling costs the most
-(Section~\ref{sec:percat}).
+temporal receptive field. Explosion007 (4.2\% anomalous) is likewise a
+short-event miss, though there the head saturates the whole video near the
+ceiling rather than near zero, blending the two regimes. Both regimes align
+with category-level weaknesses: abrupt, visually-transient events
+(RoadAccidents, Explosion, Shooting) are among the categories where snippet
+pooling costs the most (Section~\ref{sec:percat}).
 
 \textbf{False positives are sustained, not transient.} The five
 highest-scoring normal videos (Normal\_Videos\_887, 925, 884, 895, 894) are
@@ -591,11 +594,13 @@ the complete per-category tables are omitted here.
 On \textbf{UCF-Crime} (Gated Fusion, SigLIP2 Giant), the strongest categories
 are Stealing (99.34$\pm$0.13\% AUC), Vandalism (97.47$\pm$0.38), and Assault
 (97.18$\pm$0.45); the weakest are RoadAccidents (87.14$\pm$0.58), Robbery
-(88.64$\pm$0.71), and Explosion (88.75$\pm$1.04). The weak tail is exactly the
+(88.64$\pm$0.71), and Explosion (88.75$\pm$1.04). The weak tail overlaps the
 abrupt, short-event category set identified by the failure analysis
-(Section~\ref{sec:failure}): categories whose events are brief and visually
-transient lose the most to 64-frame snippet pooling, while categories with
-sustained, appearance-distinctive activity approach ceiling.
+(Section~\ref{sec:failure})---RoadAccidents and Explosion appear in both,
+though Robbery, a sustained-event category, also sits in the weak tail:
+categories whose events are brief and visually transient lose the most to
+64-frame snippet pooling, while categories with sustained,
+appearance-distinctive activity approach ceiling.
 
 On \textbf{XD-Violence} (Gated Fusion, SigLIP2 SO400M), the spread is far
 wider: Riot reaches 94.03$\pm$0.27\% AP and Fighting 81.13$\pm$0.23, while
