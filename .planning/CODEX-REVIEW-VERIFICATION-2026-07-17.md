@@ -222,3 +222,52 @@ rows' stds 0.1-0.8 are indistinguishable from the homogeneous-legacy headline ro
 
 **Recommended action:** One zero-GPU wording/presentation quick task before the defense: (1) fix ch05:29-30 — rename 'GF 2-Person' to something like 'GF Per-Person (concat)' or keep the name but define it correctly ('preserves the two per-person CTR-GCN features and concatenates them to 512-d, in place of the default mean-pool over the two retained persons'), removing the false 'single-person aggregation' phrase; (2) regenerate fig_gate_by_category_{ucf,xd}.png with print-size fonts (scripts/generate_phase6_charts.py exists) or stack them full-width; (3) reword the Fig 6.2 caption to cite Table 6.1 for the TENT/SAR null ('...is indistinguishable from source-only (Table 6.1)') or add TENT/SAR bars; (4) add \\hypersetup{pdftitle=...,pdfauthor=...,pdfkeywords=...} to preamble.tex; (5) fix references.bib:149 to Jo{\\~a}o and rebuild (bbl regenerates); (6) optionally soften 'clear leader' at ch01:205, ch05:180, ch05:220 (e.g. 'leads under gated fusion') given Giant's ±2.8 overlap; (7) optionally split Table 7.1 or narrow the Setting column to lift body type above ~8pt. Leave (a)/(b) as-is until post-defense binding (fill acknowledgments then).
 
+
+
+---
+
+# Addendum — 2026-07-17: Codex round-2 rebuttal, verified
+
+Codex revised its verdict to "conditionally defense-ready" and pushed back on 4 points. Each was
+re-verified directly:
+
+1. **Dirty-worktree provenance (VERIFIED TRUE, concede).** All sampled config_snapshot.json files
+   record `"git": {"dirty": true, ...}` (ucf_clip_only_giant_s123, ucf_late_fusion_s123,
+   ucf_gated_fusion_giant_s42, ucf_skeleton_only_s123). The post-fix SHA is strong circumstantial
+   evidence of the corrected loss code but not definitive proof — the snapshot does not record which
+   files were dirty. Strengthens the case for a version-locked consistency rerun.
+
+2. **Std-bounding critique (FAIR, concede).** With 3 seeds (1 legacy + 2 corrected per mixed row),
+   comparing mixed-row stds to pure-row stds has low power to detect a ~0.3pp implementation shift.
+   The report's phrase "empirically bound below seed noise" overclaimed; correct framing: supporting
+   evidence consistent with a negligible effect, alongside the direct o55 A/B (-0.13pp). The footnote
+   rewrite must not present mixed-row std as pure seed variance.
+
+3. **TTA structural claims (VERIFIED — quotes real, phrasing outruns evidence).** ch06:175 "it is
+   not a tuning artifact", ch06:182-183 "a structural limit of the most widely used TTA family",
+   ch06:414 "even unlimited per-condition adaptation moves nothing" all exist; the committed 3-seed
+   continual grid used a single LR (scripts/run_tta_seeds_m2.py:54 LR = 1e-3) for both TENT and SAR.
+   The mechanism argument (rank invariance + 1,536-param surface) carries the claim, but categorical
+   certainty from one LR without update-magnitude/entropy diagnostics is too strong. Soften the three
+   sentences + disclose single-LR. (Codex still slightly strawmans: the thesis never characterizes SAR
+   as BN-only — ch02:333-335 cites SAR's LN results.)
+
+4. **Paired bootstrap (CORRECT reading, concede).** The existing ch05 bootstrap is a marginal CI on
+   absolute AUC, not a paired gated-minus-visual difference. FEASIBLE AT ZERO GPU: per-video scores
+   are saved (results/*/eval_scores.npz), so an 8-config paired bootstrap is pure CPU. Report the
+   result honestly whatever it shows (internal single-config probe was P(delta>0)=0.599).
+
+## Updated action plan (supersedes the round-1 plan's items 1-7)
+
+- Wording batch grows: + TTA softening (3 sentences + single-LR disclosure), + mixed-row footnote
+  phrased without the std-bound claim.
+- GPU job A (keypoint drift) and B (learned-scalar late fusion): unchanged.
+- NEW GPU job C: version-locked consistency rerun of the legacy-trained UCF cells (~5-6 GPU-h,
+  resumable, visible terminal) — run as a VERIFICATION artifact, not a number replacement: publish
+  per-cell deltas in the footnote ("post-freeze consistency rerun shifts every cell by <= X, within
+  seed variance; numbers reported as run"). DECISION GATE: if any delta exceeds its row's seed std,
+  escalate to adopting the rerun numbers (full propagation pass). This satisfies the provenance doubt
+  without pre-committing to number churn that would contradict the thesis's own result-freeze
+  discipline (same reasoning that kept Pri-3 unadopted).
+- NEW zero-GPU: paired video-level bootstrap from saved eval_scores.npz, all 8 configs; add one
+  honest sentence to ch05 statistical-robustness section.
