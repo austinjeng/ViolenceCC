@@ -77,6 +77,18 @@ $\mathcal{L}_{\text{rank}}$, $\mathcal{L}$ & MIL ranking loss; total training
              loss \\
 $\lambda_1$, $\lambda_2$ & sparsity and temporal-smoothness regularization
              weights \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\medskip
+\noindent\textit{Symbols (continued --- test-time adaptation and reweighting).}
+
+\begin{center}
+\begin{tabular}{@{}lp{10.5cm}@{}}
+\toprule
+Symbol & Meaning \\
+\midrule
 $p_{\mathrm{clip}}$ & LayerNorm-projected visual-language features (the
              reweighting target) \\
 $s_{\mathrm{clip}}$ & solo visual snippet scores (fusion head run with the
