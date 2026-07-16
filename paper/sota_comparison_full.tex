@@ -10,7 +10,7 @@
 %%    (1) the full ~20-method published-numbers SOTA comparison table,
 %%        sorted by UCF-Crime AUC, with a mandatory `Setting' column and
 %%        per-number caveat footnotes;
-%%    (2) the 7-row fair-subset (apples-to-apples) table; and
+%%    (2) the 7-row fair-subset (regime-matched) table; and
 %%    (3) the five positioning paragraphs (P1-P5).
 %%
 %%  It is NOT \input by paper/main.tex. main.tex carries a *condensed* table
@@ -75,7 +75,7 @@ tabulate only the AP. The \textbf{Setting} column encodes, compactly, whether
 the backbone is frozen vs.\ (partly) fine-tuned, whether a learnable text/prompt
 branch is used, whether audio is used, and whether the reported metric is
 frame-level or video-level, so a reader can see at a glance which rows are
-\emph{not} apples-to-apples with a frozen, visual-only, frame-level system.
+\emph{not} regime-matched with a frozen, visual-only, frame-level system.
 We do \emph{not} claim state-of-the-art performance; the honest claim is
 competitiveness within the constrained frozen / visual-only / single-GPU regime
 (Table~\ref{tab:sota-fair}).
@@ -133,7 +133,7 @@ Ghadiya et al.$^{n}$       & 2024 & CVPRW'24 (MULA)   & N/A$^{n}$ & 86.34 & Froz
 Precision / AUPRC (\%). \textbf{We do not claim state-of-the-art}; rows above
 this work add a learnable text branch, audio, an MLLM, partial fine-tuning, or
 a video-level metric (see Setting / notes), so a bare head-to-head against them
-is not apples-to-apples (Table~\ref{tab:sota-fair}).\par\smallskip
+is not regime-matched (Table~\ref{tab:sota-fair}).\par\smallskip
 \textit{Per-number caveats.}
 $^{a}$\,GS-MoE 91.58\,/\,82.89: confirmed from the arXiv:2508.06318 primary table
 (I3D, RGB-only, no text); ICCV 2025 poster. Omitted from the main comparison only
@@ -172,10 +172,10 @@ UCF not reported --- not comparable to visual/skeleton-only methods.
 
 \medskip
 
-%% --- Fair-subset (apples-to-apples) table ---
+%% --- Fair-subset (regime-matched) table ---
 \begin{table}[t]
 \centering
-\caption{Fair-subset (apples-to-apples) comparison. \textbf{Subset definition:}
+\caption{Fair-subset (regime-matched) comparison. \textbf{Subset definition:}
 frozen features, no backbone fine-tuning, no learnable text/prompt branch,
 visual-only RGB (or RGB$+$skeleton), and a single-GPU-class feature head. This
 is the regime in which this work's 82.5\% UCF AUC / 78.7\% XD AP is most
@@ -183,7 +183,12 @@ directly comparable; methods with text/prompt branches, audio, MLLMs, partial
 fine-tuning, or video-level evaluation are excluded (reasons in
 Table~\ref{tab:sota-full}). Because \emph{every} row is, by construction, the
 same setting, a per-row Setting column is unnecessary here --- the setting is
-captured once by this caption. \textbf{Metric:} UCF AUC $=$ frame-level ROC-AUC
+captured once by this caption. \textbf{Protocol note:} this work's UCF-Crime
+numbers are computed on the 254-of-290-video evaluation cohort (Section 4.1 of
+the thesis) from the $64\times64$-pixel~/~${\sim}3$-FPS frame distribution, so
+the evaluation cohort and input fidelity differ from the published pipelines;
+comparability is scoped to the training regime, not the evaluation protocol.
+\textbf{Metric:} UCF AUC $=$ frame-level ROC-AUC
 (\%); XD AP $=$ Average Precision (\%). \textbf{This work} in \textbf{bold}.}
 \label{tab:sota-fair}
 \small
@@ -270,7 +275,7 @@ leaderboard slot.
 \medskip\noindent\textbf{Competitiveness within the comparable regime (supporting evidence).}
 With the contribution framed above, within-regime competitiveness is supporting
 evidence rather than the central claim, and it differs by metric. Restricted to
-the apples-to-apples subset (Table~\ref{tab:sota-fair}) --- fully frozen
+the regime-matched subset (Table~\ref{tab:sota-fair}) --- fully frozen
 features, no text branch, no fine-tuning, a single-GPU-class head --- on
 XD-Violence our 78.7\% AP is on par with RTFM (77.81\%, ICCV 2021), MGFN's I3D
 variant (79.19\%), and well above

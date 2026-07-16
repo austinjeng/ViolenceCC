@@ -26,8 +26,11 @@ results on UCF-Crime and XD-Violence, respectively, comparing six fusion
 variants across all four visual backbones. Two of these are gated-fusion
 configurations that differ only in their visual or skeleton aggregation:
 \textbf{GF Mean-Only} uses mean-only visual pooling in place of the default
-concatenated mean+max pooling, and \textbf{GF 2-Person} uses the 2-person
-skeleton aggregation in place of the default single-person aggregation.
+concatenated mean+max pooling, and \textbf{GF 2-Person} preserves the two
+per-person 256-d CTR-GCN features and concatenates them into a 512-d skeleton
+representation, in place of the default aggregation, which retains the top-2
+persons per frame and mean-pools over the person dimension into a single
+256-d feature (Chapter~\ref{ch:03}).
 
 % Source: paper/main.tex tab:ucf-ablation (L226-242, canonical inlined table);
 % underlying runs results/ucf_*_s{42,123,2024}/eval_metrics.json (tracked).
@@ -143,7 +146,7 @@ gated variants are statistically indistinguishable at the headline backbone
 (82.5$\pm$0.4, 82.6$\pm$0.3, and 82.5$\pm$0.4 for default, 2-Person, and
 Mean-Only with SigLIP2 Giant): pooling choices are not where UCF-Crime
 performance lives. On XD-Violence the default aggregation wins on average:
-across the four backbones the 2-person skeleton aggregation costs about
+across the four backbones the per-person skeleton concatenation costs about
 0.90~AP relative to default gated fusion (it helps only SO400M, and hurts
 CLIP by 2.1~AP), and mean-only visual pooling is consistently negative
 (between $-0.3$ and $-0.5$ AP on every backbone). The original pooling study
@@ -151,13 +154,14 @@ that fixed these defaults---a single-configuration comparison on the CLIP
 backbone conducted before the final training recipe---measured the same
 default-wins ordering, with a much larger mean-only margin ($-2.32$~AP); the
 final 3-seed grid confirms the mean-only direction on every backbone, while
-the 2-person cost on XD-Violence spans the three non-SO400M backbones.
+the per-person-concatenation cost on XD-Violence spans the three non-SO400M
+backbones.
 
 Two cells in the 2-Person row are nominally the highest values in their
 tables: 82.6$\pm$0.3 on UCF-Crime (Giant) and 79.2$\pm$0.3 on XD-Violence
 (SO400M). We deliberately do \emph{not} promote these as headline results.
 The differences over default gated fusion ($+0.1$ and $+0.5$ points) are
-within or near seed variance, the 2-person aggregation is \emph{worse} than
+within or near seed variance, the per-person concatenation is \emph{worse} than
 the default in half of the backbone$\times$dataset cells, including three of
 the four XD-Violence backbones, and selecting
 the per-cell maximum across ablation variants after seeing the results would
@@ -177,9 +181,9 @@ run.
   \caption{Performance comparison across four visual backbones and three
   fusion variants. Left: UCF-Crime AUC (\%). Right: XD-Violence AP (\%).
   SigLIP2 Giant leads on UCF-Crime; on XD-Violence the four visual-only
-  backbones fall within seed variance, while SigLIP2 SO400M is the clear
-  leader under gated fusion---a dataset-specific preference that emerges
-  through fusion. All bars are three-seed means over seeds $\{42,123,2024\}$,
+  backbones fall within seed variance, while SigLIP2 SO400M attains the
+  highest observed mean under gated fusion---a dataset-specific preference
+  that emerges through fusion. All bars are three-seed means over seeds $\{42,123,2024\}$,
   matching Tables~\ref{tab:ucf-ablation}--\ref{tab:xd-ablation} (Gated Fusion
   shown with $\pm$std).}
   \label{fig:backbone-comparison}
@@ -208,8 +212,9 @@ scale do not materialize on UCF-Crime, while its larger variants do pay off.
 backbones' visual-only AP is statistically indistinguishable across seeds
 (CLIP $74.6$, SigLIP2 Base $74.5$, SO400M $76.6$, Giant $76.8$; std
 $1.0$--$2.2$), so visual-only capacity does not cleanly rank them. Under gated
-fusion, however, SO400M emerges as the clear and stable leader ($78.7$\% AP),
-ahead of Giant ($76.8$\%). This may reflect SO400M's shape-optimized
+fusion, however, SO400M attains the highest observed mean ($78.7\pm0.9$\% AP),
+nominally ahead of Giant ($76.8\pm2.8$\%), whose wider seed band overlaps
+SO400M's mean. This may reflect SO400M's shape-optimized
 architecture providing a better capacity fit for XD-Violence's heterogeneous
 content (movies, sports, and online media) than for the fixed-camera
 surveillance of UCF-Crime.
@@ -217,8 +222,8 @@ surveillance of UCF-Crime.
 \textbf{The skeleton's benefit is backbone-dependent.} Because the visual-only
 XD-Violence scores fall within seed variance, they do not reliably rank the
 backbones; gated fusion is more stable (std $0.9$\% AP for three of the four)
-and resolves a clear leader (SO400M, $78.7$\%) that the visual-only numbers do
-not single out. The gain that fusion adds over the visual-only baseline also
+and yields a highest observed mean (SO400M, $78.7$\%) that the visual-only
+numbers do not single out. The gain that fusion adds over the visual-only baseline also
 varies with the backbone---largest for CLIP and SO400M ($+1.9$ and $+2.1$ AP)
 and negligible for SigLIP2 Base and Giant---so the skeleton stream's
 complementary value depends on the visual representation it is fused with
@@ -354,6 +359,31 @@ one reason this thesis emphasizes that its competitiveness is clearest on
 XD-Violence AP. These intervals are computed for the seed-42 checkpoints
 only; combining test-set resampling with seed variance would widen them
 further.
+
+% Source: scripts/paired_bootstrap_fusion.py -> results/paired_bootstrap/
+% paired_bootstrap.csv + summary.json (tracked; B=2000 video-level resamples,
+% numpy default_rng(0); every run's recomputed AUC/AP matched its
+% eval_metrics.json within 1e-3 before resampling). Exact UCF P(delta>0)
+% endpoints: 0.3405 / 0.848; xd_siglip2 spans 0.013-0.9845, xd_giant
+% 0.0-0.9905; CLIP XD per-seed mean deltas 0.017004/0.014232/0.026676.
+The intervals above are \emph{marginal}: they concern absolute levels. A
+\emph{paired} video-level bootstrap of the gated-minus-visual difference
+(the same $B=2000$ resamples applied to both models, per seed, all eight
+configurations) makes the per-configuration evidence explicit. On UCF-Crime
+no per-seed difference is distinguishable from zero: all twelve 95\%
+intervals straddle zero ($P(\Delta>0)$ from $0.34$ to $0.85$). On
+XD-Violence the two configurations with the visible fusion gains are also
+the ones whose intervals exclude zero --- CLIP on all three seeds
+($P(\Delta>0)=1.0$; per-seed gains $+1.4$ to $+2.7$ AP points) and SO400M
+on two of three --- while SigLIP2 Base and Giant, the two ties in
+Table~\ref{tab:xd-ablation}, flip sign with the seed: each has one
+significantly negative seed-42 interval ($-1.3$ and $-2.1$ points) and one
+significantly positive seed-2024 interval. This sharpens rather than
+overturns the position taken throughout: per-configuration gains sit within
+seed variance on UCF-Crime; per-seed significance on XD-Violence does not
+imply per-configuration robustness where the sign flips across seeds; and
+the defensible evidence for complementarity remains the cross-configuration
+consistency of Section~\ref{sec:complementarity}.
 
 \section{Seed Sensitivity}
 \label{sec:seeds}

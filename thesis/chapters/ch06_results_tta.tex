@@ -172,15 +172,21 @@ Table~\ref{tab:tent-sar-null} gives the endpoint of the entropy-minimization
 investigation: under the corrected deterministic protocol, TENT and SAR
 change mean corrupted AUC by less than $0.1$ points on every backbone (worst
 $|\Delta| = 0.082$ points), in both directions, on every seed. This is
-effectively zero, and it is not a tuning artifact: with the gate and MIL head
-frozen, only the LayerNorm affine parameters adapt, and the resulting updates
-are far too small to reorder the pooled snippet scores on which the
-rank-based AUC depends. The corruption-induced shift lives upstream in the
-frozen backbone features, which affine adaptation of the fusion head cannot
-reach. Section~\ref{sec:ln-barrier} develops this mechanism in full. We
-regard the null as a finding rather than a failure: it delineates, for
-weakly-supervised VAD with frozen LayerNorm fusion heads, a structural limit
-of the most widely used TTA family.
+effectively zero, and we argue it is not a tuning artifact: with the gate and
+MIL head frozen, only the LayerNorm affine parameters adapt, and the
+resulting updates are far too small to reorder the pooled snippet scores on
+which the rank-based AUC depends. The corruption-induced shift lives upstream
+in the frozen backbone features, which affine adaptation of the fusion head
+cannot reach. One disclosure bounds this reading: TENT and SAR were run
+% Single-LR provenance: scripts/run_tta_seeds_m2.py:54 pins LR = 1e-3 for
+% both TENT and SAR across the whole 3-seed continual grid (no sweep).
+only at their reference learning rate of $1 \times 10^{-3}$, with no
+learning-rate sweep; the categorical reading therefore rests on the
+rank-invariance mechanism.
+Section~\ref{sec:ln-barrier} develops this mechanism in full. We regard the
+null as a finding, not a failure: under the evaluated continual protocol and
+this 1{,}536-parameter LayerNorm surface, it delineates what we argue is a
+structural limit of the most widely used TTA family.
 
 \section{Feature-Statistic Restoration and the Strategy Search}
 \label{sec:coral}
@@ -252,7 +258,8 @@ Mean & 60.6 & \textbf{61.8} & +1.21 \\
   \includegraphics[width=0.85\textwidth]{figures/fig_tta_comparison.pdf}
   \caption{Test-time adaptation on UCF-Crime-C across four visual backbones
   (mean over three seeds, 20 corruption conditions). Entropy-minimization TTA
-  (TENT, SAR) is indistinguishable from source-only; our
+  (TENT, SAR) is omitted here because its deltas are below $0.1$ points on
+  every backbone (Table~\ref{tab:tent-sar-null}); our
   discriminative-reliability reweighting (Ours) improves AUC on all four
   backbones, driven by recovery of the Gaussian-noise condition that most
   degrades the visual stream.}
@@ -366,7 +373,7 @@ because the method declines to act outside its safety conditions.
 
 \subsection{Honest caveats}
 
-Three limitations bound the result. First, \textbf{it is rescue, not
+Four limitations bound the result. First, \textbf{it is rescue, not
 robustness}: the mechanism is a routing toward the skeleton stream, so its
 benefit is bounded by the skeleton-fusion ceiling, and nothing about the
 fused representation becomes intrinsically more corruption-tolerant. Second,
@@ -380,7 +387,14 @@ regression is the honest price of a label-free reliability estimate. Third,
 the whole corruption condition, which assumes batched access to the corrupted
 stream rather than streaming operation---standard in the
 corruption-robustness setting, but a real gap to online deployment that we
-list among future work (Section~\ref{sec:conc-future}).
+list among future work (Section~\ref{sec:conc-future}). Fourth, \textbf{the
+strategy search was scored on the reported test conditions}: the six-strategy
+search and finalist comparison (Section~\ref{sec:coral}) were scored on the
+same 20 conditions reported in Table~\ref{tab:tta}, so residual
+researcher-selection risk remains even though every candidate was label-free
+and tuning-free with knobs fixed by stated principles; mitigations: the
+leave-one-condition-out check eliminated CORAL, and the adopted method's
+gains reproduced on backbones, severities, and seeds unseen during screening.
 
 \section{The LayerNorm Barrier}
 \label{sec:ln-barrier}
@@ -411,8 +425,8 @@ CORAL-style alignment operates directly in the feature space where the shift
 lives, yet degrades AUC because label-free whitening reorders discriminative
 directions---rank disruption, with a sign that flips across backbones. The
 continual protocol shows the problem is not adaptation volume
-either: even unlimited per-condition adaptation moves
-nothing once the reachable parameters are limited to LN affines. The lesson
+either: full-stream continual adaptation leaves the metric unchanged
+($<0.1$ points) once the reachable parameters are limited to LN affines. The lesson
 is not that the corruptions are benign---Section~\ref{sec:source-degradation}
 shows they cost twenty points---but that adaptation confined to LayerNorm
 affine parameters cannot move a frozen, rank-based detector.

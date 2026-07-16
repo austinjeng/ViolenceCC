@@ -28,10 +28,17 @@ labels---the weak-supervision setting that motivates the MIL formulation of
 Chapter~\ref{ch:03}. The test set contains 150 normal and 140 anomalous videos
 with frame-level temporal annotations, of which 254 meet the 64-frame minimum
 and are evaluated. Videos are sourced from real surveillance cameras and
-average approximately 4 minutes in length. The dataset is distributed as
-frames pre-sampled at roughly 3~FPS (every tenth frame of its ${\sim}30$~FPS
-source video), a property that interacts with snippet duration as discussed in
-Section~\ref{sec:protocol}.
+average approximately 4 minutes in length. The UCF-Crime frame
+re-distribution used in this work provides $64\times64$-pixel PNG frames
+pre-sampled at roughly 3~FPS (every tenth frame of the ${\sim}30$~FPS source
+video); ``distributed as'' here refers to this frame re-distribution, not to
+the original Sultani et al.\ video release. CLIP/SigLIP2 preprocessing
+upsamples these frames to the backbone input size, and RTMPose operates on
+them directly, so the input fidelity of every UCF-Crime experiment in this
+thesis is lower than the native-resolution video consumed by published
+pipelines. (XD-Violence, described next, is decoded from native video and is
+unaffected.) The ${\sim}3$~FPS sampling also interacts with snippet duration
+as discussed in Section~\ref{sec:protocol}.
 
 \subsection{XD-Violence}
 
@@ -244,12 +251,23 @@ XD-Violence. We found that penalizing adjacent-snippet score differences
 over-regularizes and destabilizes the AP metric on XD-Violence's
 heterogeneous, rapidly-cut sources (movies, news, sports), while providing a
 small benefit on UCF-Crime's continuous fixed-camera
-footage.\footnote{The reported UCF-Crime numbers were produced with an earlier
-implementation of the smoothness term; the released code applies the penalty
-strictly along the temporal (adjacent-snippet) axis. We verified that this
-change shifts the headline UCF-Crime AUC by at most 0.13 percentage
-points---within the 0.1--0.4\% seed variance reported in
-Chapter~\ref{ch:05}---so the UCF-Crime results are reported as run.}
+footage.\footnote{Training provenance for the UCF-Crime numbers: an earlier
+implementation of the smoothness term penalized score differences across the
+batch axis (adjacent videos within a training batch) rather than across
+temporally adjacent snippets; the released code applies the penalty strictly
+along the temporal (adjacent-snippet) axis. The earlier implementation is
+recoverable from the repository history (original at commit \texttt{e5ab412},
+corrected in \texttt{f89910b}) and its formula is documented in
+\texttt{tests/test\_smoothness\_axis.py}. All seed-42 UCF-Crime runs and all
+three seeds of the Gated Fusion rows (including the 82.5$\pm$0.4 headline)
+were trained with the earlier implementation; seeds 123 and 2024 of the
+remaining UCF-Crime table rows were trained after the correction with the
+released temporal implementation at the identical
+$\lambda_2 = 8 \times 10^{-4}$. Those rows therefore combine two loss
+implementations across their seeds, and their standard deviations should not
+be read as pure seed variance. A direct A/B comparison on the headline
+configuration (seed 42) measured a $-0.13$ percentage-point AUC shift from
+the correction. The UCF-Crime results are reported as run.}
 
 For all fusion variants we report mean and standard deviation over three
 random seeds (42, 123, 2024) to quantify training stability. The seed controls

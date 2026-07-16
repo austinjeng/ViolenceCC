@@ -1064,21 +1064,27 @@ def chart_D_gate_by_category(gate_outputs, annos, label_fn, dataset_label):
 
     # Sort categories: Normal first, then alphabetical
     cats = sorted(df["category"].unique(), key=lambda c: (0 if c == "Normal" else 1, c))
-    fig, ax = plt.subplots(figsize=(max(12, len(cats) * 1.2), 7))
+    # Print-size styling (quick 260717-77p): these panels render at 2.83 in
+    # width in the thesis (0.48\textwidth subfigures), so the canvas is kept
+    # small and fonts large enough that in-figure text stays >= 7 pt effective
+    # (font_pt * 2.83 / fig_width_in >= 7). Data pipeline unchanged.
+    fig, ax = plt.subplots(figsize=(6, 3.6))
     sns.boxplot(
         data=df, x="category", y="mean_gate", hue="type",
         palette={"Normal": "#64748B", "Anomalous": "#EF4444"},
-        ax=ax, fliersize=2, order=cats,
+        ax=ax, fliersize=1.5, linewidth=0.8, order=cats,
     )
-    ax.set_xlabel("Category", fontsize=LABEL_SZ)
-    ax.set_ylabel("Mean Gate Value (sigmoid)", fontsize=LABEL_SZ)
+    ax.set_xlabel("Category", fontsize=16)
+    ax.set_ylabel("Mean Gate Value (sigmoid)", fontsize=16)
     ax.set_ylim(0, 1)
     ax.set_title(
         f"Gate Activation Distribution ({dataset_label})",
-        fontsize=TITLE_SZ, fontweight="bold",
+        fontsize=16, fontweight="bold",
     )
-    ax.tick_params(labelsize=TICK_SZ, axis="x", rotation=30)
-    ax.legend(fontsize=11, loc="upper right")
+    ax.tick_params(labelsize=15, axis="y")
+    ax.tick_params(labelsize=15, axis="x", rotation=60)
+    plt.setp(ax.get_xticklabels(), ha="right", rotation_mode="anchor")
+    ax.legend(fontsize=15, loc="upper right", framealpha=0.9)
 
     tag = "ucf" if "UCF" in dataset_label else "xd"
     _save(fig, "D_gating", f"D01_gate_by_category_{tag}.png")
