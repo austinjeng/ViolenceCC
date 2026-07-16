@@ -25,7 +25,7 @@ counterpart in all eight backbone$\times$dataset configurations --- strictly
 positive in six, with two ties (tie-dropping sign test, $p \approx 0.03$) ---
 despite the skeleton modality's substantially lower standalone performance
 (68.8\% AUC on UCF-Crime). The value of the modality is only realized through
-learned, input-dependent gating: fixed equal-weight late fusion falls more
+learned gating (the mechanism tested here): fixed equal-weight late fusion falls more
 than 10 AP points below gated fusion on XD-Violence on every backbone,
 confirming that \emph{how} the streams are combined matters as much as
 \emph{whether} they are combined. The headline results are $82.5$\% frame-level
@@ -48,8 +48,11 @@ BatchNorm networks to a frozen LayerNorm-based fusion head?} No. TENT- and
 SAR-style entropy minimization, restricted by the architecture to the 1{,}536
 LayerNorm affine scalars of the fusion head, leaves rank-based detection
 metrics essentially unchanged ($<0.1$ points across all four backbones under
-the three-seed continual protocol) --- a structural consequence of LayerNorm's
-lack of recalibratable batch statistics, not a tuning failure. What does
+the three-seed continual protocol) --- a null result we argue is structural,
+within the evaluated continual protocol and this 1{,}536-parameter adaptation
+surface, rather than a tuning failure: LayerNorm keeps no recalibratable
+batch statistics, and affine nudges of this size cannot reorder the pooled
+rankings on which AUC depends. What does
 recover robustness is changing which modality the frozen fusion trusts: the
 proposed label-free discriminative-reliability reweighting improves
 corrupted-AUC on all four backbones (mean $+1.21$ points, up to $+13.2$ points

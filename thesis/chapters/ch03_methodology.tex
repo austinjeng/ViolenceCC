@@ -73,8 +73,10 @@ elbows, wrists, hips, knees, ankles) for each detected person. The top-down desi
 persons first, then estimate pose inside each box---is preferable to bottom-up alternatives for
 surveillance footage, where person scale varies widely across the frame and per-box pose
 estimation normalizes that variation away. RTMPose-m occupies a deliberate accuracy--throughput
-operating point: accurate enough for reliable keypoints on medium-resolution surveillance frames,
-fast enough that extracting poses for hundreds of hours of video on one GPU remains practical.
+operating point: accurate enough for reliable keypoints on XD-Violence's native-resolution frames
+(UCF-Crime is processed from its lower-fidelity $64\times64$-pixel frame re-distribution,
+Chapter~\ref{ch:04}), fast enough that extracting poses for hundreds of hours of video on one GPU
+remains practical.
 
 We retain the top-2 persons per frame ranked by mean keypoint confidence to maintain a fixed
 spatial dimension across all inputs. Two persons is a natural minimum for violence-oriented

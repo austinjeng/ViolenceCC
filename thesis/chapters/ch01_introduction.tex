@@ -194,15 +194,15 @@ fusion meets or exceeds the visual-only baseline in all eight backbone$\times$da
 (mean $+0.6$ points; strictly positive in six of the eight, the other two tied at the displayed
 precision)---a small but consistent complementary gain, not a transformative one. Equally
 informative is the negative half of the finding: naive equal-weight late fusion frequently
-\emph{degrades} performance below the visual-only baseline, establishing that learned,
-input-dependent gating is what allows a weak modality to help.
+\emph{degrades} performance below the visual-only baseline, indicating that a learned
+combination---here, input-dependent gating---is what allows a weak modality to help.
 
 \textbf{2. A systematic four-backbone study.} We evaluate the identical pipeline across four visual
 backbones---CLIP ViT-B/16, SigLIP2 ViT-B/16, SigLIP2 SO400M, and SigLIP2 Giant---on both UCF-Crime
 and XD-Violence, with three seeds per configuration. The study reveals dataset-specific backbone
 preferences that single-backbone evaluations cannot see: UCF-Crime's fixed-camera surveillance
 footage favors the largest backbone (Giant), whereas on XD-Violence's heterogeneous sources the four
-backbones are statistically indistinguishable visual-only and SO400M emerges as the clear leader
+backbones are statistically indistinguishable visual-only and SO400M shows the highest observed mean
 only under gated fusion. The skeleton stream's complementary value itself varies with the backbone
 it is fused with---a dependence invisible to single-backbone studies and directly relevant to
 practitioners choosing a backbone from general-purpose benchmark rankings.

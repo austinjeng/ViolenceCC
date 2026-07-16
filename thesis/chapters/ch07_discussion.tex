@@ -40,8 +40,8 @@ XD-Violence with CLIP (63.9\% to 76.5\% AP)---is real but must be read
 carefully, because most of it is \emph{recovery} rather than \emph{extraction}.
 A gate that merely suppressed an uninformative skeleton stream would already
 lift late fusion back to the CLIP visual-only level of 74.6\% AP, accounting
-for 10.7 of the 12.6 points; equal-weight late fusion underperforms precisely
-because it has no input-dependent way to perform that suppression. The evidence that the skeleton contributes information
+for 10.7 of the 12.6 points; equal-weight late fusion underperforms,
+consistent with its lack of any learned way to perform that suppression. The evidence that the skeleton contributes information
 \emph{beyond} what suppression alone recovers is therefore threefold:
 (a)~the $+1.9$-point gated-over-visual-only margin that remains once the
 recovery is subtracted; (b)~the 8-of-8 meet-or-exceed pattern across every
@@ -210,7 +210,7 @@ tabulate only the AP. The \textbf{Setting} column encodes, compactly, whether
 the backbone is frozen vs.\ (partly) fine-tuned, whether a learnable text/prompt
 branch is used, whether audio is used, and whether the reported metric is
 frame-level or video-level, so a reader can see at a glance which rows are
-\emph{not} apples-to-apples with a frozen, visual-only, frame-level system.
+\emph{not} regime-matched with a frozen, visual-only, frame-level system.
 We do \emph{not} claim state-of-the-art performance; the honest claim is
 competitiveness within the constrained frozen / visual-only / single-GPU regime
 (Table~\ref{tab:sota-fair}).
@@ -267,7 +267,7 @@ Ghadiya et al.$^{n}$~\cite{ghadiya2024crossmodal} & 2024 & CVPRW'24 (MULA)   & N
 Precision / AUPRC (\%). \textbf{We do not claim state-of-the-art}; rows above
 this work add a learnable text branch, audio, an MLLM, partial fine-tuning, or
 a video-level metric (see Setting / notes), so a bare head-to-head against them
-is not apples-to-apples (Table~\ref{tab:sota-fair}).\par\smallskip
+is not regime-matched (Table~\ref{tab:sota-fair}).\par\smallskip
 \textit{Per-number caveats.}
 $^{a}$\,GS-MoE 91.58\,/\,82.89: confirmed from the arXiv:2508.06318 primary table
 (I3D, RGB-only, no text); ICCV 2025 poster. Omitted from the fair-subset comparison
@@ -307,11 +307,12 @@ reported --- not comparable to visual/skeleton-only methods.
 \end{flushleft}
 \end{table}
 
-%% --- Fair-subset (apples-to-apples) table ---
+%% --- Fair-subset (regime-matched) table ---
 \begin{table}[p]
 \centering
 \singlespacing
-\caption{Fair-subset (apples-to-apples) comparison. \textbf{Subset definition:}
+\caption[Fair-subset (regime-matched) comparison]{Fair-subset (regime-matched)
+comparison. \textbf{Subset definition:}
 frozen features, no backbone fine-tuning, no learnable text/prompt branch,
 visual-only RGB (or RGB$+$skeleton), and a single-GPU-class feature head. This
 is the regime in which this work's 82.5\% UCF AUC / 78.7\% XD AP is most
@@ -319,7 +320,11 @@ directly comparable; methods with text/prompt branches, audio, MLLMs, partial
 fine-tuning, or video-level evaluation are excluded (reasons in
 Table~\ref{tab:sota-full}). Because \emph{every} row is, by construction, the
 same setting, a per-row Setting column is unnecessary here --- the setting is
-captured once by this caption. \textbf{Metric:} UCF AUC $=$ frame-level ROC-AUC
+captured once by this caption. \textbf{Protocol note:} our UCF-Crime numbers
+use the 254-of-290-video cohort (Chapter~\ref{ch:04}) and the
+$64\times64$-pixel~/~${\sim}3$-FPS frame distribution, so comparability is
+scoped to the training regime, not the evaluation protocol.
+\textbf{Metric:} UCF AUC $=$ frame-level ROC-AUC
 (\%); XD AP $=$ Average Precision (\%). \textbf{This work} in \textbf{bold}.}
 \label{tab:sota-fair}
 \small
@@ -410,7 +415,7 @@ leaderboard slot.
 \medskip\noindent\textbf{Competitiveness within the comparable regime (supporting evidence).}
 With the contribution framed above, within-regime competitiveness is supporting
 evidence rather than the central claim, and it differs by metric. Restricted to
-the apples-to-apples subset (Table~\ref{tab:sota-fair}) --- fully frozen
+the regime-matched subset (Table~\ref{tab:sota-fair}) --- fully frozen
 features, no text branch, no fine-tuning, a single-GPU-class head --- on
 XD-Violence our 78.7\% AP is on par with RTFM~\cite{tian2021rtfm} (77.81\%,
 ICCV 2021), MGFN's~\cite{chen2023mgfn} I3D
@@ -560,7 +565,7 @@ degrade (motion blur, JPEG compression). The gains concern corrupted-input AUC
 only; clean-benchmark AUC is untouched by design, and we make no claim
 otherwise.
 
-Two scope caps deserve emphasis. First, the method relies on
+Three scope caps deserve emphasis. First, the method relies on
 \emph{transductive} whole-condition statistics: the routed weight for a
 condition is estimated from the entire corrupted test set of that condition
 before scoring it. This is a standard evaluation protocol in the TTA
@@ -572,8 +577,12 @@ discriminative-spread reliability proxy can over-route on backbones whose
 visual stream compresses scores without losing rank (SigLIP2-Base at
 high-severity Gaussian noise on one seed) --- the proxy conflates score
 compression with rank loss, and a label-free signal that distinguishes the two
-is an open problem. Both caps are disclosed wherever the corresponding gains
-are reported (Chapter~\ref{ch:06}).
+is an open problem. Third, the six-strategy search that produced the method
+was scored on the same 20 test conditions reported in Chapter~\ref{ch:06};
+residual researcher-selection risk remains despite the label-free constraint
+and the gains' reproduction on backbones, severities, and seeds unseen during
+screening. All caps are disclosed wherever the corresponding gains are
+reported (Chapter~\ref{ch:06}).
 
 \subsection{Dataset Scope and Synthetic Corruptions}
 \label{sec:lim-scope}
