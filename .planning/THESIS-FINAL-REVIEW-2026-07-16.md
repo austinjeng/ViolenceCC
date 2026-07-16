@@ -26,7 +26,18 @@ majority vote). 51 raw findings -> 44 unique (7 cross-agent duplicates merged), 
 FIXED (4): H-ch07-intro-roadmap, M-7.7.1-duplication, L-ch09-coda-antecedent,
 L-ch09-transductive-pointer. Rebuild clean (0 errors, 0 undefined refs).
 
-## Open-item triage (recommendation)
+## Fix-batch outcome (quick 260716-q9z, 2026-07-16)
+
+H1/H3/H4 + M1-M12/M14 ALL FIXED (commits 7cf64be + c514213, merge 2894307; fragment M12-class
+follow-up 22cfa08). Verifier: passed 6/6 must-haves (260716-q9z-VERIFICATION.md) — H1 re-derived
+from tables (4-4 exact), H3 byte-identical row move in both files, H4 confirmed spatially in the
+PDF (folio VIII clean), zero experiment-number changes, all 4 executor deviations sound.
+Build: 95pp (was 97 — root-caused: seam condense 3c275e4 −1pp, M2 sanctioned deletion −1pp),
+0 errors, 0 undefined refs, 0 Overfull box, headlines 82.5/78.7 intact.
+
+REMAINING OPEN: M15 acknowledgments (author-only) + 22 LOW (L20/L22 fixed earlier; polish tier).
+
+## Original open-item triage (pre-fix-batch, kept for record)
 
 **Must fix before submission (blockers):**
 - M15 acknowledgments placeholder — *author must write this personally* (renders on Roman p. III; rated MEDIUM by verifiers but it is a hard submission blocker)
@@ -49,7 +60,7 @@ or editorial with fixes suggested inline below.
 
 ## HIGH (4)
 
-### H1. [OPEN] `thesis/chapters/ch05_results_fusion.tex:160` — False claim that 2-person aggregation is worse than default in the majority of cells; the actual split is 4-4
+### H1. [FIXED 7cf64be] `thesis/chapters/ch05_results_fusion.tex:160` — False claim that 2-person aggregation is worse than default in the majority of cells; the actual split is 4-4
 
 The text reads: "the 2-person aggregation is \emph{worse} than the default for the majority of backbone$\times$dataset cells". This is contradicted by the chapter's own Tables 5.1/5.2 on the same pages. At displayed precision, GF 2-Person beats default Gated Fusion in 4 of 8 cells (UCF Base 79.5 vs 79.0, UCF SO400M 81.7 vs 81.3, UCF Giant 82.6 vs 82.5, XD SO400M 79.2 vs 78.7) and is worse in the other 4 (UCF CLIP 81.3 vs 81.4, XD CLIP 74.4 vs 76.5, XD Base 73.2 vs 74.5, XD Giant 76.0 vs 76.8). I verified with unrounded 3-seed means from results/*_2person_*/eval_metrics.json: better in 4, worse in 4 (diffs +0.465, +0.393, +0.039, +0.473 vs -0.044, -2.119, -1.307, -0.862). A 4-4 split is not a majority, and a committee member can catch this by counting cells in the tables directly above the sentence.
 
@@ -61,13 +72,13 @@ Lines 14-17 read: "The chapter closes with a full comparison against the publish
 
 **Suggested fix:** Rewrite the last sentence of the Chapter 7 opening paragraph to reflect the new order, e.g.: "The chapter then gives a full comparison against the published state of the art (Section~\ref{sec:sota}), including the fair-subset analysis that defines the regime in which this work's numbers are directly comparable, and closes by stating the study's limitations (Section~\ref{sec:disc-limitations})."
 
-### H3. [OPEN] `thesis/chapters/ch07_discussion.tex:253` — In Table tab:sota-full the bolded 'This work' row (UCF 82.5) is placed BELOW EventVAD (UCF 82.03), contradicting the caption's explicit claims 'sorted by UCF AUC descending' and 'placed at its true position'.
+### H3. [FIXED 7cf64be] `thesis/chapters/ch07_discussion.tex:253` — In Table tab:sota-full the bolded 'This work' row (UCF 82.5) is placed BELOW EventVAD (UCF 82.03), contradicting the caption's explicit claims 'sorted by UCF AUC descending' and 'placed at its true position'.
 
 Line 252: 'EventVAD$^{k}$~\cite{shao2025eventvad}    & 2025 & ACM MM'25         & 82.03 & 64.04 & ...' followed by line 253: '\textbf{This work (dual-modal fusion)} & \textbf{2026} & \textbf{(thesis)} & \textbf{82.5} & \textbf{78.7} & ...'. The caption (lines 220-223) states the table is 'sorted by UCF AUC descending. The \textbf{This work} row is placed at its true position'. Since 82.5 > 82.03, the true position is one row higher, above EventVAD. Every other row is correctly ordered; this is the one row a committee member will look at first, and the chapter's own prose agrees 82.5 exceeds EventVAD ('matches or exceeds them on UCF', line 453). The same misordering exists in the source fragment paper/sota_comparison_full.tex:120-121, from which this was ported.
 
 **Suggested fix:** Swap lines 252 and 253 so the 'This work' row precedes the EventVAD row (and apply the same swap in paper/sota_comparison_full.tex if that fragment is still used).
 
-### H4. [OPEN] `thesis/frontmatter/notation.tex:46` — Symbols table overflows the page: it runs ~1.7cm into the bottom margin on Roman page VIII and the page number 'VIII' is printed on top of a table row *(independently found by 2 agents)*
+### H4. [FIXED 7cf64be] `thesis/frontmatter/notation.tex:46` — Symbols table overflows the page: it runs ~1.7cm into the bottom margin on Roman page VIII and the page number 'VIII' is printed on top of a table row *(independently found by 2 agents)*
 
 The Symbols table (\begin{center}\begin{tabular}{@{}lp{10.5cm}@{}} ... 25 rows, notation.tex lines 46-98) is a single unbreakable tabular that no longer fits on one page. main.log line 1448 reports 'Overfull \vbox (47.5823pt too high) has occurred while \output is active' when shipping frontmatter page 8 (Roman VIII, physical PDF page 12). Rendering that page confirms the table's last rows ('$w$ & routing scalar scaling the visual stream, $w = 1-(1-w_{\mathrm{vl}})\,s$' and '$\rho$ & SAR sharpness-aware step radius') extend past the 2cm bottom-margin line, and the folio 'VIII' is overprinted directly on the 'routing scalar scaling the visual stream' row. This regresses the fixed NTUST margin gate (bottom 2cm) and is immediately visible to a committee member.
 
@@ -76,73 +87,73 @@ The Symbols table (\begin{center}\begin{tabular}{@{}lp{10.5cm}@{}} ... 25 rows, 
 
 ## MEDIUM (15)
 
-### M1. [OPEN] `thesis/chapters/ch02_related_work.tex:66` — "sub-million-parameter fusion head" contradicts the 0.50M-1.02M parameter range stated in Chapters 1, 4, and 8 (Conclusion)
+### M1. [FIXED c514213] `thesis/chapters/ch02_related_work.tex:66` — "sub-million-parameter fusion head" contradicts the 0.50M-1.02M parameter range stated in Chapters 1, 4, and 8 (Conclusion)
 
 Line 66 reads: "a design goal shared by the sub-million-parameter fusion head of this thesis." But ch01_introduction.tex:105 says "(0.50M--1.02M trainable parameters, depending on backbone)", ch04_experimental_setup.tex:379 says "0.50M--1.02M trainable parameters (scaling with the visual feature dimension)", and ch09_conclusion.tex:66 says "0.50M to 1.02M trainable parameters depending on backbone". The largest configuration (1.02M, which corresponds to the widest visual feature dimension — the SigLIP2 Giant backbone that produces the UCF-Crime 82.5% headline) is above one million parameters, so "sub-million" is false for the headline configuration and inconsistent with three other chapters a committee member can cross-check.
 
 **Suggested fix:** Replace "the sub-million-parameter fusion head" with a claim consistent with the rest of the thesis, e.g. "the lightweight (0.50M--1.02M parameter) fusion head of this thesis" or "the roughly-million-parameter fusion head".
 
-### M2. [OPEN] `thesis/chapters/ch03_methodology.tex:114` — Section 3.3 states the same two facts twice in back-to-back paragraphs (four-stream weighted averaging, and the 20-second-snippet caveat), plus a wrong 'reported below' pointer
+### M2. [FIXED c514213] `thesis/chapters/ch03_methodology.tex:114` — Section 3.3 states the same two facts twice in back-to-back paragraphs (four-stream weighted averaging, and the 20-second-snippet caveat), plus a wrong 'reported below' pointer
 
 Lines 108-112 already say: "Each stream produces a 256-dimensional feature vector per temporal window, and the four are combined by weighted averaging with weights 1.0 (joint), 1.0 (bone), 0.5 (joint motion), and 0.5 (bone motion)". Line 114 then repeats it almost verbatim: "The four-stream features are combined by weighted averaging (joint and bone weighted 1.0, motion streams 0.5) to form the final 256-d skeleton representation." Likewise, line 114's closing parenthetical "(On UCF-Crime a single snippet thus pools skeleton motion over ${\sim}20$~s---far longer than the few-second action clips on which CTR-GCN was pre-trained---a plausible factor in the weaker UCF skeleton-only result reported below.)" duplicates lines 119-122: "Second, the frozen NTU-pretrained encoder was trained on short, single-action indoor clips; the 20-second effective snippet duration on UCF-Crime stretches this encoder well outside its pretraining regime, an honest caveat for interpreting the skeleton-only results of Chapter~\ref{ch:05}." This reads as an unmerged paste (paper text alongside thesis text) that a committee member would mark. Additionally, "reported below" is wrong in place: the skeleton-only result appears nowhere in Chapter 3 — it is in Chapter 5, as the duplicate sentence correctly says.
 
 **Suggested fix:** Delete the redundant sentence "The four-stream features are combined by weighted averaging (joint and bone weighted 1.0, motion streams 0.5) to form the final 256-d skeleton representation." and the closing parenthetical from line 114 (the 'Second, ...' paragraph at lines 116-122 already carries the caveat with the correct Chapter 5 pointer).
 
-### M3. [OPEN] `thesis/chapters/ch03_methodology.tex:359` — Symbol collision inside Section 3.7: plain $s$ means per-snippet sigmoid score in 3.7.1 but skeleton-reliability gate in 3.7.3; $\sigma$ means sigmoid in Eq. (3.3) but standard deviation in Eq. (3.7)
+### M3. [FIXED c514213] `thesis/chapters/ch03_methodology.tex:359` — Symbol collision inside Section 3.7: plain $s$ means per-snippet sigmoid score in 3.7.1 but skeleton-reliability gate in 3.7.3; $\sigma$ means sigmoid in Eq. (3.3) but standard deviation in Eq. (3.7)
 
 Line 304 defines binary entropy "$-(s\log s + (1-s)\log(1-s))$ per snippet score $s$"; 55 lines later, line 359 reuses the same bare symbol for a different quantity: "A skeleton-reliability gate $s = \min\!\big(1, \max\big(0,\, (2 z_0 - z_{\mathrm{skel}})/z_0\big)\big)$", and it is then used as the gate throughout 3.7.3 (e.g. line 397 "the skeleton is trusted ($s > 0$)") and in the summary at line 416 ("form $w_{\mathrm{vl}}$, $s$, and $w$"). Both usages sit in the same Section 3.7, and the neighboring solo-score symbol $s_{\mathrm{clip}}$ makes bare $s$ naturally read as a score. Compounding this, $\sigma$ is the sigmoid in the gate equation at line 196 ("$\mathbf{g} = \sigma(W_g[\hat{\mathbf{s}} \| \hat{\mathbf{v}}] + \mathbf{b}_g)$") but the standard deviation in Eq. (3.7) at line 357 ("$\sigma\big(s_{\mathrm{clip}}^{\mathrm{test}}\big)$"). Neither overload is flagged in the chapter's Notation paragraph (lines 50-58). A notation-careful committee member will catch this.
 
 **Suggested fix:** Rename the skeleton-reliability gate to a non-colliding symbol (e.g. $r_{\mathrm{skel}}$, matching the code's skel_rel) throughout 3.7.3 and the summary list, and either use $\mathrm{std}(\cdot)$ for the dispersion in Eq. (3.7) or add a one-line note in the Notation paragraph disambiguating the overloads.
 
-### M4. [OPEN] `thesis/chapters/ch04_experimental_setup.tex:385` — Arithmetically inconsistent gloss: ~30 ms/frame is equated with 21.6 FPS end-to-end, but 30 ms/frame is 33.3 FPS (as the cited table's own source CSV states), while 21.6 FPS corresponds to ~46 ms/frame
+### M4. [FIXED c514213] `thesis/chapters/ch04_experimental_setup.tex:385` — Arithmetically inconsistent gloss: ~30 ms/frame is equated with 21.6 FPS end-to-end, but 30 ms/frame is 33.3 FPS (as the cited table's own source CSV states), while 21.6 FPS corresponds to ~46 ms/frame
 
 Line 385-387 reads: "pose estimation runs at ${\sim}30$~ms per frame (about 21.6 FPS end-to-end, 99.3\% of it model inference)". These two numbers cannot describe the same measurement: 1000/30.07 ms = 33.3 FPS (results/backbone_bench_combined.csv, the tracked source of Table tab:efficiency-backbones, lists exactly "30.1 ms/f" latency AND "33.3 f/s" throughput for the RTMPose-m + YOLOX row), whereas 21.6 FPS implies 46.3 ms/frame. The "99.3% of it model inference" clause makes the gap unexplainable by I/O overhead. The two figures come from different measurements: 30.07 ms/frame is the isolated per-frame benchmark (Table 4.3 of this chapter), while 21.6 FPS is the production extraction-loop throughput on single-person scenes (ch03_methodology.tex:88 explicitly says "approximately 21.6 FPS on single-person scenes (about 15 FPS with multiple persons)"). A committee member who divides 1000 by 30 will catch the 1.5x discrepancy within a single sentence, and the sentence also contradicts the throughput column of the table it is drawn from.
 
 **Suggested fix:** Decouple the two measurements, e.g.: "pose estimation costs ${\sim}30$~ms per frame in isolation (Table~\ref{tab:efficiency-backbones}), and the full extraction loop sustains about 21.6 FPS on single-person scenes (Chapter~\ref{ch:03}), 99.3\% of that time being model inference---an order of magnitude slower per frame than CLIP embedding."
 
-### M5. [OPEN] `thesis/chapters/ch05_results_fusion.tex:153` — "Confirms its direction on every backbone" contradicts the same paragraph's "(it helps only SO400M)"; "larger margins" is true only for mean-only pooling
+### M5. [FIXED c514213] `thesis/chapters/ch05_results_fusion.tex:153` — "Confirms its direction on every backbone" contradicts the same paragraph's "(it helps only SO400M)"; "larger margins" is true only for mean-only pooling
 
 The sentence reads: "The original pooling study ... measured the same ordering with larger margins ($-0.90$~AP for 2-person concatenation and $-2.32$~AP for mean-only pooling), and the final 3-seed grid confirms its direction on every backbone." Two problems: (1) two sentences earlier the same paragraph states the 2-person aggregation "helps only SO400M" on XD-Violence (+0.5 AP, Table 5.2), so the final grid does NOT confirm the 2-person direction on every backbone (on UCF it is also nominally better on 3 of 4 backbones). (2) "larger margins" holds only for mean-only pooling (-2.32 historical vs -0.3..-0.5 final): for 2-person the historical margin (-0.90) is essentially equal to the final cross-backbone XD mean cost ("about 0.90 AP", stated in the same paragraph) and smaller than the final CLIP-backbone margin (-2.1 AP), so the original study did not measure a larger 2-person margin.
 
 **Suggested fix:** Scope the confirmation claim to mean-only pooling (which is negative on every XD backbone) and drop or qualify "larger margins" for the 2-person comparison, e.g.: "...measured the same default-wins ordering, with a much larger mean-only margin ($-2.32$~AP); the final 3-seed grid confirms the mean-only direction on every backbone, while the 2-person cost is concentrated in CLIP and SigLIP2 Base."
 
-### M6. [OPEN] `thesis/chapters/ch05_results_fusion.tex:342` — CI-width claim ("exceeds the spread of the entire published leaderboard") is contradicted by the thesis's own Chapter 7 comparison table
+### M6. [FIXED c514213] `thesis/chapters/ch05_results_fusion.tex:342` — CI-width claim ("exceeds the spread of the entire published leaderboard") is contradicted by the thesis's own Chapter 7 comparison table
 
 The text reads: "its width exceeds the spread of the entire published leaderboard on this benchmark." The UCF-Crime bootstrap CI width is 12.39 pp, but the thesis's own SOTA comparison table in Chapter 7 (ch07_discussion.tex lines 237-255) spans Sultani et al. 75.41 (explicitly included as the "founding baseline" row) to DSANet 89.44 -- a spread of 14.03 pp, which is wider than 12.39 pp. As written, the claim is false against the thesis's own table; it holds only for the modern frozen-feature subset (84.30-89.44).
 
 **Suggested fix:** Soften or scope the claim, e.g.: "its width rivals the spread of the entire published leaderboard on this benchmark and exceeds the spread of the modern frozen-feature methods it is compared against in Chapter 7."
 
-### M7. [OPEN] `thesis/chapters/ch05_results_fusion.tex:540` — Explosion007 does not "show the same pattern" as the near-0.000 short-event miss: its scores saturate near 0.99, not near zero
+### M7. [FIXED c514213] `thesis/chapters/ch05_results_fusion.tex:540` — Explosion007 does not "show the same pattern" as the near-0.000 short-event miss: its scores saturate near 0.99, not near zero
 
 The text reads: "RoadAccidents011 contains an event spanning only 1.9\% of its frames, and the model scores the entire video near 0.000... Explosion007 (4.2\% anomalous) shows the same pattern." Per the tracked source results/_analysis_2026-06-10/pri9_failure_cases.md (the file this section cites), Explosion007's frame-score means are 0.992 (anomalous) and 0.993 (normal) -- near-ceiling saturation, the opposite of RoadAccidents011's near-0.000 profile, and matching the chapter's first regime (saturated-high near-ties, like Burglary017 at 0.994/0.994). Explosion007 is a short-event case, but its failure mode is inverted ranking under ceiling saturation, not dilution toward zero, so "the same pattern" is contradicted by the cited data.
 
 **Suggested fix:** Clarify which aspect is shared, e.g.: "Explosion007 (4.2\% anomalous) is likewise a short-event miss, though there the head saturates the whole video near the ceiling rather than near zero, blending the two regimes."
 
-### M8. [OPEN] `thesis/chapters/ch05_results_fusion.tex:543` — Reciprocal "exactly" claims between the failure analysis and the per-category section do not match: Shooting is mid-pack per-category (95.67), and Robbery is in the weak tail but absent from the failure cases
+### M8. [FIXED c514213] `thesis/chapters/ch05_results_fusion.tex:543` — Reciprocal "exactly" claims between the failure analysis and the per-category section do not match: Shooting is mid-pack per-category (95.67), and Robbery is in the weak tail but absent from the failure cases
 
 Line 543-545 reads: "abrupt, visually-transient events (RoadAccidents, Explosion, Shooting) are exactly the categories where snippet pooling costs the most (Section~\ref{sec:percat})", and line 595-597 reads back: "The weak tail is exactly the abrupt, short-event category set identified by the failure analysis (Section~\ref{sec:failure})". But Section 5.8's own numbers list the weakest categories as RoadAccidents (87.14), Robbery (88.64), and Explosion (88.75), while Shooting is 95.67 -- 6th strongest of 13, well above mid-pack, not a category where "snippet pooling costs the most". Conversely Robbery (2nd weakest) is neither abrupt/short-event nor identified by the failure analysis. The two sets share only RoadAccidents and Explosion, so "exactly" is wrong in both directions and is checkable from the values quoted in the same chapter.
 
 **Suggested fix:** Weaken "exactly" to a partial correspondence in both places, e.g. at line 543: "...are among the categories where snippet pooling costs the most" (or name only RoadAccidents and Explosion), and at line 595: "The weak tail overlaps the abrupt, short-event category set identified by the failure analysis (RoadAccidents, Explosion), though Robbery -- a sustained-event category -- also sits in it."
 
-### M9. [OPEN] `thesis/chapters/ch06_results_tta.tex:61` — "Gaussian noise at high severities is the deepest failure mode" is contradicted by the figure it describes and by the chapter's own Section 6.4 prose — JPEG compression is the lowest-AUC family on all four backbones
+### M9. [FIXED c514213] `thesis/chapters/ch06_results_tta.tex:61` — "Gaussian noise at high severities is the deepest failure mode" is contradicted by the figure it describes and by the chapter's own Section 6.4 prose — JPEG compression is the lowest-AUC family on all four backbones
 
 Line 60-62: "Third, the damage is uneven across families: Gaussian noise at high severities is the deepest failure mode, while brightness shift leaves the stream comparatively intact." This paragraph analyzes Figure 6.1 (source-only AUC of the gated fusion model). Verified against the tracked data (results/_coral_derisk/r1full_*.json + variants, 3-seed): the JPEG family mean is the lowest on ALL four backbones (CLIP 46.5, Base 40.0, SO400M 49.2, Giant 41.5) versus Gaussian (57.5, 56.8, 51.3, 58.8), and the worst individual cells are almost all JPEG cells. The chapter itself concedes this at line 333-334: "Gaussian noise is not the lowest-AUC family in absolute terms (several JPEG cells sit lower still)". The claim is only true for the visual-language stream specifically — the qualifier that the Figure 6.1 caption (line 44-45, "the most destructive condition family for the visual-language stream") and PROVENANCE.md row 12's canonical labeling both use, but which this sentence omits. A committee member comparing the sentence to the figure directly above it would catch the contradiction.
 
 **Suggested fix:** Add the stream qualifier to match the figure caption and line 333: e.g. "Gaussian noise at high severities is the deepest failure mode for the visual-language stream (in absolute fused AUC several JPEG cells sit lower still, Section~\ref{sec:disc-results}), while brightness shift leaves the stream comparatively intact."
 
-### M10. [OPEN] `thesis/chapters/ch06_results_tta.tex:410` — Attribution slip in the LayerNorm-barrier argument: the episodic protocol is credited with showing "the problem is not adaptation volume", but the chapter's own Section 6.2 establishes the episodic protocol was structurally incapable of showing anything — the evidence cited is the continual protocol
+### M10. [FIXED c514213] `thesis/chapters/ch06_results_tta.tex:410` — Attribution slip in the LayerNorm-barrier argument: the episodic protocol is credited with showing "the problem is not adaptation volume", but the chapter's own Section 6.2 establishes the episodic protocol was structurally incapable of showing anything — the evidence cited is the continual protocol
 
 Lines 410-412: "The per-video episodic protocol shows the problem is not adaptation volume either: even unlimited per-condition adaptation (continual protocol) moves nothing once the reachable parameters are limited to LN affines." This is internally inconsistent: lines 127-132 state the episodic protocol "was structurally incapable of showing an effect, in either direction" (adapted parameters never influenced a scored output), so it cannot demonstrate anything about adaptation volume. The colon clause itself names the continual protocol as the actual evidence. As written, the sentence subject contradicts the chapter's own protocol narrative — a logic error in the mechanism section a careful reader would catch.
 
 **Suggested fix:** Change the subject: "The continual protocol shows the problem is not adaptation volume either: even unlimited per-condition adaptation moves nothing once the reachable parameters are limited to LN affines." (or "The episodic-to-continual comparison shows...")
 
-### M11. [OPEN] `thesis/chapters/ch07_discussion.tex:272` — Self-contradictory table note: footnote (a) says GS-MoE is 'Omitted from the main comparison' while GS-MoE is the first row of that very table; the exclusion actually applies to the fair-subset table.
+### M11. [FIXED c514213] `thesis/chapters/ch07_discussion.tex:272` — Self-contradictory table note: footnote (a) says GS-MoE is 'Omitted from the main comparison' while GS-MoE is the first row of that very table; the exclusion actually applies to the fair-subset table.
 
 Lines 271-273: '$^{a}$\,GS-MoE 91.58\,/\,82.89: ... Omitted from the main comparison only because its trained per-category mixture-of-experts head exceeds the single-GPU-class regime.' GS-MoE appears as row 1 of Table~\ref{tab:sota-full} (line 234) — the main comparison — and is only absent from the fair-subset Table~\ref{tab:sota-fair}. The wording is a stale artifact of the paper port: in paper/main.tex the condensed main-text comparison genuinely omits GS-MoE (footnote at paper/main.tex:414), but in the thesis the sentence contradicts the table it annotates.
 
 **Suggested fix:** Change to 'Omitted from the fair-subset comparison (Table~\ref{tab:sota-fair}) only because its trained per-category mixture-of-experts head exceeds the single-GPU-class regime.'
 
-### M12. [OPEN] `thesis/chapters/ch07_discussion.tex:402` — '+13.2 points on the hardest corruption' mislabels the gain condition and breaks the thesis-canonical framing used everywhere else ('the condition that most collapses the visual-language stream'). *(independently found by 2 agents)*
+### M12. [FIXED c514213] `thesis/chapters/ch07_discussion.tex:402` — '+13.2 points on the hardest corruption' mislabels the gain condition and breaks the thesis-canonical framing used everywhere else ('the condition that most collapses the visual-language stream'). *(independently found by 2 agents)*
 
 Lines 401-402: 'improves \emph{corrupted-AUC} (robustness, not clean-benchmark AUC) on all four backbones (mean $+1.2$ points, up to $+13.2$ points on the hardest corruption)'. The +13.2 cell is SO400M Gaussian severity 5, which is NOT the hardest corruption in absolute terms — thesis/PROVENANCE.md row 12 records that JPEG cells have lower absolute corrupted AUC and explicitly forbids 'most-degraded'-style labels, mandating the canonical phrase 'the condition that most collapses the visual-language stream' (adopted thesis-wide in quick 260713-mkh, C4). Ch01:223, ch06:304-305, ch06:331-332, and ch09:55-56 all use the canonical phrase; this is the lone deviation, and it is factually misleading about which corruption is 'hardest'.
 
@@ -154,7 +165,7 @@ Lines 498-521 repeat, with identical numbers and near-identical wording, what li
 
 **Suggested fix:** Compress lines 498-521 to 2-3 sentences that state only the limitation-relevant conclusion (competitive on XD AP, trails the frozen-feature pack on UCF AUC, gap plausibly due to omitted temporal modeling) and point back to Section~\ref{sec:sota-positioning} / Tables~\ref{tab:sota-full},~\ref{tab:sota-fair} for the full read, dropping the repeated per-method number list and the duplicated EventVAD/LAVAD compute point.
 
-### M14. [OPEN] `thesis/chapters/ch07_discussion.tex:554` — 'AP's calibration dependence' (Section 7.7.3) contradicts the chapter's own statements that AP is rank-based and rewards only score ordering (Sections 7.7.2 and 7.4), and is technically incorrect — AP is invariant to monotone score transforms.
+### M14. [FIXED c514213] `thesis/chapters/ch07_discussion.tex:554` — 'AP's calibration dependence' (Section 7.7.3) contradicts the chapter's own statements that AP is rank-based and rewards only score ordering (Sections 7.7.2 and 7.4), and is technically incorrect — AP is invariant to monotone score transforms.
 
 Lines 553-555: 'the residual Giant sensitivity suggests that AP's calibration dependence and XD-Violence's imbalanced categories still create a challenging optimization landscape'. Two subsections earlier (lines 525-527) the thesis states: 'The headline metrics are rank-based (AUC and AP), and rank-based metrics reward only the \emph{ordering} of scores, not their absolute values', and Section 7.4 (lines 150-151) states a rank-based metric 'is invariant to any monotone transformation of the scores'. AP depends only on the ranking (plus class prevalence), not on calibration, so 'calibration dependence' is a technical error a committee member can catch by juxtaposing 7.7.2 and 7.7.3. Note the same framing originates in ch04_experimental_setup.tex:93-96 ('AP ... is therefore more sensitive to score calibration') and paper/main.tex, so the fix should be coordinated across both spots.
 
