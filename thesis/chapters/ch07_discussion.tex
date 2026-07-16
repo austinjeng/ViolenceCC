@@ -457,3 +457,150 @@ frozen features remains a strong, deployable trade-off for a single-GPU
 researcher. The thesis's value is precisely this corner of the design space:
 reproducible, consumer-GPU-feasible, multimodal-by-fusion, and explicitly
 robustness-aware, rather than a pursuit of the absolute highest benchmark AUC.
+
+\section{Limitations}
+\label{sec:disc-limitations}
+
+This study has several limitations that should be considered when interpreting
+the results. We state them plainly --- including the quantitative targets the
+work set for itself and did not meet. The concrete follow-up tracks these
+limitations motivate are outlined in Chapter~\ref{ch:09}.
+
+\subsection{Performance Gaps and Accepted Target Misses}
+\label{sec:lim-gaps}
+
+\textbf{Accepted target misses.} The project's pre-registered research plan
+(PRD) set explicit performance gates before the main experiments were run, and
+the final results miss them. On UCF-Crime the minimum gate was 83\% frame-level
+AUC (target range 85--87\%); the achieved headline is $82.5 \pm 0.4$\%, i.e.\
+0.5 points below the minimum gate and well below the target range. On
+XD-Violence the minimum gate was 80\% AP (target range 82--85\%); the achieved
+headline is $78.7 \pm 0.9$\%, i.e.\ 1.3 points below the minimum. We report
+these as accepted misses rather than reframing the targets after the fact. The
+PRD also set a baseline-reproduction gate --- reproducing RTFM to within one
+point of its published 84.30\% UCF-Crime AUC --- as a check on the evaluation
+pipeline; the RTFM reproduction study, carried out on the XD-Violence I3D
+configuration, reached 65.70\% AP against the published 77.81\% and was
+likewise accepted as a miss after a diagnostic investigation cleared the
+evaluation harness against an independent snippet-versus-frame sanity anchor
+and localized the gap to the training side --- feature-dimensionality,
+multi-scale-temporal-network, and batch-size mismatches.
+
+\textbf{Why the gap exists.} Our best UCF-Crime result falls below the
+published performance of methods that use end-to-end fine-tuned backbones,
+learnable text branches, or temporal modeling specifically designed for
+anomaly detection. This gap reflects our architectural choice to freeze all
+backbone encoders, which prioritizes computational efficiency and modularity
+over peak performance. Unfreezing selected backbone layers or incorporating
+temporal transformers could improve absolute numbers but would increase
+training cost substantially on our single-GPU setup.
+
+\textbf{Positioning within the published landscape.} Section~\ref{sec:sota}
+(Tables~\ref{tab:sota-full} and~\ref{tab:sota-fair}) places these numbers in
+the full published landscape; we summarize the read here rather than repeating
+the tables. Within the comparable regime --- frozen features, no text branch,
+a single-GPU-class head --- our 78.7\% XD-Violence AP is on par with
+RTFM~\cite{tian2021rtfm} (77.81\%) and the I3D variant of
+MGFN~\cite{chen2023mgfn} (79.19\%),
+and above the founding Sultani et al.~\cite{sultani2018ucfcrime} baseline.
+On UCF-Crime our 82.5\% clears Sultani (75.41\% AUC) but trails the other
+frozen-feature methods (RTFM 84.30\%,
+Light-WVAD~\cite{wang2024lightwvad} 84.7\%, UR-DMU~\cite{zhou2023urdmu}
+86.97\%, MGFN 86.98\%,
+CLIP-TSA~\cite{joo2023cliptsa} 87.58\%),
+so our competitiveness within this regime is clearest on XD-Violence AP and
+weakest on UCF-Crime AUC. We attribute the residual UCF gap to CLIP-TSA ---
+the closest frozen-CLIP analogue --- to the temporal self-attention and
+multi-crop aggregation it adds and our minimal head omits, but we do not
+isolate this experimentally and leave a controlled ablation to future work. A
+heavier budget is also not automatically decisive: the training-free methods
+EventVAD~\cite{shao2025eventvad} and LAVAD~\cite{zanella2024lavad} run a 7B
+and 13B multimodal LLM yet reach
+82.03\% and 80.28\% UCF AUC --- at or below our 82.5\% --- and fall far below
+us on XD-Violence AP
+(64.04\% / 62.01\% vs 78.7\%), at a far higher inference budget.
+
+\subsection{Score Calibration and Fixed-Threshold Deployment}
+\label{sec:lim-calibration}
+
+The headline metrics are rank-based (AUC and AP), and rank-based metrics reward
+only the \emph{ordering} of scores, not their absolute values. This masks a
+limitation of the current fusion head that Section~\ref{sec:failure} exposes
+directly: the normal-frame score distribution is heavily right-skewed, with a
+75th percentile of $0.986$ for the headline UCF-Crime configuration
+(Figure~\ref{fig:score-hist}). A quarter of all normal frames therefore receive
+near-certain anomaly scores. AUC absorbs this as long as anomalous frames still
+rank higher, but any deployment that acts on a \emph{fixed} score threshold ---
+the usual way an alarm is triggered in practice --- would face a severe and
+sustained false-alarm rate at any threshold low enough to catch the true
+events. Score calibration, not ranking, is thus the binding limitation of the
+head as trained. We do not address it in this thesis: our contribution is a
+comparison under standard rank-based protocols, and re-calibrating the head
+would not change any reported number. Making the pipeline deployable, however,
+would require either post-hoc calibration of the MIL head (for example,
+temperature scaling or isotonic regression fit on held-out normal frames) or a
+threshold-free alarm policy (for example, ranking within a sliding window
+rather than thresholding absolute scores). We flag both as concrete future
+work and note that neither requires re-training the backbones.
+
+\subsection{Seed Sensitivity on XD-Violence}
+\label{sec:lim-seeds}
+
+XD-Violence gated fusion shows elevated seed variance only for the
+highest-capacity backbone (SigLIP2 Giant, 2.8\% AP standard deviation); the
+other three backbones are stable (near 0.9\%), comparable to UCF-Crime
+(maximum 0.4\%). As noted in Chapter~\ref{ch:04}, this variance is sensitive
+to the temporal smoothness regularizer, which we disable on XD-Violence; the
+residual Giant sensitivity suggests that AP's calibration dependence and
+XD-Violence's imbalanced categories still create a challenging optimization
+landscape for the largest backbone. Practically, this means single-seed
+XD-Violence results for high-capacity backbones should be treated with
+caution --- a lesson this thesis internalized by reporting all headline and
+ablation numbers as three-seed means --- and future work should investigate
+ensemble strategies or variance-reduction techniques for more stable training.
+
+\subsection{Test-Time Adaptation Scope}
+\label{sec:lim-tta}
+
+Our test-time method targets the regime where one modality stays robust; its
+gains are concentrated on corruptions that collapse the visual-language stream
+(e.g., Gaussian noise) and are near-zero, by construction, where both streams
+degrade (motion blur, JPEG compression). The gains concern corrupted-input AUC
+only; clean-benchmark AUC is untouched by design, and we make no claim
+otherwise.
+
+Two scope caps deserve emphasis. First, the method relies on
+\emph{transductive} whole-condition statistics: the routed weight for a
+condition is estimated from the entire corrupted test set of that condition
+before scoring it. This is a standard evaluation protocol in the TTA
+literature, but it is not an online deployment recipe --- a real system sees
+its test distribution incrementally, not in advance. Until a streaming variant
+exists (Section~\ref{sec:conc-future}), the honest claim class is transductive
+robustness recovery, and we make no online-adaptation claim. Second, the
+discriminative-spread reliability proxy can over-route on backbones whose
+visual stream compresses scores without losing rank (SigLIP2-Base at
+high-severity Gaussian noise on one seed) --- the proxy conflates score
+compression with rank loss, and a label-free signal that distinguishes the two
+is an open problem. Both caps are disclosed wherever the corresponding gains
+are reported (Chapter~\ref{ch:06}).
+
+\subsection{Dataset Scope and Synthetic Corruptions}
+\label{sec:lim-scope}
+
+Our evaluation is limited to two datasets (UCF-Crime and XD-Violence).
+Generalization to other VAD benchmarks such as ShanghaiTech or CUHK Avenue,
+which feature different anomaly types (e.g., pedestrian trajectory anomalies
+rather than violent actions) and different video characteristics, remains to
+be verified. The thesis is scoped to violence-oriented anomalies by design,
+and its conclusions about skeleton complementarity are plausibly strongest
+exactly there --- categories dominated by human motion --- so transfer to
+appearance-dominated anomaly regimes should not be assumed.
+
+Additionally, our corruption conditions for the robustness study are
+synthetically generated following the ImageNet-C
+protocol~\cite{hendrycks2019imagenetc}. Real-world distribution shifts
+involving camera aging, environmental changes, compression pipelines, or
+cross-city deployment may exhibit different characteristics, and the
+transductive protocol discussed above compounds this caveat: the robustness
+results should be read as a controlled study of the routing mechanism, not as
+a field trial.
