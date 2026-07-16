@@ -115,12 +115,15 @@ def test_queue_definitions():
     # Phase 10 run_name spot checks
     assert QUEUES["phase10_ucf_main"][2].run_name == "ucf_gated_fusion_giant_s42"
     assert QUEUES["phase10_xd_seeds"][0].run_name == "xd_gated_fusion_giant_s123"
-    # Total unique specs across all queues = 334
-    # (252 + 14 Phase 10 + 16 m7_visual_seeds + 52 pri1_ablations_seeds).
+    # Quick 260717-77p: learned-scalar late-fusion queue (8 configs x 3 seeds)
+    assert len(QUEUES["learned_late_fusion"]) == 24
+    # Total unique specs across all queues = 358
+    # (252 + 14 Phase 10 + 16 m7_visual_seeds + 52 pri1_ablations_seeds
+    #  + 24 learned_late_fusion).
     all_run_names = {
         s.run_name for q in QUEUES.values() for s in q
     }
-    assert len(all_run_names) == 334, f"expected 334 unique run_names, got {len(all_run_names)}"
+    assert len(all_run_names) == 358, f"expected 358 unique run_names, got {len(all_run_names)}"
 
 
 def test_run_name_deterministic():

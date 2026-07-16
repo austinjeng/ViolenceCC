@@ -368,6 +368,30 @@ QUEUES["pri1_ablations_seeds"] = [
 ]  # 52 runs (26 configs x seeds {123, 2024})
 
 
+# Quick 260717-77p (Codex round-2, C5): learned-scalar late-fusion baseline.
+# The alpha='learned' mode has existed in src/models/late_fusion.py since
+# Phase 3 behind the pre-registered D-08 switch rule but was never trained.
+# 8 configs (4 backbones x 2 datasets, cloned from late_fusion*.yaml with
+# alpha: learned) x seeds {42, 123, 2024} = 24 runs, ~<5 min each (features
+# cached, head-only). Run in a VISIBLE terminal:
+#     python scripts/run_ablations.py --queue learned_late_fusion
+_LEARNED_LF_CONFIGS = [
+    ("ucf", "configs/late_fusion_learned.yaml",            "learned"),
+    ("xd",  "configs/late_fusion_learned_xd.yaml",         "learned"),
+    ("ucf", "configs/late_fusion_learned_siglip2.yaml",    "siglip2_learned"),
+    ("xd",  "configs/late_fusion_learned_xd_siglip2.yaml", "siglip2_learned"),
+    ("ucf", "configs/late_fusion_learned_so400m.yaml",     "so400m_learned"),
+    ("xd",  "configs/late_fusion_learned_xd_so400m.yaml",  "so400m_learned"),
+    ("ucf", "configs/late_fusion_learned_giant.yaml",      "giant_learned"),
+    ("xd",  "configs/late_fusion_learned_xd_giant.yaml",   "giant_learned"),
+]
+QUEUES["learned_late_fusion"] = [
+    RunSpec(ds, "late_fusion", seed, cfg, cv)
+    for ds, cfg, cv in _LEARNED_LF_CONFIGS
+    for seed in (42, 123, 2024)
+]  # 24 runs (8 configs x seeds {42, 123, 2024})
+
+
 # ----------------------------------------------------------------------
 # Phase 7 hyperparameter sweep queue definitions (D-01, D-02, D-03)
 # 5 lr x 4 k_topk = 20 runs at seed=42

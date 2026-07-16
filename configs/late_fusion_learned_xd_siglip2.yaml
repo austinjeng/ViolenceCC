@@ -1,0 +1,41 @@
+# configs/late_fusion_learned_xd_siglip2.yaml
+# Phase 8: SigLIP2 XD-Violence Late Fusion baseline. Mirrors late_fusion_xd.yaml with SigLIP2 features.
+seed: 42
+dataset: xd
+
+paths:
+  skeleton_features: "E:/features/xd/skeleton"
+  clip_features: "E:/features/xd/siglip2"
+  splits_dir: "data/splits"
+  results_dir: "results"
+
+model:
+  variant: late_fusion
+  skel_dim: 256
+  clip_dim: 1536
+  proj_dim: 512
+  head_hidden: [128, 32]
+  dropout: 0.3
+  alpha: learned           # 260717-77p: learned-scalar late-fusion baseline (exercises the D-08 switch rule)
+
+data:
+  T: 32
+  batch_size: 16
+  num_workers: 4
+  pin_memory: true
+
+train:
+  lr: 1.0e-4
+  weight_decay: 1.0e-2
+  epochs: 50
+  warmup_epochs: 5
+  patience: 10
+  k_topk: 3
+  margin: 1.0
+  lam_sparse: 8.0e-3
+  lam_smooth: 0.0
+
+wandb:
+  project: violencecc
+  mode: disabled          # Rule 3 fallback: wandb preflight exit 2 (no API key); run CSV-only per plan 04-06 Step A Option C
+  tags: [phase8, late_fusion, xd, siglip2]
