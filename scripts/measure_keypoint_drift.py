@@ -53,6 +53,20 @@ NEGLIGIBILITY CRITERION (stated up front; printed with the verdict):
 
 Output: results/keypoint_drift/keypoint_drift.csv (one row per
 video x condition) + a printed per-condition summary with PASS/FAIL.
+
+BASELINE MODES (--baseline, added 2026-07-17 after the clean-control check):
+  cache (default) : compare corrupted-frame keypoints against the April clean
+    cache E:/skeletons/ucf/<vid>.pkl. A 6-video control found this comparison
+    is CONTAMINATED by a pathway mismatch: fresh CLEAN extraction vs the cache
+    already scores mean px_dev ~13.6 / OKS ~0.20 (the cache was built by a
+    different extraction configuration), so vs-cache numbers overstate drift
+    and must not be quoted as corruption drift.
+  fresh : per video, extract keypoints from UNCORRUPTED frames with TODAY'S
+    pathway first, then compare each corrupted extraction against that fresh
+    clean baseline -- same code path on both sides, isolating corruption as
+    the only variable. Also writes one 'clean_ref' row per video (fresh-clean
+    vs cache) documenting the pathway mismatch for the record. Fresh mode
+    writes to results/keypoint_drift/keypoint_drift_fresh.csv.
 """
 from __future__ import annotations
 
@@ -72,6 +86,7 @@ if str(_SCRIPTS_DIR) not in sys.path:
 UCF_TEST_ROOT = Path("E:/UCF_crime_dataset/test")
 CLEAN_SKELETON_DIR = Path("E:/skeletons/ucf")
 OUT_CSV = PROJECT_ROOT / "results" / "keypoint_drift" / "keypoint_drift.csv"
+OUT_CSV_FRESH = PROJECT_ROOT / "results" / "keypoint_drift" / "keypoint_drift_fresh.csv"
 
 TARGET_SAMPLE = 50
 CONDITIONS = [
@@ -165,42 +180,47 @@ def _frame_metrics(kp_clean, sc_clean, kp_corr, sc_corr):
     return best
 
 
-def measure_video(video_id: str, condition: str, severity: int) -> dict | None:
-    """Corrupt frames in-memory, run RTMPose, compare vs the clean cache."""
-    # Heavy imports deferred so --list-only works without rtmlib/onnxruntime.
-    from extract_skeletons import load_ucf_frames, process_frames_to_keypoints
-
+def _load_cache_keypoints(video_id: str):
     # Security note: pickle is safe here -- these are the project's OWN clean
     # skeleton cache files written by scripts/extract_skeletons.py (PYSKL
     # pickle format is the established project-wide convention; no untrusted
     # input is ever loaded through this path).
     with open(CLEAN_SKELETON_DIR / f"{video_id}.pkl", "rb") as f:
         clean = pickle.load(f)
-    kp_clean_all = clean["keypoint"]        # [2, T, 17, 2] pixel coords
-    sc_clean_all = clean["keypoint_score"]  # [2, T, 17]
+    return clean["keypoint"], clean["keypoint_score"]  # [2,T,17,2], [2,T,17]
+
+
+def _extract_keypoints(video_id: str, condition: str | None, severity: int | None):
+    """Run TODAY'S extraction pathway on (optionally corrupted) frames."""
+    # Heavy imports deferred so --list-only works without rtmlib/onnxruntime.
+    from extract_skeletons import load_ucf_frames, process_frames_to_keypoints
 
     rng = np.random.default_rng(42)  # mirrors extract_skeletons corruption mode
     frames, img_shape = load_ucf_frames(
         video_id, corruption_type=condition,
         corruption_severity=severity, corruption_rng=rng,
     )
-    kp_corr_all, sc_corr_all = process_frames_to_keypoints(frames, img_shape)
+    return process_frames_to_keypoints(frames, img_shape)
 
-    t_clean = kp_clean_all.shape[1]
-    t_corr = kp_corr_all.shape[1]
-    if t_clean != t_corr:
-        print(f"  [warn] {video_id}: frame count clean={t_clean} corr={t_corr}; "
-              f"comparing the first {min(t_clean, t_corr)} frames")
-    t = min(t_clean, t_corr)
+
+def _compare_series(video_id, kp_base_all, sc_base_all, kp_test_all, sc_test_all) -> dict | None:
+    """Frame-matched comparison of a test keypoint series against a baseline
+    series; conf_drop = baseline confidence minus test confidence."""
+    t_base = kp_base_all.shape[1]
+    t_test = kp_test_all.shape[1]
+    if t_base != t_test:
+        print(f"  [warn] {video_id}: frame count base={t_base} test={t_test}; "
+              f"comparing the first {min(t_base, t_test)} frames")
+    t = min(t_base, t_test)
 
     devs, okss, drops, n_cmp = [], [], [], 0
     for f_idx in range(t):
         m = _frame_metrics(
-            kp_clean_all[:, f_idx], sc_clean_all[:, f_idx],
-            kp_corr_all[:, f_idx], sc_corr_all[:, f_idx],
+            kp_base_all[:, f_idx], sc_base_all[:, f_idx],
+            kp_test_all[:, f_idx], sc_test_all[:, f_idx],
         )
         if m is None:
-            continue  # clean extraction detected nobody in this frame
+            continue  # baseline detected nobody in this frame
         px, oks, conf_c, conf_r = m
         devs.append(px)
         okss.append(oks)
@@ -208,7 +228,7 @@ def measure_video(video_id: str, condition: str, severity: int) -> dict | None:
         n_cmp += 1
 
     if n_cmp == 0:
-        print(f"  [warn] {video_id}: no comparable frames (no clean detections)")
+        print(f"  [warn] {video_id}: no comparable frames (no baseline detections)")
         return None
     return {
         "n_frames": t,
@@ -219,14 +239,33 @@ def measure_video(video_id: str, condition: str, severity: int) -> dict | None:
     }
 
 
+def measure_video(video_id: str, condition: str, severity: int) -> dict | None:
+    """Corrupt frames in-memory, run RTMPose, compare vs the clean cache
+    (LEGACY vs-cache baseline -- see BASELINE MODES in the module header)."""
+    kp_clean_all, sc_clean_all = _load_cache_keypoints(video_id)
+    kp_corr_all, sc_corr_all = _extract_keypoints(video_id, condition, severity)
+    return _compare_series(video_id, kp_clean_all, sc_clean_all,
+                           kp_corr_all, sc_corr_all)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument(
         "--list-only", action="store_true",
         help="Enumerate the stratified sample and exit (NO inference, no rtmlib import).",
     )
-    parser.add_argument("--out", default=str(OUT_CSV))
+    parser.add_argument(
+        "--baseline", choices=["cache", "fresh"], default="cache",
+        help="cache: compare vs the April clean cache (contaminated by a "
+             "pathway mismatch -- see module header). fresh: compare vs a "
+             "fresh clean extraction with today's pathway (isolates "
+             "corruption drift; the quotable measurement).",
+    )
+    parser.add_argument("--out", default=None,
+                        help="Output CSV (default depends on --baseline).")
     args = parser.parse_args()
+    if args.out is None:
+        args.out = str(OUT_CSV_FRESH if args.baseline == "fresh" else OUT_CSV)
 
     by_cat = enumerate_test_videos()
     sample = stratified_sample(by_cat)
@@ -253,6 +292,37 @@ def main() -> int:
         if new_file:
             writer.writeheader()
         for cat, vid in sample:
+            if args.baseline == "fresh":
+                todo = [(c, s) for c, s in CONDITIONS if (vid, c, s) not in done]
+                need_ref = (vid, "clean_ref", 0) not in done
+                if not todo and not need_ref:
+                    print(f"[skip] {vid} (all rows exist)")
+                    continue
+                print(f"[run ] {vid} clean baseline extraction")
+                kp_base, sc_base = _extract_keypoints(vid, None, None)
+                if need_ref:
+                    # Diagnostic: fresh-clean vs cache documents the pathway
+                    # mismatch; NOT a corruption measurement.
+                    kp_cache, sc_cache = _load_cache_keypoints(vid)
+                    ref = _compare_series(vid, kp_cache, sc_cache, kp_base, sc_base)
+                    if ref is not None:
+                        writer.writerow({
+                            "video_id": vid, "category": cat,
+                            "condition": "clean_ref", "severity": 0, **ref,
+                        })
+                        f.flush()
+                for cond, sev in todo:
+                    print(f"[run ] {vid} {cond}_{sev} (vs fresh clean)")
+                    kp_t, sc_t = _extract_keypoints(vid, cond, sev)
+                    m = _compare_series(vid, kp_base, sc_base, kp_t, sc_t)
+                    if m is None:
+                        continue
+                    writer.writerow({
+                        "video_id": vid, "category": cat,
+                        "condition": cond, "severity": sev, **m,
+                    })
+                    f.flush()
+                continue
             for cond, sev in CONDITIONS:
                 if (vid, cond, sev) in done:
                     print(f"[skip] {vid} {cond}_{sev} (row exists)")
@@ -271,7 +341,16 @@ def main() -> int:
     with open(out_csv, newline="") as f:
         rows = list(csv.DictReader(f))
     print("\n=== Per-condition summary ===")
-    print(f"(criterion: PASS iff mean OKS >= {OKS_PASS} AND mean conf drop <= {CONF_DROP_PASS})")
+    print(f"(baseline: {args.baseline}; criterion: PASS iff mean OKS >= {OKS_PASS} "
+          f"AND mean conf drop <= {CONF_DROP_PASS})")
+    ref_rows = [r for r in rows if r["condition"] == "clean_ref"]
+    if ref_rows:
+        oks = float(np.mean([float(r["oks"]) for r in ref_rows]))
+        drop = float(np.mean([float(r["conf_drop"]) for r in ref_rows]))
+        dev = float(np.mean([float(r["mean_px_dev"]) for r in ref_rows]))
+        print(f"  clean_ref (fresh-clean vs cache, pathway-mismatch diagnostic, "
+              f"NOT drift): n={len(ref_rows)} mean_px_dev={dev:.3f} "
+              f"OKS={oks:.4f} conf_drop={drop:.4f}")
     for cond, sev in CONDITIONS:
         sub = [r for r in rows if r["condition"] == cond and int(r["severity"]) == sev]
         if not sub:
