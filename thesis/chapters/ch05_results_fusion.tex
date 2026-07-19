@@ -133,6 +133,16 @@ top, on both datasets and all four backbones. The practical lesson is that
 a second modality is added---an unweighted combination of unequal streams is
 worse than not fusing at all.
 
+\textbf{Learned-scalar control.} Replacing late fusion's fixed equal weight
+with a single learned mixing coefficient does not repair it: across all eight
+backbone$\times$dataset configurations (three seeds each), the learned
+coefficient converges to 0.44--0.49 visual share --- essentially its
+equal-weight initialization --- and the resulting scores stay within $\pm0.9$
+points of the fixed-weight variant, 1.9--2.5 AUC points below gated fusion on
+UCF-Crime and 10--13 AP points below on XD-Violence. A \emph{static} learned
+weight therefore cannot escape the late-fusion failure mode; the reweighting
+must be input-dependent (run records: \texttt{results/results-index.csv}).
+
 \subsection{Pooling ablations}
 \label{sec:pooling}
 
