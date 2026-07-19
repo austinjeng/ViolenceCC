@@ -267,7 +267,13 @@ $\lambda_2 = 8 \times 10^{-4}$. Those rows therefore combine two loss
 implementations across their seeds, and their standard deviations should not
 be read as pure seed variance. A direct A/B comparison on the headline
 configuration (seed 42) measured a $-0.13$ percentage-point AUC shift from
-the correction. The UCF-Crime results are reported as run.}
+the correction. The UCF-Crime results are reported as run. A post-submission
+consistency rerun retrained all twenty-nine legacy-implementation cells with
+the released code under a version-locked clean working tree: the headline
+reproduces at 82.5\% ($-0.06$ points, with all three headline seeds inside
+their seed band) and every qualitative conclusion of Chapter~\ref{ch:05} is
+preserved; per-cell deltas are tracked in the released repository
+(\texttt{results/\_consistency\_rerun/}).}
 
 For all fusion variants we report mean and standard deviation over three
 random seeds (42, 123, 2024) to quantify training stability. The seed controls
