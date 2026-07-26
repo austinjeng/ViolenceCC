@@ -37,7 +37,7 @@ persons per frame and mean-pools over the person dimension into a single
 % Cell values reproduced verbatim -- do not retype from any other source.
 \begin{table}[t]
 \centering
-\caption{Ablation study on UCF-Crime. AUC (\%) reported for each fusion variant across four visual backbones. All rows show mean$\pm$std over three seeds (42, 123, 2024). Best result per row in \textbf{bold}. $\Delta$ relative to CLIP ViT-B/16 baseline.}
+\caption[Ablation study on UCF-Crime (AUC, three seeds)]{Ablation study on UCF-Crime. AUC (\%) reported for each fusion variant across four visual backbones. All rows show mean$\pm$std over three seeds (42, 123, 2024). Best result per row in \textbf{bold}. $\Delta$ relative to CLIP ViT-B/16 baseline.}
 \label{tab:ucf-ablation}
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{l c c c c c}
@@ -61,7 +61,7 @@ GF Mean-Only & 80.6$\pm$0.7 & 79.2$\pm$0.1 & 82.0$\pm$0.7 & \textbf{82.5$\pm$0.4
 % Cell values reproduced verbatim -- do not retype from any other source.
 \begin{table}[t]
 \centering
-\caption{Ablation study on XD-Violence. AP (\%) reported for each fusion variant across four visual backbones. All rows show mean$\pm$std over three seeds. Best result per row in \textbf{bold}. $\Delta$ relative to CLIP ViT-B/16 baseline.}
+\caption[Ablation study on XD-Violence (AP, three seeds)]{Ablation study on XD-Violence. AP (\%) reported for each fusion variant across four visual backbones. All rows show mean$\pm$std over three seeds. Best result per row in \textbf{bold}. $\Delta$ relative to CLIP ViT-B/16 baseline.}
 \label{tab:xd-ablation}
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{l c c c c c}
@@ -188,7 +188,7 @@ run.
 \begin{figure}[t]
   \centering
   \includegraphics[width=\textwidth]{figures/fig_backbone_comparison.pdf}
-  \caption{Performance comparison across four visual backbones and three
+  \caption[Performance comparison across four backbones and three fusion variants]{Performance comparison across four visual backbones and three
   fusion variants. Left: UCF-Crime AUC (\%). Right: XD-Violence AP (\%).
   SigLIP2 Giant leads on UCF-Crime; on XD-Violence the four visual-only
   backbones fall within seed variance, while SigLIP2 SO400M attains the
@@ -432,7 +432,7 @@ differences of up to two points routinely vanish under reseeding.
 \begin{figure}[t]
   \centering
   \includegraphics[width=0.85\textwidth]{figures/fig_temporal_scores.pdf}
-  \caption{Frame-level anomaly scores on the Fighting047 test video from
+  \caption[Frame-level anomaly scores on the Fighting047 test video]{Frame-level anomaly scores on the Fighting047 test video from
   UCF-Crime (seed 42). Inside the annotated ground-truth window (shaded), the
   gated fusion score (solid) rises to near $0.95$ and stays high, tracking or
   exceeding the visual-only stream while the skeleton-only score stays flat
@@ -462,7 +462,7 @@ both streams remain weak.
 \begin{figure}[t]
   \centering
   \includegraphics[width=\textwidth]{figures/fig_gating_distribution.pdf}
-  \caption{Per-category frame-level performance (UCF-Crime AUC, top;
+  \caption[Per-category performance for skeleton-only, visual-only, and gated fusion]{Per-category frame-level performance (UCF-Crime AUC, top;
   XD-Violence AP, bottom) for Skeleton-Only, Visual-Only, and Gated Fusion in
   the CLIP ViT-B/16 configuration (seed 42). Fusion's per-category behavior
   tracks the visual stream almost everywhere, with the skeleton stream's
@@ -496,7 +496,7 @@ skeleton stream's collapses---the gate does not average profiles, it selects.
     \includegraphics[width=\textwidth]{figures/fig_gate_by_category_xd.png}
     \caption{XD-Violence}
   \end{subfigure}
-  \caption{Mean gate activation by category for the gated fusion model (CLIP
+  \caption[Mean gate activation by category for the gated fusion model]{Mean gate activation by category for the gated fusion model (CLIP
   ViT-B/16 configuration, seed 42). Gate values are sigmoid-bounded and vary
   systematically by category, confirming that the learned gate is
   input-dependent rather than a fixed mixing constant.}
@@ -517,7 +517,7 @@ skeleton stream's collapses---the gate does not average profiles, it selects.
     \includegraphics[width=\textwidth]{figures/fig_tsne_xd.png}
     \caption{XD-Violence}
   \end{subfigure}
-  \caption{t-SNE projection of the fused (post-LayerNorm) video-level
+  \caption[t-SNE projection of fused video-level test-set representations]{t-SNE projection of the fused (post-LayerNorm) video-level
   representations of the test sets (CLIP ViT-B/16 configuration, seed 42);
   grey points are normal videos. Anomalous videos concentrate in
   identifiable regions but do not form a cleanly separable cluster,
@@ -552,7 +552,7 @@ per-video statistics were computed.
 % Source: worst-anomaly-video table, pri9_failure_cases.md (tracked).
 \begin{table}[t]
 \centering
-\caption{The five worst-ranked anomalous test videos (UCF-Crime, Gated Fusion
+\caption[Five worst-ranked anomalous test videos (UCF-Crime)]{The five worst-ranked anomalous test videos (UCF-Crime, Gated Fusion
 SigLIP2 Giant, seed 42), by per-video frame-level AUC. ``Anom.\ frac.'' is the
 fraction of the video's frames annotated anomalous.}
 \label{tab:failure-cases}
@@ -602,7 +602,7 @@ blips.
 \begin{figure}[t]
   \centering
   \includegraphics[width=0.85\textwidth]{figures/pri9_score_hist.png}
-  \caption{Frame-score distributions for anomalous versus normal frames
+  \caption[Frame-score distributions for anomalous versus normal frames]{Frame-score distributions for anomalous versus normal frames
   (UCF-Crime, Gated Fusion SigLIP2 Giant, seed 42). Both distributions are
   strongly bimodal: the model emits near-0 or near-1 scores almost
   exclusively, and a quarter of normal frames score above 0.98.}

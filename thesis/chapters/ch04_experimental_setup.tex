@@ -171,7 +171,7 @@ the clean frame.
 % stale pre-implementation parameter lists in CLAUDE.md (Pitfall 5).
 \begin{table}[t]
 \centering
-\caption{UCF-Crime-C severity parameterization (severity 1 = mildest, 5 =
+\caption[UCF-Crime-C corruption severity parameterization]{UCF-Crime-C severity parameterization (severity 1 = mildest, 5 =
 harshest), as implemented in the tracked corruption module
 \texttt{scripts/corruption.py}. Brightness is an additive offset on the
 normalized $[0,1]$ image. The final column indicates whether skeleton features
@@ -356,7 +356,7 @@ they sit on.
 % RTX 4090.
 \begin{table}[t]
 \centering
-\caption{Trainable-head efficiency benchmarks (CLIP ViT-B/16 backbone
+\caption[Trainable-head efficiency benchmarks (RTX 4090)]{Trainable-head efficiency benchmarks (CLIP ViT-B/16 backbone
 configuration), measured on a single RTX 4090. Per-sample latency and
 throughput refer to one snippet-feature forward pass. The head parameter count
 scales with the visual feature dimension: from 0.50M (CLIP ViT-B/16, shown
@@ -382,7 +382,7 @@ RTFM-I3D & 137.41 & 4.46 & 0.0287 & 34785.6 & 18.8 \\
 % taken from the respective papers.
 \begin{table}[t]
 \centering
-\caption{Frozen extraction backbones. Parameter counts marked ``measured''
+\caption[Frozen extraction backbones and parameter counts]{Frozen extraction backbones. Parameter counts marked ``measured''
 were benchmarked locally on the RTX 4090; ``published'' values are taken from
 the respective papers. I3D features (used only by the RTFM reproduction
 summarized in Section~\ref{sec:lim-gaps}) are pre-extracted.}

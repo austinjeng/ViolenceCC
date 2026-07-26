@@ -36,7 +36,7 @@ full-length frame-grid numbers of Chapter~\ref{ch:05}.
 \begin{figure}[t]
   \centering
   \includegraphics[width=\textwidth]{figures/fig_corruption_source.pdf}
-  \caption{Source-only (unadapted) AUC of the gated fusion model across the
+  \caption[Source-only AUC across the 20 UCF-Crime-C conditions]{Source-only (unadapted) AUC of the gated fusion model across the
   20 UCF-Crime-C conditions and four backbones (3-seed means, truncated
   snippet-aligned grid). Degradation generally deepens with severity, but not
   monotonically in every family---for example, SigLIP2 Base's Gaussian column
@@ -150,7 +150,7 @@ single adaptation batch.
 % per_condition_rollup.csv (tracked; 760-row per-condition rollup).
 \begin{table}[t]
 \centering
-\caption{Entropy-minimization TTA on UCF-Crime-C: change in mean AUC (points,
+\caption[Entropy-minimization TTA null result on UCF-Crime-C]{Entropy-minimization TTA on UCF-Crime-C: change in mean AUC (points,
 over the 20 corruption conditions) relative to source-only, under the
 deterministic continual protocol, averaged over three seeds. The worst
 per-backbone magnitude is 0.082 points---below one tenth of a point on every
@@ -234,7 +234,7 @@ its search-time gains reproduced exactly on the production pipeline.
 % protocol-comparability caveat.
 \begin{table}[t]
 \centering
-\caption{Test-time adaptation on UCF-Crime-C, mean AUC (\%) over 20 corruption conditions (4 types $\times$ 5 severities). Source-Only and our discriminative-reliability reweighting (Ours) are reported as the mean over three seeds $\{42,123,2024\}$; $\Delta$ is the paired per-seed gain of Ours over Source-Only (mean$\pm$std). Best per backbone in \textbf{bold}. AUCs here are computed on the truncated snippet-aligned frame grid (a whole number of 64-frame windows) and are thus internally consistent within this table but not directly comparable in absolute terms to the full-length frame-grid numbers in Tables~\ref{tab:ucf-ablation}--\ref{tab:xd-ablation}.}
+\caption[Test-time adaptation on UCF-Crime-C, source-only versus reweighting]{Test-time adaptation on UCF-Crime-C, mean AUC (\%) over 20 corruption conditions (4 types $\times$ 5 severities). Source-Only and our discriminative-reliability reweighting (Ours) are reported as the mean over three seeds $\{42,123,2024\}$; $\Delta$ is the paired per-seed gain of Ours over Source-Only (mean$\pm$std). Best per backbone in \textbf{bold}. AUCs here are computed on the truncated snippet-aligned frame grid (a whole number of 64-frame windows) and are thus internally consistent within this table but not directly comparable in absolute terms to the full-length frame-grid numbers in Tables~\ref{tab:ucf-ablation}--\ref{tab:xd-ablation}.}
 \label{tab:tta}
 \begin{tabular}{l c c c}
 \toprule
@@ -256,7 +256,7 @@ Mean & 60.6 & \textbf{61.8} & +1.21 \\
 \begin{figure}[t]
   \centering
   \includegraphics[width=0.85\textwidth]{figures/fig_tta_comparison.pdf}
-  \caption{Test-time adaptation on UCF-Crime-C across four visual backbones
+  \caption[TTA gains across four backbones on UCF-Crime-C]{Test-time adaptation on UCF-Crime-C across four visual backbones
   (mean over three seeds, 20 corruption conditions). Entropy-minimization TTA
   (TENT, SAR) is omitted here because its deltas are below $0.1$ points on
   every backbone (Table~\ref{tab:tent-sar-null}); our
@@ -283,7 +283,7 @@ training or clean-test features with equivalent results.
 % cross-checked against results/_analysis_2026-06-10/pri5_tta_breakdown.md.
 \begin{table}[t]
 \centering
-\caption{Discriminative-reliability reweighting gain by corruption type on UCF-Crime (3-seed mean $\Delta$AUC in points, averaged over the five severities of each corruption family). The gain is concentrated on Gaussian noise; for motion blur, JPEG, and brightness the reliability gate keeps the fusion at the source model, so $\Delta\approx0$ by construction.}
+\caption[Discriminative-reliability reweighting gain by corruption type]{Discriminative-reliability reweighting gain by corruption type on UCF-Crime (3-seed mean $\Delta$AUC in points, averaged over the five severities of each corruption family). The gain is concentrated on Gaussian noise; for motion blur, JPEG, and brightness the reliability gate keeps the fusion at the source model, so $\Delta\approx0$ by construction.}
 \label{tab:tta_breakdown}
 \begin{tabular}{lrrrr}
 \toprule
@@ -308,7 +308,7 @@ SigLIP2 Giant  & +1.69 & 0.00 & 0.00 & 0.00 \\
 \begin{figure}[t]
   \centering
   \includegraphics[width=\textwidth]{figures/fig_severity_heatmap.pdf}
-  \caption{Per-condition gain of discriminative-reliability reweighting
+  \caption[Per-condition gain of discriminative-reliability reweighting]{Per-condition gain of discriminative-reliability reweighting
   ($\Delta$AUC in points, 3-seed means) over all 20 UCF-Crime-C conditions
   and four backbones. The gain concentrates in the Gaussian-noise column and
   grows with severity, peaking at $+13.2$ points for SigLIP2 SO400M at
@@ -324,7 +324,7 @@ SigLIP2 Giant  & +1.69 & 0.00 & 0.00 & 0.00 \\
 \begin{figure}[t]
   \centering
   \includegraphics[width=\textwidth]{figures/fig_corruption_disc_reweight.pdf}
-  \caption{Absolute AUC under discriminative-reliability reweighting across
+  \caption[Absolute AUC under discriminative-reliability reweighting]{Absolute AUC under discriminative-reliability reweighting across
   the 20 UCF-Crime-C conditions (3-seed means; compare
   Figure~\ref{fig:corruption-source}). The Gaussian-noise column recovers
   visibly; all other columns are identical to source-only because the gate
