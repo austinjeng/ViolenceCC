@@ -36,9 +36,9 @@ contribution is a reproducible, single-GPU dual-modal pipeline and a
 label-free robustness study, not a new peak score.
 
 A second investigation studies test-time adaptation (TTA) under 20 synthetic
-corruption conditions over three seeds. Entropy-minimization TTA (TENT, SAR),
-restricted by the architecture to the fusion head's LayerNorm parameters,
-changes AUC by less than $0.1$ points on every backbone --- a structural null
+corruption conditions over three seeds. Two representative entropy-minimization TTA methods (TENT, SAR),
+restricted by the architecture to adapting only the fusion head's LayerNorm
+parameters, change AUC by less than $0.1$ points on every backbone --- a structural null
 result analyzed in the thesis body. What does recover robustness is a
 proposed label-free, tuning-free discriminative-reliability reweighting that
 routes the gated fusion toward the corruption-robust skeleton stream when the
