@@ -43,6 +43,15 @@ CELLS = [
     (1.0e-3, 1),
     (7.0e-4, 3),
     (1.0e-3, 3),
+    # Extension (user request): softer selection k in {4..9} at the shipped lr only --
+    # the k<=3 grid showed AP rising monotonically toward k=3 at lr 1e-4, so probe the
+    # far side of the boundary. k=4 first (most informative cell earliest).
+    (1.0e-4, 4),
+    (1.0e-4, 5),
+    (1.0e-4, 6),
+    (1.0e-4, 7),
+    (1.0e-4, 8),
+    (1.0e-4, 9),
 ]
 
 
