@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!--
+  Knowledge artifact. Self-contained: no network access required.
+  Compiled 2026-08-03 from the 20-agent journal placement survey
+  (discovery workflow wf_a0ebe9a4-808, verification workflow wf_c783879f-d77).
+  Source of record: .planning/JOURNAL-SURVEY-2026-08-03.md
+  Also published as a Claude Artifact; this is the durable local copy.
+-->
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; }
+  h1, h2, h3, h4, p, ul, ol, dl, table, figure { margin: 0; }
+</style>
+<title>Journal Placement Survey — Dual-Modal Skeleton-Visual Violence Detection</title>
+
+<style>
+  :root {
+    --bg:        #FBFBFC;
+    --surface:   #F3F4F6;
+    --ink:       #17191D;
+    --muted:     #5A6069;
+    --faint:     #878D96;
+    --rule:      #E1E4E9;
+    --rule-soft: #EDEFF2;
+    --accent:    #1D4E5C;
+    --accent-bg: #E6EFF1;
+
+    --ok:     #2C6349;
+    --ok-bg:  #E4EFE8;
+    --warn:   #7E561A;
+    --warn-bg:#F3EBDC;
+    --info:   #35526E;
+    --info-bg:#E5EBF1;
+    --bad:    #833733;
+    --bad-bg: #F2E3E2;
+
+    --serif: "Iowan Old Style", "Charter", Charter, Georgia, "Times New Roman", serif;
+    --sans:  ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono:  ui-monospace, "Cascadia Mono", "Cascadia Code", Consolas, "SF Mono", Menlo, monospace;
+
+    --measure: 68ch;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:        #131519;
+      --surface:   #1B1E24;
+      --ink:       #E6E8EC;
+      --muted:     #9AA1AB;
+      --faint:     #7C838D;
+      --rule:      #2B2F37;
+      --rule-soft: #23272E;
+      --accent:    #7FB6C4;
+      --accent-bg: #1A2A30;
+
+      --ok:     #7DBF9C;
+      --ok-bg:  #1A2721;
+      --warn:   #D3A461;
+      --warn-bg:#2A2318;
+      --info:   #8FB0CE;
+      --info-bg:#1A222B;
+      --bad:    #D18E89;
+      --bad-bg: #2A1E1D;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg:        #131519;
+    --surface:   #1B1E24;
+    --ink:       #E6E8EC;
+    --muted:     #9AA1AB;
+    --faint:     #7C838D;
+    --rule:      #2B2F37;
+    --rule-soft: #23272E;
+    --accent:    #7FB6C4;
+    --accent-bg: #1A2A30;
+    --ok:     #7DBF9C;  --ok-bg:  #1A2721;
+    --warn:   #D3A461;  --warn-bg:#2A2318;
+    --info:   #8FB0CE;  --info-bg:#1A222B;
+    --bad:    #D18E89;  --bad-bg: #2A1E1D;
+  }
+
+  :root[data-theme="light"] {
+    --bg:        #FBFBFC;
+    --surface:   #F3F4F6;
+    --ink:       #17191D;
+    --muted:     #5A6069;
+    --faint:     #878D96;
+    --rule:      #E1E4E9;
+    --rule-soft: #EDEFF2;
+    --accent:    #1D4E5C;
+    --accent-bg: #E6EFF1;
+    --ok:     #2C6349;  --ok-bg:  #E4EFE8;
+    --warn:   #7E561A;  --warn-bg:#F3EBDC;
+    --info:   #35526E;  --info-bg:#E5EBF1;
+    --bad:    #833733;  --bad-bg: #F2E3E2;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 17px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 1140px;
+    margin: 0 auto;
+    padding: 4rem 1.5rem 7rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3.25rem;
+  }
+
+  /* ---- typography ---- */
+  h1, h2, h3, h4 { font-family: var(--sans); text-wrap: balance; line-height: 1.22; }
+
+  h1 { font-size: 2rem; font-weight: 620; letter-spacing: -0.018em; }
+  h2 { font-size: 1.32rem; font-weight: 600; letter-spacing: -0.012em; padding-bottom: .5rem; border-bottom: 1px solid var(--rule); }
+  h3 { font-size: 1.03rem; font-weight: 600; letter-spacing: -0.005em; }
+  h4 { font-size: .9rem; font-weight: 600; color: var(--muted); }
+
+  .eyebrow {
+    font-family: var(--sans);
+    font-size: .69rem;
+    font-weight: 620;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  p, li { max-width: var(--measure); }
+  p { margin: 0; }
+
+  strong { font-weight: 640; }
+  em { font-style: italic; }
+
+  a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: 1px; }
+  a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+
+  code, .num { font-family: var(--mono); font-size: .87em; font-variant-numeric: tabular-nums; }
+
+  /* ---- structure ---- */
+  section { display: flex; flex-direction: column; gap: 1.1rem; }
+  .stack  { display: flex; flex-direction: column; gap: .85rem; }
+  .stack-tight { display: flex; flex-direction: column; gap: .45rem; }
+
+  header.doc { display: flex; flex-direction: column; gap: .7rem; padding-bottom: 2rem; border-bottom: 2px solid var(--ink); }
+  header.doc .sub { color: var(--muted); font-size: 1.02rem; max-width: var(--measure); }
+  .meta { font-family: var(--sans); font-size: .78rem; color: var(--faint); display: flex; flex-wrap: wrap; gap: .4rem 1.1rem; }
+
+  ul, ol { margin: 0; padding-left: 1.25rem; display: flex; flex-direction: column; gap: .45rem; }
+  li::marker { color: var(--faint); }
+
+  /* ---- table of contents ---- */
+  nav.toc { background: var(--surface); border: 1px solid var(--rule); padding: 1.1rem 1.4rem; }
+  nav.toc ol { font-family: var(--sans); font-size: .87rem; gap: .3rem; counter-reset: t; list-style: none; padding-left: 0; max-width: none; }
+  nav.toc li { max-width: none; counter-increment: t; }
+  nav.toc li::before { content: counter(t) ". "; color: var(--faint); font-variant-numeric: tabular-nums; }
+  nav.toc a { text-decoration: none; }
+  nav.toc a:hover { text-decoration: underline; }
+
+  /* ---- callout ---- */
+  .note {
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    padding: .9rem 1.15rem;
+    display: flex; flex-direction: column; gap: .5rem;
+  }
+  .note.alert { border-left-color: var(--bad); background: var(--bad-bg); }
+  .note .eyebrow { color: var(--muted); }
+  .note p { max-width: 64ch; }
+
+  /* ---- tables ---- */
+  .scroll { overflow-x: auto; border: 1px solid var(--rule); }
+  table { border-collapse: collapse; width: 100%; font-family: var(--sans); font-size: .82rem; line-height: 1.45; }
+  caption { text-align: left; font-family: var(--sans); font-size: .8rem; color: var(--muted); padding: 0 0 .55rem; max-width: var(--measure); }
+  th, td { padding: .58rem .7rem; text-align: left; vertical-align: top; border-bottom: 1px solid var(--rule-soft); }
+  thead th { background: var(--surface); font-weight: 620; font-size: .73rem; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--rule); white-space: nowrap; }
+  tbody tr:last-child td { border-bottom: none; }
+  td.n, th.n { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td.name { font-weight: 600; min-width: 15rem; }
+  td.name .pub { display: block; font-weight: 400; font-size: .92em; color: var(--faint); }
+  .wide { min-width: 20rem; }
+
+  /* ---- verdict chips ---- */
+  .chip {
+    display: inline-block;
+    font-family: var(--sans);
+    font-size: .68rem;
+    font-weight: 640;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    padding: .16rem .45rem;
+    white-space: nowrap;
+    border: 1px solid currentColor;
+  }
+  .chip.t { color: var(--ok);   background: var(--ok-bg); }
+  .chip.s { color: var(--info); background: var(--info-bg); }
+  .chip.r { color: var(--warn); background: var(--warn-bg); }
+  .chip.x { color: var(--bad);  background: var(--bad-bg); }
+
+  /* ---- ladder ---- */
+  .ladder { display: flex; flex-direction: column; gap: 0; border: 1px solid var(--rule); }
+  .rung { display: grid; grid-template-columns: 4.5rem 1fr; gap: 1.1rem; padding: 1rem 1.2rem; border-bottom: 1px solid var(--rule-soft); }
+  .rung:last-child { border-bottom: none; }
+  .rung .step { font-family: var(--sans); font-size: .7rem; font-weight: 620; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); padding-top: .2rem; }
+  .rung .body { display: flex; flex-direction: column; gap: .35rem; }
+  .rung h3 { font-size: 1rem; }
+  .rung p { font-size: .94rem; max-width: 62ch; color: var(--muted); }
+  .rung .why { color: var(--ink); }
+
+  /* ---- definition rows ---- */
+  dl.rows { display: grid; grid-template-columns: max-content 1fr; gap: .5rem 1.4rem; font-size: .95rem; margin: 0; }
+  dl.rows dt { font-family: var(--sans); font-size: .82rem; font-weight: 600; color: var(--muted); padding-top: .12rem; }
+  dl.rows dd { margin: 0; max-width: 58ch; }
+
+  details { border-top: 1px solid var(--rule-soft); padding-top: .7rem; }
+  summary { font-family: var(--sans); font-size: .88rem; font-weight: 600; cursor: pointer; color: var(--accent); }
+  details[open] summary { margin-bottom: .7rem; }
+
+  footer.doc { border-top: 1px solid var(--rule); padding-top: 1.5rem; font-size: .85rem; color: var(--faint); }
+  footer.doc p { max-width: var(--measure); }
+
+  @media (max-width: 620px) {
+    body { font-size: 16px; }
+    .page { padding: 2.5rem 1.1rem 4rem; gap: 2.5rem; }
+    h1 { font-size: 1.6rem; }
+    dl.rows { grid-template-columns: 1fr; gap: .15rem; }
+    dl.rows dd { margin-bottom: .6rem; }
+    .rung { grid-template-columns: 1fr; gap: .3rem; }
+  }
+</style>
+
+</head>
+<body>
+
+<div class="page">
+
+<header class="doc">
+  <div class="eyebrow">Journal placement survey</div>
+  <h1>Where to submit the dual-modal skeleton–visual violence detection paper</h1>
+  <p class="sub">SCIE-indexed targets in Q2 and Q3, with an honest evaluation of Q1. Built from live verification against Clarivate's Master Journal List, JCR 2026 (2025 JIF, released 17 June 2026), publisher pricing files, and the NTUST library's own open-access page.</p>
+  <div class="meta">
+    <span>Compiled 3 August 2026</span>
+    <span>133 journals screened · 20 assessed in depth</span>
+    <span>All quartiles are JCR, not SJR</span>
+  </div>
+</header>
+
+<nav class="toc" aria-label="Contents">
+  <ol>
+    <li><a href="#verdict">The recommendation</a></li>
+    <li><a href="#judged">What your numbers are actually judged against</a></li>
+    <li><a href="#q2">Q2 targets</a></li>
+    <li><a href="#q3">Q3 targets</a></li>
+    <li><a href="#q1">Q1 evaluated honestly</a></li>
+    <li><a href="#traps">Ruled out, and four traps</a></li>
+    <li><a href="#cost">What it actually costs you</a></li>
+    <li><a href="#work">What the manuscript needs first</a></li>
+    <li><a href="#priorart">Prior art you must cite</a></li>
+    <li><a href="#method">How this was built, and what stayed unverified</a></li>
+  </ol>
+</nav>
+
+<!-- ============================================ -->
+<section id="verdict">
+  <h2>1 · The recommendation</h2>
+
+  <p>Two facts reshape the decision before any journal is named.</p>
+
+  <div class="note">
+    <div class="eyebrow">Fact one</div>
+    <p><strong>You have no deadline.</strong> The NTUST Information Management graduate regulations — both currently-applicable versions — contain zero occurrences of 期刊, 發表, or SCI. There is no journal-publication requirement for the master's degree, and your oral defence already passed. This submission is for merit and career value, not a graduation gate, so you can afford to aim high and ladder down.</p>
+  </div>
+
+  <div class="note">
+    <div class="eyebrow">Fact two</div>
+    <p><strong>Publishing costs you nothing at most of the good targets.</strong> Every Elsevier and Springer hybrid journal offers a subscription route that Elsevier states verbatim as “No publication fee charged to authors.” The venues that actually cost money — IEEE Access, MDPI, IET, PeerJ — are the fully open-access ones. Cost should therefore not drive your choice among the free options.</p>
+  </div>
+
+  <p>Given that, the ladder below maximises expected outcome rather than speed. Steps 1–3 are all Elsevier, so a rejection at one carries your reviews to the next through the Article Transfer Service instead of restarting review.</p>
+
+  <div class="ladder">
+    <div class="rung">
+      <div class="step">First</div>
+      <div class="body">
+        <h3>Image and Vision Computing <span class="chip t">Target</span></h3>
+        <p class="why">Elsevier · JIF 5.0 · Q2 in Computer Science, Artificial Intelligence (67/210) · costs you $0 · 16-day first decision, 167 days to acceptance</p>
+        <p>The heaviest recent publisher of your exact problem among realistic venues — roughly nine genuine VAD papers in 2024–2026, including weakly supervised and audio-visual work. Its scope statement explicitly rewards quantitative performance evaluation and comparison, which is what your paper actually is. A failed attempt costs about two weeks.</p>
+      </div>
+    </div>
+    <div class="rung">
+      <div class="step">Second</div>
+      <div class="body">
+        <h3>Computer Vision and Image Understanding <span class="chip t">Target</span></h3>
+        <p class="why">Elsevier · JIF 3.6 · Q2 in CS-AI (99/210) · $0 · 7-day first decision (aggressive desk screen)</p>
+        <p>The only venue whose aims-and-scope explicitly solicits “papers offering insights that differ from predominant views” — a clause written for your TENT/SAR null result. It has already published a weakly supervised VAD paper presented as a <em>baseline</em> rather than a SOTA claim, at 85.30% UCF-Crime AUC. Promote this to first place if — and only if — you can instrument the LayerNorm head and turn “AUC moves &lt;0.1pp” into a measured mechanism.</p>
+      </div>
+    </div>
+    <div class="rung">
+      <div class="step">Third</div>
+      <div class="body">
+        <h3>Journal of Visual Communication and Image Representation <span class="chip s">Safety net</span></h3>
+        <p class="why">Elsevier · JIF 2.8 · Q2 in CS-Software Engineering (59/128), Q3 in CS-Information Systems · $0 · 215 days to acceptance, the slowest here</p>
+        <p>The highest probability of publication anywhere on this list. It published a 2025 paper that builds its own multiply-distorted video dataset, analyses how data-quality fluctuation degrades VAD methods, and makes no leaderboard claim at all — structurally the same paper as your UCF-Crime-C work. Reframed robustness-first, this is where the thesis most likely ends up in print.</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>Two alternatives worth weighing against that ladder</h3>
+
+  <dl class="rows">
+    <dt>Advisor's home turf</dt>
+    <dd><strong>Signal, Image and Video Processing</strong> (Springer, JIF 2.7, Q3, $0). Prof. Yang has six papers there — his most active SCIE venue in the last three years — and it publishes 15+ video-anomaly papers a year. The catch is a hard 10-page cap that forces you to ship one contribution, not four. Highest achievable probability of any single venue once reframed: roughly 55–65%.</dd>
+
+    <dt>Buy certainty</dt>
+    <dd><strong>IEEE Access</strong> (JIF 4.2, Q2 in all three categories, ~4-week decision). Its reviewer guidelines state verbatim that articles “are not necessarily expected to have a high level of novelty, but they should be distinct from previous publications and technically sound.” That criterion is built for a paper like yours. Costs US$1,728 at the NTUST rate, and its real acceptance rate is 20%, not the 30% folklore.</dd>
+  </dl>
+
+  <p><strong>Skip Pattern Recognition Letters.</strong> It is Q2 in CS-AI on paper, but it published exactly one genuine VAD paper in 2024–2026 against nine or ten each at IVC, CVIU and JVCIR — and its concision requirement fights every upgrade the other venues demand, so the work does not transfer.</p>
+</section>
+
+<!-- ============================================ -->
+<section id="judged">
+  <h2>2 · What your numbers are actually judged against</h2>
+
+  <p>The strategic question is not “is 82.5% good.” It is “what did the journals in this band actually accept.” Every row below was verified from the paper record.</p>
+
+  <div class="scroll">
+    <table>
+      <caption>Published UCF-Crime AUC / XD-Violence AP in SCIE journals, 2024–2026. Your paper: 82.5% / 78.7%.</caption>
+      <thead>
+        <tr><th class="wide">Accepted paper</th><th>Venue</th><th class="n">UCF AUC</th><th class="n">XD AP</th><th>Read</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="wide">Bameri et al., probabilistic modelling + ensemble learning, weakly supervised</td>
+          <td>IET Image Processing 2025</td><td class="n">80.86</td><td class="n">—</td>
+          <td><strong>Below yours</strong>, described in its own abstract as “competitive performance”</td>
+        </tr>
+        <tr>
+          <td class="wide">LTGS-Net</td>
+          <td>Sensors 2025</td><td class="n">82.33</td><td class="n">—</td>
+          <td>Statistically indistinguishable from yours</td>
+        </tr>
+        <tr>
+          <td class="wide">Hybrid-ConvATFM</td>
+          <td>Pattern Analysis &amp; Applications 2025</td><td class="n">84.91</td><td class="n">83.51</td>
+          <td>Closest published number above yours — a 2.4pp gap</td>
+        </tr>
+        <tr>
+          <td class="wide">Human-Scene Network, presented as “a novel baseline”</td>
+          <td>CVIU 2024</td><td class="n">85.30</td><td class="n">—</td>
+          <td>Already off the field pace when published, and still accepted</td>
+        </tr>
+        <tr>
+          <td class="wide">The Visual Computer's 2026 WS-VAD acceptance</td>
+          <td>The Visual Computer 2026</td><td class="n">86.48</td><td class="n">—</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td class="wide">ViCap-AD, claims state of the art</td>
+          <td>Machine Vision &amp; Applications 2025</td><td class="n">87.20</td><td class="n">85.02</td>
+          <td>MVA's one recent WS-VAD acceptance was a SOTA-claiming paper</td>
+        </tr>
+        <tr>
+          <td class="wide">RelVid, CLIP + text, frozen image encoder</td>
+          <td>Sensors 2025</td><td class="n">87.71</td><td class="n">80.76</td>
+          <td>No skeleton modality</td>
+        </tr>
+        <tr>
+          <td class="wide">TAPL, temporal-aware prompt learning</td>
+          <td>SIViP 2025</td><td class="n">88.00</td><td class="n">85.26</td>
+          <td>Same journal, same year as much softer acceptances — SIViP publishes at two tiers at once</td>
+        </tr>
+        <tr>
+          <td class="wide">VadCLIP++</td>
+          <td>Digital Signal Processing 2025</td><td class="n">88.12</td><td class="n">85.03</td>
+          <td>—</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Read the spread rather than the top. Q2 and Q3 journals demonstrably accept work at and below your operating point — one of them 1.6 points below it. Your accuracy is not what disqualifies you. What disqualifies a paper in this band is <em>presenting itself as a competitive detector and losing</em>. Every venue-specific recommendation in this document reduces to the same move: stop being a method paper that falls short, and become a study that measures.</p>
+
+  <div class="note">
+    <div class="eyebrow">The framing principle</div>
+    <p>Three assets are publishable regardless of the operating point, and none of them is the fusion architecture: <strong>(a)</strong> a controlled four-backbone comparison under one fixed head, one protocol and matched seeds — nobody has published this for weakly supervised VAD, and your own finding that the SO400M lead on XD-Violence was seed noise is a real methodological result; <strong>(b)</strong> three-seed mean±std reporting, which is above the norm in a field dominated by single-seed numbers; <strong>(c)</strong> frozen backbones with a 0.5–1.0M-parameter trainable head, which supports a defensible accuracy-per-cost claim. Lead with those.</p>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<section id="q2">
+  <h2>3 · Q2 targets</h2>
+
+  <p>Quartiles below are per-category JCR, not the “best category” headline that aggregators print. Where a journal is Q2 in one category and Q3 in another, both are shown — a thesis committee will look up the field-appropriate one.</p>
+
+  <div class="scroll">
+    <table>
+      <thead>
+        <tr><th class="wide">Journal</th><th class="n">JIF</th><th>Quartile (JCR 2026)</th><th class="n">Cost to you</th><th class="n">1st decision</th><th class="wide">Evidence and read</th><th>Verdict</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="name wide">Image and Vision Computing<span class="pub">Elsevier</span></td>
+          <td class="n">5.0</td>
+          <td>Q2 CS-AI 67/210<br><span style="color:var(--faint)">Q1 in CS-SE, CS-T&amp;M, Optics</span></td>
+          <td class="n">$0</td><td class="n">16 d</td>
+          <td class="wide">~9 genuine VAD papers 2024–26 incl. weakly supervised and audio-visual. Scope text rewards comparison-and-evaluation work. Fastest Elsevier path to acceptance at 167 days.</td>
+          <td><span class="chip t">Target</span></td>
+        </tr>
+        <tr>
+          <td class="name wide">IEEE Access<span class="pub">IEEE</span></td>
+          <td class="n">4.2</td>
+          <td>Q2 ×3 — CS-IS 100/266, EE 124/369, Telecom 53/127</td>
+          <td class="n">$1,728</td><td class="n">~4 wk</td>
+          <td class="wide">Reviewer guidelines explicitly do not require novelty, only technical soundness and distinctness. No page limit. Real acceptance rate 20% per IEEE, not the 30% commonly quoted.</td>
+          <td><span class="chip t">Target</span></td>
+        </tr>
+        <tr>
+          <td class="name wide">Sensors<span class="pub">MDPI</span></td>
+          <td class="n">4.0</td>
+          <td>Q2 ×3 — Instr. 24/81, Chem-Anal 37/110, EE 127/369</td>
+          <td class="n">~$3,210</td><td class="n">17.8 d</td>
+          <td class="wide">Fastest venue surveyed, and it accepted LTGS-Net at 82.33% UCF. Requires a genuine sensor-degradation reframe or it desk-rejects on scope. Most expensive option and NTUST has no library deal.</td>
+          <td><span class="chip s">Viable</span></td>
+        </tr>
+        <tr>
+          <td class="name wide">Computer Vision and Image Understanding<span class="pub">Elsevier</span></td>
+          <td class="n">3.6</td>
+          <td>Q2 CS-AI 99/210, Q2 EE 142/369</td>
+          <td class="n">$0</td><td class="n">7 d</td>
+          <td class="wide">Scope solicits counter-consensus insight — the entry ticket for your TTA null. Published a WS-VAD “baseline” paper at 85.30% and a skeleton-based fighting-detection paper. The 7-day median means most submissions never reach a referee.</td>
+          <td><span class="chip t">Target</span></td>
+        </tr>
+        <tr>
+          <td class="name wide">Pattern Recognition Letters<span class="pub">Elsevier</span></td>
+          <td class="n">3.5</td>
+          <td>Q2 CS-AI 102/210 <span style="color:var(--faint)">(51.7 pct — 3 ranks off Q3)</span></td>
+          <td class="n">$0</td><td class="n">17 d</td>
+          <td class="wide">One genuine VAD paper in three years. Its concision requirement contradicts what every other venue demands, so work done for PRL transfers nowhere. Clarivate's own JCI metric already places it Q3.</td>
+          <td><span class="chip x">Skip</span></td>
+        </tr>
+        <tr>
+          <td class="name wide">The Visual Computer<span class="pub">Springer</span></td>
+          <td class="n">3.4</td>
+          <td>Q2 CS-SE 44/128 <span style="color:var(--faint)">— not indexed in CS-AI at all</span></td>
+          <td class="n">$0</td><td class="n">3 d</td>
+          <td class="wide">Advisor has 3 papers. Published entropy-minimisation TTA twice, so your null has a conversation to enter. But: Word .docx required (real conversion cost from LaTeX), 3-day desk median, and a committee reading CS-AI will not find it ranked there.</td>
+          <td><span class="chip s">Viable</span></td>
+        </tr>
+        <tr>
+          <td class="name wide">PeerJ Computer Science<span class="pub">PeerJ</span></td>
+          <td class="n">2.9</td>
+          <td>Q2 CS-T&amp;M 50/146<br><span style="color:var(--faint)">Q3 CS-AI 121/210</span></td>
+          <td class="n">$1,510</td><td class="n">30–35 d</td>
+          <td class="wide">Evaluates on “soundness, not impact” — the only venue where “we did not beat SOTA” is formally an invalid rejection ground. Confirmed SCIE (an earlier ESCI claim was wrong). $1,510 via two lifetime memberships beats the $2,155 APC.</td>
+          <td><span class="chip t">Target</span></td>
+        </tr>
+        <tr>
+          <td class="name wide">Journal of Visual Communication and Image Representation<span class="pub">Elsevier</span></td>
+          <td class="n">2.8</td>
+          <td>Q2 CS-SE 59/128<br><span style="color:var(--faint)">Q3 CS-IS 149/266</span></td>
+          <td class="n">$0</td><td class="n">15 d</td>
+          <td class="wide">Published a 2025 self-built multi-distortion VAD study with no leaderboard claim — the structural twin of your corruption work. Highest publication probability on the list. Slowest to acceptance at 215 days.</td>
+          <td><span class="chip t">Target</span></td>
+        </tr>
+        <tr>
+          <td class="name wide">Multimedia Systems<span class="pub">Springer</span></td>
+          <td class="n">2.8</td>
+          <td>Q2 CS-T&amp;M 52/146<br><span style="color:var(--faint)">Q3 CS-IS 149/266</span></td>
+          <td class="n">$0</td><td class="n">41 d</td>
+          <td class="wide">The only Springer title here whose first-decision median is long enough to mean the median submission is genuinely reviewed rather than desk-screened. Published a 2026 lightweight violence-detection paper.</td>
+          <td><span class="chip s">Viable</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <div class="eyebrow">How to read “first decision”</div>
+    <p>A 1–7 day median is not fast peer review — it is a desk-rejection statistic. At CVIU the 7-day figure sits against a 94-day decision-after-review median, meaning the median submission never reaches a referee. Treat low numbers as a warning that your title, abstract and cover letter decide the outcome, and treat 30–41 day medians (Machine Vision and Applications, Multimedia Systems) as evidence that a submission there is actually read.</p>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<section id="q3">
+  <h2>4 · Q3 targets</h2>
+
+  <p>One structural note before the table: <strong>IEEE has essentially no Q3 in this subject area.</strong> Its computer-science and electrical-engineering titles are almost all Q1 or Q2, so “Q2 and Q3” collapses to “IEEE Q2” inside that portfolio. Genuine Q3 lives at Springer, Elsevier's mid-tier and IET.</p>
+
+  <div class="scroll">
+    <table>
+      <thead>
+        <tr><th class="wide">Journal</th><th class="n">JIF</th><th>Quartile (JCR 2026)</th><th class="n">Cost to you</th><th class="n">1st decision</th><th class="wide">Evidence and read</th><th>Verdict</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="name wide">Signal, Image and Video Processing<span class="pub">Springer</span></td>
+          <td class="n">2.7</td>
+          <td>Q3 EE 186/369, Q3 Imaging Science</td>
+          <td class="n">$0</td><td class="n">4 d</td>
+          <td class="wide">Advisor's most active SCIE venue (6 papers). 15+ video-anomaly papers in 2025–26, published at two quality tiers simultaneously. Verified end-to-end: ~132–139 days received-to-accepted. <strong>Hard 10-page cap</strong> forces one contribution only.</td>
+          <td><span class="chip t">Target</span></td>
+        </tr>
+        <tr>
+          <td class="name wide">Pattern Analysis and Applications<span class="pub">Springer</span></td>
+          <td class="n">2.6</td>
+          <td>Q3 CS-AI 130/210</td>
+          <td class="n">$0</td><td class="n">1 d</td>
+          <td class="wide">Its stated policy mandates replicable research, released code and data, and “rigorous comparisons under identical conditions” — you over-deliver on all three. It also published a robustness <em>evaluation</em> study, and its WS-VAD acceptance sits at 84.91%. But a 1-day median is the most brutal desk filter surveyed.</td>
+          <td><span class="chip s">High variance</span></td>
+        </tr>
+        <tr>
+          <td class="name wide">IET Image Processing<span class="pub">Wiley / IET</span></td>
+          <td class="n">2.4</td>
+          <td>Q3 ×3 — CS-AI 139/210, EE 215/369, Imaging 27/39</td>
+          <td class="n">$2,800</td><td class="n">38 d</td>
+          <td class="wide">The best-documented venue here: publisher states a <strong>33% acceptance rate</strong>, 38-day first decision, 131 days to acceptance. It accepted 80.86% UCF-Crime. But a mandatory APC with no free route, and the Wiley free-APC deal covers hybrid titles only — this is fully gold OA, so it does not qualify.</td>
+          <td><span class="chip s">Viable if funded</span></td>
+        </tr>
+        <tr>
+          <td class="name wide">Journal on Image and Video Processing<span class="pub">Springer · formerly EURASIP JIVP</span></td>
+          <td class="n">2.3</td>
+          <td>Q3 in both categories</td>
+          <td class="n">$2,090</td><td class="n">171 d</td>
+          <td class="wide">Renamed 1 January 2026 with a new eISSN, 3091-454X — searching Clarivate under the old ISSN returns nothing, which is why it looks delisted and is not. Good community fit, killed by a 171-day median first decision.</td>
+          <td><span class="chip s">Viable</span></td>
+        </tr>
+        <tr>
+          <td class="name wide">Signal Processing: Image Communication<span class="pub">Elsevier</span></td>
+          <td class="n">2.1</td>
+          <td>Q3 EE 235/369</td>
+          <td class="n">$0</td><td class="n">—</td>
+          <td class="wide">Free and easy, but the JIF fell 22% this cycle. Note it is Q2 under SJR and Q3 under JCR — confirm which system your committee reads.</td>
+          <td><span class="chip s">Fallback</span></td>
+        </tr>
+        <tr>
+          <td class="name wide">Machine Vision and Applications<span class="pub">Springer / IAPR</span></td>
+          <td class="n">2.0</td>
+          <td>Q3 ×3 — CS-AI 148/210, Cybernetics, EE</td>
+          <td class="n">$0</td><td class="n">30 d</td>
+          <td class="wide">A 30-day median means real review, and it published two test-time-adaptation papers in 2026 — one framed as “self-adaptive <em>deployment</em>,” which is your angle. IAPR applications culture forgives non-top accuracy. But JIF 2.0 sits below its own 5-year 2.6, and verified received-to-accepted was 179 days.</td>
+          <td><span class="chip s">Viable</span></td>
+        </tr>
+        <tr>
+          <td class="name wide">ETRI Journal<span class="pub">ETRI / Wiley</span></td>
+          <td class="n">2.0</td>
+          <td>Q3 EE 243/369, Q3 Telecom 93/127</td>
+          <td class="n">$0</td><td class="n">unpublished</td>
+          <td class="wide">Genuinely free — no APC, no submission fee, no page charge. But scope is information/telecom/electronics, there is an 8–10 page hard cap, review is double-anonymous, no speed or acceptance figures are published, and there is no transfer network on rejection.</td>
+          <td><span class="chip x">Skip</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<section id="q1">
+  <h2>5 · Q1 evaluated honestly</h2>
+
+  <p>Your belief that Q1 is out of reach is <strong>partly right, and the correction matters</strong>. The equation “Q1 means you must beat 88–90% AUC” holds at the prestige and video/multimedia tier. It does not hold at the applications-oriented Q1 titles, whose effective bar is rigour plus application credibility.</p>
+
+  <div class="scroll">
+    <table>
+      <thead>
+        <tr><th class="wide">Venue</th><th class="n">JIF</th><th class="n">Cost</th><th class="wide">Assessment</th><th>Verdict</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="name wide">Neurocomputing<span class="pub">Elsevier · Q1 CS-AI 43/210</span></td>
+          <td class="n">6.7</td><td class="n">$0</td>
+          <td class="wide"><strong>The one credible shot.</strong> MIL is native vocabulary here — it even published a PyTorch MIL library — and it has a sustained VAD line. 8-day first decision and 139 days to acceptance, the fastest overall, so a failed attempt is cheap in time. The catch: it pays for <em>methods</em>, not CV pipelines. You would need to formalise discriminative-reliability reweighting as an algorithm, argue the BN-versus-LN adaptation contrast analytically, and ideally show it works on one non-VAD LayerNorm head. Roughly 12–18% as-is, 25–30% after that reframe.</td>
+          <td><span class="chip r">Reach</span></td>
+        </tr>
+        <tr>
+          <td class="name wide">Expert Systems with Applications<span class="pub">Elsevier · Q1</span></td>
+          <td class="n">9.4</td><td class="n">$0</td>
+          <td class="wide">Its bar is application credibility, not benchmark supremacy — it published a 2025 violence-detection paper whose selling point was embedded deployability, not accuracy. The blocker is framing: a title reading “A Multi-Backbone Study” triggers its fastest desk reject, “application invisibility.” Roughly 10% as-is, 30–40% after an application-first rewrite with a deployment figure, operational metrics and an accuracy-vs-compute Pareto plot. <strong>Engineering Applications of AI</strong> (9.0) is a near-identical alternate — one application-framed manuscript serves both.</td>
+          <td><span class="chip r">Reach</span></td>
+        </tr>
+        <tr>
+          <td class="name wide">IEEE TCSVT<span class="pub">Q1 EE 13/369</span></td>
+          <td class="n">10.8</td><td class="n">$0 + page charges</td>
+          <td class="wide">The most on-topic IEEE venue and therefore the one with the bar set by its own publications. A 5–8 point gap to the field will draw a first-round “not competitive” rejection regardless of rigour. Mandatory over-length charges of $110–175/page on top.</td>
+          <td><span class="chip x">No</span></td>
+        </tr>
+        <tr>
+          <td class="name wide">IEEE Transactions on Multimedia<span class="pub">Q1 ×3</span></td>
+          <td class="n">9.9</td><td class="n">$0 + $220/pp &gt;8</td>
+          <td class="wide">Natural home for multimodal fusion, but this is where audio-visual VAD lives — every reviewer will ask why you did not use XD-Violence's audio. Mandatory page charges make a 12-page paper cost ~$880.</td>
+          <td><span class="chip x">No</span></td>
+        </tr>
+        <tr>
+          <td class="name wide">Pattern Recognition<span class="pub">Q1</span></td>
+          <td class="n">9.1</td><td class="n">$0</td>
+          <td class="wide">Ruled out on the bar, and separately on prior art — it published the RGB+skeleton VAD paper described in section 9.</td>
+          <td><span class="chip x">No</span></td>
+        </tr>
+        <tr>
+          <td class="name wide">TIP 15.3 · IJCV 10.3 · TPAMI 20.4 · Information Fusion 17.4<span class="pub">the prestige tier</span></td>
+          <td class="n">—</td><td class="n">$0</td>
+          <td class="wide">Closed. These expect a novel formulation with theoretical depth plus strong empirical results; below-SOTA numbers are disqualifying and none has a recognised slot for empirical studies or standalone negative results.</td>
+          <td><span class="chip x">No</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>If you want one Q1 line on the CV and are willing to spend two weeks finding out, Neurocomputing is the rational lottery ticket — the 8-day desk median makes failure cheap. Take it <em>instead of</em> CVIU, not before it, since the two require incompatible reframes.</p>
+</section>
+
+<!-- ============================================ -->
+<section id="traps">
+  <h2>6 · Ruled out, and four traps</h2>
+
+  <div class="note alert">
+    <div class="eyebrow">Raise this with your advisor</div>
+    <p><strong>Multimedia Tools and Applications is no longer an SCI journal.</strong> Clarivate removed it from the Web of Science Core Collection in the October 2024 update. Searching its ISSN on the Master Journal List today returns zero results while control searches return exact matches, and Springer's own indexing list no longer names SCIE. It carries no impact factor and no quartile.</p>
+    <p>This matters because MTAP is Prof. Yang's dominant venue — <strong>15 of his 40 indexed journal papers</strong>, spanning 2008 to 2026, including one published after the delisting. If the lab default is to send multimedia work there, that default no longer produces an SCI paper. Signal, Image and Video Processing has already absorbed the overflow and is his active SCIE outlet.</p>
+  </div>
+
+  <h3>Trap 1 — the ESCI journals that look like SCIE</h3>
+  <p>Since JCR 2023, ESCI journals carry impact factors and quartiles, so metrics sites display them identically to SCIE titles. Four venues you would otherwise consider are ESCI, verified individually on the Master Journal List:</p>
+  <ul>
+    <li><strong>Journal of Imaging</strong> (MDPI) — JIF 3.8, advertised as “JCR-Q2”, but ESCI. Painful, because it is the single best topical match found: it published two CLIP-based weakly supervised VAD papers on your exact two datasets.</li>
+    <li><strong>Big Data and Cognitive Computing</strong> (MDPI) — JIF 5.3, advertised “JCR-Q1”, still ESCI. The starkest case.</li>
+    <li><strong>Information</strong> (MDPI) — JIF 4.3, “JCR-Q2”, ESCI.</li>
+    <li><strong>Frontiers in Computer Science</strong> — JIF 3.4, ESCI.</li>
+  </ul>
+  <p>MDPI's own pages give the game away if you read closely: they write “SCIE (Web of Science)” for Sensors, Applied Sciences and Electronics, and “ESCI (Web of Science)” for the four above. Confirm with your department whether its rule is “SCIE” or “JCR-indexed with an impact factor” — the answer decides whether Journal of Imaging is eligible.</p>
+
+  <h3>Trap 2 — the best-category headline</h3>
+  <p>Aggregators print a multi-category journal's <em>best</em> quartile. Image and Vision Computing is widely listed as Q1; it is Q1 in Software Engineering, Theory &amp; Methods and Optics, and Q2 in Computer Science, Artificial Intelligence — the category anyone assessing a vision paper will actually look up, where it has been Q2 every year since 2013. The same trap applies to JVCIR, Multimedia Systems and PeerJ Computer Science, all of which are Q2 in one category and Q3 in another.</p>
+
+  <h3>Trap 3 — journals that lost or may lose coverage</h3>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Journal</th><th class="wide">Status, verified 3 Aug 2026</th></tr></thead>
+      <tbody>
+        <tr><td class="name">Multimedia Tools and Applications</td><td class="wide">Delisted from WoS Core, Oct 2024. No JIF, no quartile. Still Scopus-indexed.</td></tr>
+        <tr><td class="name">Neural Computing and Applications</td><td class="wide">Zero hits on the Master Journal List under both ISSNs; no SCIE on Springer's own indexing list; no impact factor displayed. Delisted, though no Clarivate announcement naming it could be found. <strong>Have the NTUST library confirm ISSN 0941-0643 in JCR before relying on this.</strong></td></tr>
+        <tr><td class="name">Journal of Ambient Intelligence and Humanized Computing</td><td class="wide">Absent from WoS Core entirely — no JIF, no quartile, no coverage.</td></tr>
+        <tr><td class="name">Soft Computing</td><td class="wide">Still SCIE, but flagged <strong>On Hold</strong> by Clarivate — under re-evaluation, new content not being indexed while the review runs. Historically most on-hold journals are eventually removed.</td></tr>
+        <tr><td class="name">Alexandria Engineering Journal</td><td class="wide"><strong>On Hold</strong> in WoS, and separately has no Scopus CiteScore 2025 while controls populate. High risk on both databases.</td></tr>
+        <tr><td class="name">Heliyon</td><td class="wide">Cleared — it was placed on hold in Sept 2024 but is listed under SCIE today with no hold flag. Not delisted. Weak CS reputation remains a separate reason to avoid it.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Trap 4 — venues that fail the stated Q2/Q3 goal</h3>
+  <ul>
+    <li><strong>Journal of Information Science and Engineering</strong> (Academia Sinica) — SCIE and free, but <strong>Q4</strong> (228/266, JIF 0.9, down 18%), plus a mandatory $100 per page beyond 12. Keep only as a guaranteed-landing safety net, and argue it on accessibility, never on quartile.</li>
+    <li><strong>IET Computer Vision</strong> — Q4 in both categories, JIF 1.4. Despite the name, it is the weaker of the two IET titles by a wide margin.</li>
+    <li><strong>Journal of Electronic Imaging</strong> (SPIE) — Q4 in all three categories, JIF 1.0.</li>
+    <li><strong>IEICE Transactions on Information and Systems</strong>, <strong>KSII TIIS</strong>, <strong>IJPRAI</strong> — all Q4.</li>
+  </ul>
+</section>
+
+<!-- ============================================ -->
+<section id="cost">
+  <h2>7 · What it actually costs you</h2>
+
+  <p>Read verbatim from the NTUST library's open-access page (library.ntust.edu.tw, Traditional Chinese), current as of today. <strong>Every arrangement requires the corresponding author to be NTUST-affiliated</strong> — settle authorship roles before submission.</p>
+
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Publisher</th><th class="wide">NTUST arrangement</th><th>What it means for you</th></tr></thead>
+      <tbody>
+        <tr><td class="name">Springer Nature</td><td class="wide">Free APC on <strong>hybrid</strong> journals. 52 slots in 2026 — the page still reads “剩餘：3” as of 21 July and has not been refreshed since. 53 slots open 1 Jan 2027.</td><td>Treat the 2026 quota as exhausted. Irrelevant anyway: the subscription route is already free.</td></tr>
+        <tr><td class="name">Wiley</td><td class="wide">Free APC on <strong>hybrid</strong> journals. 29 slots 2026, 30 in 2027.</td><td>Does <strong>not</strong> cover IET Image Processing — that title is fully gold OA, not hybrid.</td></tr>
+        <tr><td class="name">Elsevier</td><td class="wide">10% discount only. No free-APC slots.</td><td>Moot — take the subscription route and pay $0.</td></tr>
+        <tr><td class="name">IEEE</td><td class="wide">Reduced rates: US$1,728 gold OA, US$2,240 hybrid.</td><td>IEEE Access drops from $2,160 to $1,728. No over-length charges at Access specifically.</td></tr>
+        <tr><td class="name">MDPI</td><td class="wide">No library subsidy. NTUST is an MDPI IOAP participant (since 2020) but billing is “non-central: invoiced to author” with an undisclosed discount.</td><td>Budget close to list. CHF 2,600 for Sensors is ≈ $3,210 at today's rate, not $2,600 — every aggregator converts CHF at 1:1, which is stale by about 24%.</td></tr>
+        <tr><td class="name">Cambridge · IOP · ACS</td><td class="wide">Full waivers / full coverage.</td><td>No relevant venues in this field.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="scroll">
+    <table>
+      <caption>Out-of-pocket cost by target, verified against Elsevier's April 2026 price file, Springer's per-journal pages, and publisher APC pages.</caption>
+      <thead><tr><th>Cost</th><th class="wide">Venues</th></tr></thead>
+      <tbody>
+        <tr><td class="n"><strong>$0</strong></td><td class="wide">Image and Vision Computing · CVIU · JVCIR · Pattern Recognition Letters · Neurocomputing · SPIC · SIViP · The Visual Computer · Multimedia Systems · Machine Vision and Applications · Pattern Analysis and Applications · ETRI Journal (genuinely free, not merely hybrid) · JISE base rate</td></tr>
+        <tr><td class="n">$1,510</td><td class="wide">PeerJ Computer Science via 2 × lifetime membership at $755 (every author needs one). The flat APC is $2,155 — DOAJ's $1,395 figure is stale.</td></tr>
+        <tr><td class="n">$1,728</td><td class="wide">IEEE Access at the NTUST rate. Check Prof. Yang's IEEE membership grade — an IEEE <em>Society</em> membership is worth a further 20%, plain membership 5%, student grade nothing.</td></tr>
+        <tr><td class="n">$2,090</td><td class="wide">Journal on Image and Video Processing</td></tr>
+        <tr><td class="n">$2,800</td><td class="wide">IET Image Processing — mandatory, no free route, Wiley deal does not apply</td></tr>
+        <tr><td class="n">~$3,210</td><td class="wide">Sensors</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <div class="eyebrow">One email, before you write anything</div>
+    <p>Ask the NTUST library in writing: (a) does the Wiley agreement cover IET-branded titles, specifically IET Image Processing, ISSN 1751-9667; (b) does the library hold an IEEE institutional deposit account that pays IEEE Access APCs; (c) is any Springer 2026 quota actually left. The answers reorder the paid half of this list. And ask Prof. Yang whether NSTC project funds cover APCs — in Taiwan they usually do, which would put IET Image Processing back in play as the best topical fit on the whole survey.</p>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<section id="work">
+  <h2>8 · What the manuscript needs first</h2>
+
+  <p>The same upgrades keep appearing across independent venue assessments. Ranked by return per unit of GPU time, not by effort.</p>
+
+  <ol class="stack">
+    <li><strong>Matched-protocol baseline re-runs.</strong> Re-run Sultani-MIL and RTFM inside your own harness — same splits, same snippet count, same three seeds, same 64-frame exclusion rule — and report them beside your 82.5%. This converts the fatal framing “82.5 versus 88–91 reported” into the survivable and more honest “under identical protocol, ours versus their reproduction.” Your existing XD sweep and RTFM repro-gap work is the seed. <em>Nothing else moves the odds this much, and it serves every venue simultaneously.</em></li>
+
+    <li><strong>An external baseline under corruption.</strong> Right now +1.2pp mean / +13.2pp max is your method against your own model on your own benchmark. Run one reimplemented external baseline over the identical corrupted feature caches. If reliability reweighting also lifts a baseline it is a method; if it lifts only yours it is a tuning artifact. Demanded at every venue assessed.</li>
+
+    <li><strong>Add ShanghaiTech.</strong> Cheapest way to kill the “only two datasets” objection, which was named at almost every venue. Mandatory at IET Image Processing, where every VAD paper reports three to five datasets.</li>
+
+    <li><strong>Report an online/causal TTA variant alongside the transductive one.</strong> Pooling reliability statistics over a whole corruption condition is attackable as a test-set statistics leak. As written, that objection is fatal at the Q1 venues and embarrassing anywhere. Quantify what changes under a streaming protocol.</li>
+
+    <li><strong>Accuracy-per-cost Pareto.</strong> Trainable parameters, total parameters, FLOPs per snippet, peak VRAM, training wall-clock, inference FPS — for your four backbones and for the published competitors. A scatter of UCF AUC against trainable parameters puts you on a frontier instead of at the bottom of a leaderboard. Costs no new training.</li>
+
+    <li><strong>Paired significance tests everywhere.</strong> You already have the right instinct with the 8/8 sign test at p=0.008 for complementarity. Extend it systematically, report effect sizes and confidence intervals rather than bare deltas, and give the full 20-condition distribution rather than mean and max — a +13.2pp maximum next to a +1.2pp mean invites a cherry-picking charge that owning the variance defuses.</li>
+
+    <li><strong>Mechanism for the TTA null</strong>, if you go to CVIU or The Visual Computer. “AUC moves &lt;0.1pp” is an observation; CVIU rejects observations. Instrument the LayerNorm head: gradient magnitude reaching the affine parameters, entropy before and after adaptation, fraction of snippet scores whose rank actually flips, and a BatchNorm-equipped control proving the null is structural rather than a tuning failure. This is the single highest-value experiment for the venues that most reward your negative result.</li>
+
+    <li><strong>Fix the Figure 2 erratum</strong> — RoadAccidents127 is anti-aligned with ground truth; use Fighting047, as the talk deck already does.</li>
+  </ol>
+
+  <div class="note">
+    <div class="eyebrow">Good news on prior publication</div>
+    <p><strong>CGW '26 is non-archival by written policy.</strong> Its call for papers states that accepted regular papers are disclosed only by the presenter at the conference and are “not included on the website or in the conference handbook” — no proceedings, no DOI, no ACM Digital Library or IEEE Xplore record, and the same clause appears in CGW 2025. You are extending an unpublished talk, not an indexed paper, so no duplicate-publication rule is triggered and no formal new-material quota applies.</p>
+    <p>Disclose it in the cover letter anyway — Elsevier's ethics policy explicitly exempts “a published lecture or academic thesis,” which covers both the talk and your 128-page thesis. Where a journal states its own threshold (Computers &amp; Graphics and The Visual Computer both say 30% new content), meet it regardless; it is the safe posture and you have far more than enough thesis material.</p>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<section id="priorart">
+  <h2>9 · Prior art you must cite</h2>
+
+  <div class="note alert">
+    <p><strong>Chen, Cao, Liu, Liu, Zhao and Liu — “Cross-modal attention fusion of RGB and skeleton for multimodal-driven video anomaly detection.”</strong> Pattern Recognition, volume 179, article 113815. DOI <code>10.1016/j.patcog.2026.113815</code>. Online 21 April 2026, print November 2026.</p>
+    <p>Confirmed to exist via Crossref and OpenAlex. Its reported numbers could not be retrieved — ScienceDirect blocked every route attempted, and neither Crossref, OpenAlex nor Semantic Scholar carries an abstract for it. <strong>Get the PDF through the NTUST library and read it before you submit anywhere.</strong> Unaddressed, it is blocking prior art in a Q1 venue for what a reviewer will read as your core idea.</p>
+    <p>Your differentiators are real and should be stated explicitly: it fuses RGB with skeleton, you fuse a frozen <em>vision-language</em> backbone with skeleton; you freeze both encoders and train 0.5–1.0M parameters; you compare four backbones under one protocol; and you add corruption robustness and test-time adaptation, which it does not.</p>
+  </div>
+
+  <p>Two further items from the sweep:</p>
+  <ul>
+    <li><strong>Skeleton-based ST-GCN + MIL on UCF-Crime</strong>, Smart Media Journal 15(6):130, 2026 — skeleton-only weakly supervised anomaly detection at 0.8368 AUC, above your 82.5%. Not SCIE-indexed, so it is not a venue signal, but it is a citation you should not be caught missing.</li>
+    <li><strong>Shin et al., IEEE Open Journal of the Computer Society 2025</strong> — often surfaced as skeleton prior art; it is not. It fuses RGB, optical flow and audio with no pose modality at all. Cite it as multimodal WS-VAD, not as skeleton work.</li>
+  </ul>
+</section>
+
+<!-- ============================================ -->
+<section id="method">
+  <h2>10 · How this was built, and what stayed unverified</h2>
+
+  <p>Twenty research agents across two passes: a discovery sweep by publisher family plus scope-evidence, Q1-reach and local-context sweeps, then an adversarial verification pass instructed to refute rather than confirm. Roughly 2.4 million tokens and 1,550 tool calls. Nine claims from the first pass were overturned by the second.</p>
+
+  <dl class="rows">
+    <dt>Metrics vintage</dt>
+    <dd>All impact factors and quartiles are 2025 JIFs from the JCR 2026 edition, released 17 June 2026. Aggregators label the same number the “2026 impact factor” — same value, different convention. The unambiguous phrasing for a committee is “JIF released June 2026, 2025 citation year.”</dd>
+
+    <dt>Quartile source</dt>
+    <dd>Per-category JCR ranks were read from JCR journal profiles, not from Scimago. SJR quartiles routinely differ by one level and are frequently mislabelled as JCR by aggregator sites — IET Image Processing is Q3 under JCR and Q2 under SJR, and SPIC likewise. Confirm which system NTUST uses.</dd>
+
+    <dt>Indexing</dt>
+    <dd>Every SCIE-versus-ESCI determination came from the Clarivate Master Journal List with all index filters active, with positive and negative controls run in the same session to rule out filter and rendering artifacts.</dd>
+
+    <dt>Acceptance rates</dt>
+    <dd>Publisher-stated for only three venues in the entire survey: IET Image Processing (33%), IEEE Access (20%) and PeerJ Computer Science (33%). Every other acceptance-rate figure circulating online is an aggregator estimate. None are quoted here.</dd>
+
+    <dt>Not verified</dt>
+    <dd>The Pattern Recognition 2026 paper's reported numbers (ScienceDirect blocked all retrieval routes). The exact date MTAP lost SCIE coverage — the status is established, the timing is not. Neural Computing and Applications' delisting mechanism, which has no announcement behind it. ETRI Journal's and PeerJ's review-speed figures, which their publishers simply do not publish. MDPI per-journal acceptance rates, which are rendered in a JavaScript widget behind bot protection.</dd>
+
+    <dt>One internal disagreement</dt>
+    <dd>One agent asserted the CGW '26 paper is indexed in the ACM Digital Library and treated it as prior publication. That is contradicted by CGW's own call for papers, quoted verbatim in section 8, which states the opposite. The primary source wins, but if you have an ACM DL record for the paper, tell me and section 8 changes.</dd>
+  </dl>
+
+  <details>
+    <summary>Full screening breadth</summary>
+    <div class="stack" style="margin-top:.5rem">
+      <p>133 distinct journals were assessed across IEEE, Elsevier, Springer, Wiley/IET/Taylor &amp; Francis, MDPI and open-access publishers, plus regional SCIE titles from Taiwan, Korea, Japan and China. A dedicated completeness pass hunted for missed venue families and surfaced Machine Learning (Springer, Q2, free subscription route) as the one place a null result is an asset rather than a liability — noted here for completeness, though it is a genuine reach.</p>
+      <p>The venues that institutionalise negative results as an article type — TMLR, ReScience C, the NeurIPS and ICLR reproducibility tracks, Cambridge's Experimental Results — are all outside JCR and therefore ineligible under an SCI requirement.</p>
+    </div>
+  </details>
+</section>
+
+<footer class="doc">
+  <p>Prepared for the ViolenceCC thesis project, National Taiwan University of Science and Technology. Verify any figure against Clarivate JCR through the NTUST library subscription before quoting it in a cover letter, a committee document, or a funding form.</p>
+</footer>
+
+</div>
+
+</body>
+</html>
