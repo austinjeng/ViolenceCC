@@ -1,6 +1,6 @@
 # SCI Journal Placement Survey — 2026-08-03
 
-**Subject:** `paper/main.tex` — "Dual-Modal Skeleton-Visual Fusion for Weakly Supervised
+**Subject:** `paper/main.tex` (11pp, ACM sigconf) — "Dual-Modal Skeleton-Visual Fusion for Weakly Supervised
 Violence Detection: A Multi-Backbone Study" (Jeng & Yang, NTUST), presented at CGW '26.
 **Requested by:** thesis advisor (Prof. Chuan-Kai Yang) — survey of submittable SCI journals.
 **Goal:** SCIE-indexed venue, Q2/Q3 target, Q1 evaluated honestly, minimal cost.
@@ -408,8 +408,9 @@ Named independently by multiple venue assessments.
    before/after adaptation, fraction of snippet scores whose rank flips, plus a
    BatchNorm-equipped control proving the null is structural, not a tuning failure. Harness
    exists (`scripts/_tmp_tta_harness.py`).
-8. **Fix the Figure 2 erratum** — RoadAccidents127 is anti-aligned with GT; use Fighting047
-   (already tracked in memory `project_cgw_talk_2026-07-07`).
+8. ~~Fix the Figure 2 erratum~~ — **already done**; `paper/main.tex:270` uses Fighting047 and
+   `thesis/chapters/ch05_results_fusion.tex:431` records that it supersedes the
+   RoadAccidents127 erratum. Listed here in error on 2026-08-03; corrected 2026-08-04.
 
 ### Prior publication: CGW '26 is non-archival
 
