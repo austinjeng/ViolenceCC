@@ -7,6 +7,8 @@
   Knowledge artifact. Self-contained: no network access required.
   Compiled 2026-08-03 from the 20-agent journal placement survey
   (discovery workflow wf_a0ebe9a4-808, verification workflow wf_c783879f-d77).
+  Updated 2026-08-04: Pattern Recognition 179:113815 read directly; prior-art
+  flag CLEARED (unsupervised, no benchmark overlap) - see section 9.
   Source of record: .planning/JOURNAL-SURVEY-2026-08-03.md
   Also published as a Claude Artifact; this is the durable local copy.
 -->
@@ -248,7 +250,7 @@
   <h1>Where to submit the dual-modal skeleton–visual violence detection paper</h1>
   <p class="sub">SCIE-indexed targets in Q2 and Q3, with an honest evaluation of Q1. Built from live verification against Clarivate's Master Journal List, JCR 2026 (2025 JIF, released 17 June 2026), publisher pricing files, and the NTUST library's own open-access page.</p>
   <div class="meta">
-    <span>Compiled 3 August 2026</span>
+    <span>Compiled 3 August 2026 · prior-art check resolved 4 August</span>
     <span>133 journals screened · 20 assessed in depth</span>
     <span>All quartiles are JCR, not SJR</span>
   </div>
@@ -264,7 +266,7 @@
     <li><a href="#traps">Ruled out, and four traps</a></li>
     <li><a href="#cost">What it actually costs you</a></li>
     <li><a href="#work">What the manuscript needs first</a></li>
-    <li><a href="#priorart">Prior art you must cite</a></li>
+    <li><a href="#priorart">Prior art — checked and cleared</a></li>
     <li><a href="#method">How this was built, and what stayed unverified</a></li>
   </ol>
 </nav>
@@ -740,12 +742,19 @@
 
 <!-- ============================================ -->
 <section id="priorart">
-  <h2>9 · Prior art you must cite</h2>
+  <h2>9 · Prior art — checked and cleared</h2>
 
-  <div class="note alert">
-    <p><strong>Chen, Cao, Liu, Liu, Zhao and Liu — “Cross-modal attention fusion of RGB and skeleton for multimodal-driven video anomaly detection.”</strong> Pattern Recognition, volume 179, article 113815. DOI <code>10.1016/j.patcog.2026.113815</code>. Online 21 April 2026, print November 2026.</p>
-    <p>Confirmed to exist via Crossref and OpenAlex. Its reported numbers could not be retrieved — ScienceDirect blocked every route attempted, and neither Crossref, OpenAlex nor Semantic Scholar carries an abstract for it. <strong>Get the PDF through the NTUST library and read it before you submit anywhere.</strong> Unaddressed, it is blocking prior art in a Q1 venue for what a reviewer will read as your core idea.</p>
-    <p>Your differentiators are real and should be stated explicitly: it fuses RGB with skeleton, you fuse a frozen <em>vision-language</em> backbone with skeleton; you freeze both encoders and train 0.5–1.0M parameters; you compare four backbones under one protocol; and you add corruption robustness and test-time adaptation, which it does not.</p>
+  <div class="note">
+    <div class="eyebrow">Resolved — read 4 August 2026</div>
+    <p><strong>Chen, Cao, Liu, Liu, Zhao and Liu — “Cross-modal attention fusion of RGB and skeleton for multimodal-driven video anomaly detection” (CMAF-Net).</strong> Pattern Recognition, volume 179 Part C, article 113815, November 2026. DOI <code>10.1016/j.patcog.2026.113815</code>. Part of the <em>Multimodal Video</em> special issue.</p>
+    <p><strong>It is not blocking prior art.</strong> The survey flagged it on title alone, because ScienceDirect blocked every automated retrieval route. Read directly, it turns out to solve a different problem in a different paradigm on different data:</p>
+    <ul>
+      <li><strong>Fully unsupervised, not weakly supervised.</strong> Its own introduction draws the line for you: weakly supervised multimodal methods “require video-level annotations during training, whereas CMAF-Net operates in the fully unsupervised setting, learning exclusively from easy-to-collect normal samples without any anomalies and labels.” One-class training on normal data only — not MIL, and not our problem statement.</li>
+      <li><strong>Zero benchmark overlap.</strong> It evaluates on UCSD Ped2, CUHK Avenue, ShanghaiTech, HR-ShanghaiTech and NWPU. Neither UCF-Crime nor XD-Violence appears. There is no number in that paper that competes with 82.5% / 78.7%.</li>
+      <li><strong>Trained encoders, no vision-language model.</strong> A Mamba RGB encoder and a GCN skeleton encoder are learned end-to-end with bidirectional cross-modal attention, supervised by future-frame prediction plus normalizing-flow density estimation. No CLIP, no SigLIP2, no frozen-backbone constraint, no test-time adaptation, no corruption robustness.</li>
+    </ul>
+    <p><strong>What to do with it:</strong> cite it in related work as the unsupervised cross-modal counterpart, and state the delta in one sentence — unsupervised one-class density modelling with trained encoders on pedestrian benchmarks, versus weakly supervised MIL over frozen vision-language and skeleton encoders on UCF-Crime and XD-Violence. It strengthens the paper rather than threatening it: a Q1 venue publishing RGB+skeleton fusion in 2026 is evidence the modality pairing is live, and the weakly supervised half of that space is visibly unoccupied.</p>
+    <p>One incidental observation, useful if you ever cite it precisely: its abstract says “four benchmark datasets” while its contribution list and experiments section both say five. Follow the experiments section.</p>
   </div>
 
   <p>Two further items from the sweep:</p>
@@ -775,7 +784,10 @@
     <dd>Publisher-stated for only three venues in the entire survey: IET Image Processing (33%), IEEE Access (20%) and PeerJ Computer Science (33%). Every other acceptance-rate figure circulating online is an aggregator estimate. None are quoted here.</dd>
 
     <dt>Not verified</dt>
-    <dd>The Pattern Recognition 2026 paper's reported numbers (ScienceDirect blocked all retrieval routes). The exact date MTAP lost SCIE coverage — the status is established, the timing is not. Neural Computing and Applications' delisting mechanism, which has no announcement behind it. ETRI Journal's and PeerJ's review-speed figures, which their publishers simply do not publish. MDPI per-journal acceptance rates, which are rendered in a JavaScript widget behind bot protection.</dd>
+    <dd>The exact date MTAP lost SCIE coverage — the status is established, the timing is not. Neural Computing and Applications' delisting mechanism, which has no announcement behind it. ETRI Journal's and PeerJ's review-speed figures, which their publishers simply do not publish. MDPI per-journal acceptance rates, which are rendered in a JavaScript widget behind bot protection.</dd>
+
+    <dt>Since resolved</dt>
+    <dd>The Pattern Recognition 2026 paper — flagged unverified on 3 August because every automated route to ScienceDirect was blocked, then read directly in a browser on 4 August. It is unsupervised, uses none of our benchmarks, and is not blocking prior art. See section 9. This is the one place where the survey's automated tooling produced a false alarm, and it is worth noting why: a title match plus an inaccessible body is weak evidence, and the survey correctly labelled it as such rather than asserting a collision.</dd>
 
     <dt>One internal disagreement</dt>
     <dd>One agent asserted the CGW '26 paper is indexed in the ACM Digital Library and treated it as prior publication. That is contradicted by CGW's own call for papers, quoted verbatim in section 8, which states the opposite. The primary source wins, but if you have an ACM DL record for the paper, tell me and section 8 changes.</dd>
