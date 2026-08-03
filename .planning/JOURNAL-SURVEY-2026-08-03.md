@@ -424,7 +424,7 @@ applies. No CGW journal special issue or fast-track exists either.
 
 Disclose it in the cover letter regardless; Elsevier's ethics policy explicitly exempts
 *"an abstract or as part of a published lecture or academic thesis or as an electronic
-preprint"*, covering both the talk and the 128-page thesis. Where a journal states its own
+preprint"*, covering both the talk and the 95-page thesis. Where a journal states its own
 threshold (Computers & Graphics and The Visual Computer both say 30% new content), meet it
 anyway — the thesis supplies far more than enough.
 
