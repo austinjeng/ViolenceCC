@@ -96,3 +96,6 @@ thesis/*.lot
 .playwright-cli/
 .qa_tmp/
 .pytest_tmp/
+
+# Personal documents — never commit (signed committee forms; purged from remote history 2026-08-31)
+審定書和推薦書.pdf
