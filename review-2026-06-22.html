@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ViolenceCC — Code &amp; Thesis Review · 2026-06-22</title>
+<style>
+:root{
+  --bg:#faf9f7; --panel:#ffffff; --ink:#1f1d1a; --ink2:#55504a; --ink3:#8a847c;
+  --line:#e9e5df; --line2:#f1eee9;
+  --accent:#cc785c; --accent-soft:#f5e8e3;
+  --accent2:#5a7d9a;
+  --skel:#4f9d7e; --clip:#4361ee; --fuse:#7b5ea7;
+  --high:#c0392b; --high-bg:#fbeae7;
+  --low:#b8860b; --low-bg:#fbf3df;
+  --info:#5a6b7a; --info-bg:#eef1f4;
+  --clean:#2f8a5b; --clean-bg:#e7f4ec;
+  --refute:#9a9088; --refute-bg:#f1efec;
+  --radius:14px; --radius-s:8px;
+  --mono:'SF Mono','Cascadia Code','JetBrains Mono','Consolas',monospace;
+  --sans:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;
+  --shadow:0 1px 2px rgba(40,30,20,.04),0 6px 24px rgba(40,30,20,.06);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);line-height:1.62;font-size:15.5px;
+  -webkit-font-smoothing:antialiased;padding-bottom:80px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+code{font-family:var(--mono);font-size:.86em;background:var(--line2);padding:1.5px 6px;border-radius:5px;color:#7a5240;word-break:break-word}
+
+/* hero */
+header.hero{background:linear-gradient(160deg,#2b2722 0%,#3a332b 60%,#473b30 100%);color:#f3efe9;padding:60px 0 52px;border-bottom:3px solid var(--accent)}
+.hero .wrap{position:relative}
+.eyebrow{font-size:12.5px;letter-spacing:.16em;text-transform:uppercase;color:#d8b9a8;font-weight:600;margin-bottom:14px}
+.hero h1{font-size:2.45rem;font-weight:760;letter-spacing:-.02em;line-height:1.1;margin-bottom:14px}
+.hero p.sub{font-size:1.06rem;color:#d3cabf;max-width:760px}
+.hero .meta{margin-top:22px;display:flex;flex-wrap:wrap;gap:10px 22px;font-size:13.5px;color:#bcae9f}
+.hero .meta b{color:#efe7dc;font-weight:600}
+
+/* verdict banner */
+.verdict{margin:-30px auto 0;position:relative;z-index:2}
+.verdict .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:26px 30px;border-left:5px solid var(--clean)}
+.verdict h2{font-size:1.18rem;font-weight:700;display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.verdict h2 .dot{width:11px;height:11px;border-radius:50%;background:var(--clean);box-shadow:0 0 0 4px var(--clean-bg)}
+.verdict p{color:var(--ink2);font-size:15px}
+.verdict p+p{margin-top:10px}
+
+/* stat grid */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:34px 0 8px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-s);padding:16px 18px}
+.stat .n{font-size:1.9rem;font-weight:740;letter-spacing:-.02em;line-height:1}
+.stat .l{font-size:12.5px;color:var(--ink3);margin-top:6px;line-height:1.35}
+.stat.good .n{color:var(--clean)} .stat.warn .n{color:var(--high)} .stat.mid .n{color:var(--low)}
+
+section{margin-top:48px}
+h2.sec{font-size:1.5rem;font-weight:720;letter-spacing:-.015em;margin-bottom:6px;display:flex;align-items:baseline;gap:12px}
+h2.sec .tag{font-size:12px;font-weight:600;color:var(--ink3);letter-spacing:.04em}
+.lead{color:var(--ink2);margin-bottom:22px;max-width:820px}
+
+/* methodology box */
+.method{background:#fffdfa;border:1px solid var(--line);border-radius:var(--radius);padding:22px 26px}
+.method ul{list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px 26px;margin-top:6px}
+.method li{padding-left:24px;position:relative;font-size:14px;color:var(--ink2)}
+.method li::before{content:"";position:absolute;left:0;top:8px;width:9px;height:9px;border-radius:2px;background:var(--accent)}
+.method li b{color:var(--ink);font-weight:600}
+
+/* priority cards */
+.pcard{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--high);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px 28px;margin-bottom:18px}
+.pcard.resolved{border-left-color:var(--clean)}
+.resolved-note{background:var(--clean-bg);border:1px solid #bfe3cd;border-radius:var(--radius-s);padding:12px 16px;font-size:14px;color:#1d5236;margin-top:12px}
+.resolved-note b{color:#13402a}
+.b-resolved{background:var(--clean);color:#fff;font-weight:700}
+.f.resolved-f{border-left-color:var(--clean)!important}
+.pcard .ph{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:12px}
+.pcard h3{font-size:1.16rem;font-weight:700;letter-spacing:-.01em;flex:1;min-width:60%}
+.pcard .body p{margin-bottom:10px;color:var(--ink2);font-size:14.5px}
+.pcard .kv{font-size:13px;color:var(--ink3);margin-bottom:14px;font-family:var(--mono);word-break:break-word}
+.fix{background:var(--clean-bg);border:1px solid #cfe7d8;border-radius:var(--radius-s);padding:12px 16px;font-size:14px;color:#22573a}
+.fix b{color:#184a30}
+.evid{background:var(--line2);border-radius:var(--radius-s);padding:12px 16px;font-size:13px;color:var(--ink2);font-family:var(--mono);line-height:1.55;margin-bottom:12px;white-space:pre-wrap;word-break:break-word}
+
+/* badges */
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:650;padding:3px 9px;border-radius:20px;letter-spacing:.02em;white-space:nowrap}
+.b-high{background:var(--high-bg);color:var(--high)}
+.b-low{background:var(--low-bg);color:var(--low)}
+.b-info{background:var(--info-bg);color:var(--info)}
+.b-clean{background:var(--clean-bg);color:var(--clean)}
+.b-confirmed{background:#efe7e2;color:#8a5a44;border:1px solid #e2d3ca}
+.b-partial{background:#eef1f4;color:#566;border:1px solid #dfe4ea}
+.b-refuted{background:var(--refute-bg);color:var(--refute);border:1px solid #e3ddd6}
+.b-area{background:#f3f0ec;color:#6b645c;border:1px solid #e9e4dd}
+.b-disc{background:#fff;color:#9a9088;border:1px dashed #cfc8bf}
+
+/* filter + table */
+.filterbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;align-items:center}
+.filterbar .lbl{font-size:12.5px;color:var(--ink3);margin-right:4px;font-weight:600}
+.fbtn{font-family:var(--sans);font-size:13px;font-weight:600;padding:6px 13px;border-radius:20px;border:1px solid var(--line);background:var(--panel);color:var(--ink2);cursor:pointer;transition:all .15s}
+.fbtn:hover{border-color:var(--accent);color:var(--accent)}
+.fbtn.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+.flist{display:flex;flex-direction:column;gap:10px}
+.f{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:15px 18px;transition:box-shadow .15s}
+.f:hover{box-shadow:var(--shadow)}
+.f .fh{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.f .fid{font-family:var(--mono);font-size:12px;color:var(--ink3);font-weight:600}
+.f .ft{font-weight:640;font-size:14.6px;flex:1;min-width:55%}
+.f .fexp{cursor:pointer;color:var(--ink3);font-size:18px;line-height:1;user-select:none;padding:0 4px}
+.f .fd{margin-top:11px;padding-top:12px;border-top:1px dashed var(--line);font-size:13.6px;color:var(--ink2);display:none}
+.f.open .fd{display:block}
+.f .fd .loc{font-family:var(--mono);font-size:12px;color:var(--ink3);margin-bottom:8px;word-break:break-word}
+.f .fd p{margin-bottom:9px}
+.f .fd .fix{margin-top:6px}
+.f.clean{border-left:4px solid var(--clean)}
+.f.high{border-left:4px solid var(--high)}
+.f.low{border-left:4px solid var(--low)}
+.f.info{border-left:4px solid var(--info)}
+
+/* dimension table */
+table.dim{width:100%;border-collapse:collapse;font-size:13.8px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+table.dim th,table.dim td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line2);vertical-align:top}
+table.dim th{background:#f7f4f0;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink3);font-weight:700}
+table.dim tr:last-child td{border-bottom:none}
+table.dim td.d{font-weight:650;white-space:nowrap;color:var(--ink)}
+table.dim td.v{color:var(--clean);font-weight:650;white-space:nowrap}
+table.dim td.s{color:var(--ink2);font-size:13.2px}
+
+.note{font-size:13px;color:var(--ink3);margin-top:14px;font-style:italic}
+footer{margin-top:60px;border-top:1px solid var(--line);padding-top:24px;color:var(--ink3);font-size:13px}
+.refuted-grid{display:grid;grid-template-columns:1fr;gap:8px}
+.rf{background:var(--refute-bg);border:1px solid #e8e2db;border-radius:8px;padding:12px 16px;font-size:13.4px;color:var(--ink2)}
+.rf b{color:var(--ink)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--ink3);margin-bottom:16px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+@media(max-width:640px){.hero h1{font-size:1.9rem}.wrap{padding:0 16px}}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Independent Audit · Adversarially Verified</div>
+    <h1>ViolenceCC — Complete Code &amp; Thesis Review</h1>
+    <p class="sub">A full, independent audit of the ViolenceCC research codebase (~27k LOC Python) and the CGW&nbsp;'26 thesis manuscript — every finding re-derived from the live repository and checked by a separate skeptic before it was kept.</p>
+    <div class="meta">
+      <span><b>Date</b> 2026-06-22</span>
+      <span><b>Scope</b> src/ · scripts/ · tests/ · configs/ · paper/</span>
+      <span><b>Method</b> 76-agent workflow (13 review dimensions → per-finding verification)</span>
+      <span><b>Headlines</b> UCF 82.5% AUC · XD 78.7% AP</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="verdict">
+    <div class="card">
+      <h2><span class="dot"></span>Bottom line — the project is in strong shape</h2>
+      <p>The codebase is <b>correct and faithful to the paper</b>, the test suite is <b>fully green (321/321)</b>, and <b>every headline number reproduces exactly from tracked data</b> (independently recomputed: UCF gated SigLIP2-Giant 82.54&nbsp;±&nbsp;0.36; XD gated SO400M 78.72&nbsp;±&nbsp;0.91; skeleton-only 68.77&nbsp;/&nbsp;40.79). All six paper equations match the implementation — three were confirmed by executing the code. No data leakage, no metric bug, no correctness defect reaches a reported result.</p>
+      <p>Of 63 raised findings, verification kept <b>52</b> (28 confirmed, 24 partial) and discarded <b>11</b> false positives. Only <b>two were HIGH</b> — a <b>fabricated SOTA citation number</b> and a <b>stale figure whose caption claimed "3-seed"</b> — and <b style="color:var(--clean)">both are now fixed</b> (commits <code>f694611</code>, <code>2e6cb6b</code>; verified, paper rebuilds clean at 11 pp, headlines intact). Everything else is low-severity polish, documentation, or already-disclosed caveats.</p>
+      <p style="color:var(--clean);font-weight:600;margin-top:10px">✓ Updates 2026-06-22/23: both HIGH items resolved (no open HIGH or critical findings remain); the low-severity batches are in progress — 8 paper-editorial findings (T2-1, T2-2, T2-3, T3-2, T3-3, T4-1, T4-2, T5-3; commit bb71fb9) and 7 code-hygiene findings (C1-1, C1-2, C1-3, C2-1, C3-2, C4-1, C4-3; commit 99078d7, full pytest suite green at 322 passed). Each fix was gated behind an independent adversarial check before being marked resolved. 19 of the review's findings now resolved.</p>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat good"><div class="n">321/321</div><div class="l">pytest pass · 0 fail / skip · 602s</div></div>
+    <div class="stat good"><div class="n">2&rarr;0</div><div class="l">HIGH findings — both fixed (f694611, 2e6cb6b)</div></div>
+    <div class="stat"><div class="n">52</div><div class="l">verified findings (of 63 raised)</div></div>
+    <div class="stat mid"><div class="n">11</div><div class="l">false positives removed by verify</div></div>
+    <div class="stat good"><div class="n">100%</div><div class="l">headline numbers reproduce from git</div></div>
+    <div class="stat good"><div class="n">12/13</div><div class="l">SOTA-table cells correct vs sources</div></div>
+  </div>
+
+  <!-- METHOD -->
+  <section>
+    <h2 class="sec">How this review was run</h2>
+    <p class="lead">Rather than a single linear pass, the review fanned out into thirteen independent dimensions — seven over the code, six over the thesis — run in parallel. Each finding was then handed to a separate adversarial verifier instructed to re-derive it from the live repository and default to <em>refuted</em> unless it could independently reproduce the claim. That second pass is what removed 11 plausible-but-wrong findings.</p>
+    <div class="method">
+      <ul>
+        <li><b>Code (7):</b> models &amp; MIL loss · data/eval &amp; leakage · TTA modules · train/eval CLI · reproducibility &amp; config · live pytest run · scripts hygiene</li>
+        <li><b>Thesis (6):</b> claims↔evidence · methodology · SOTA fact-check vs primary sources · TTA narrative honesty · writing/figures · reproducibility honesty</li>
+        <li><b>Empirical checks:</b> ran the full test suite; recomputed all ablation cells from <code>results-index.csv</code>; verified TENT/SAR collect exactly 1,536 LN params; confirmed <code>compute_w</code> and all six equations against code.</li>
+        <li><b>Primary-source checks:</b> every cited SOTA number fetched and compared against the original paper, including all four author-flagged <code>RE-VERIFY</code> items.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- PRIORITY -->
+  <section>
+    <h2 class="sec">The two issues that matter <span class="tag" style="color:var(--clean)">✓ both resolved 2026-06-22</span></h2>
+    <p class="lead">Both were in the paper, not the code. Neither changed a headline result. Both have now been fixed and verified — details and commit references below.</p>
+
+    <div class="pcard resolved">
+      <div class="ph">
+        <h3>1. A fabricated SOTA number: Light-WVAD's XD-Violence AP (77.3) is attributed to a paper that never evaluated XD-Violence</h3>
+        <span class="badge b-resolved">✓ RESOLVED</span><span class="badge b-high">HIGH</span><span class="badge b-confirmed">confirmed</span><span class="badge b-area">Thesis · SOTA</span>
+      </div>
+      <div class="kv">paper/main.tex:406 (Table 4) · sota_comparison_full.tex:118,197 · prose main.tex:385</div>
+      <div class="body">
+        <p>The comparison table credits Light-WVAD with <b>77.3% XD-Violence AP</b>. The cited work (Wang, Zhou &amp; Guan, <em>Neurocomputing</em> 2024 / arXiv 2310.05330) evaluates <b>only UCF-Crime and ShanghaiTech, and reports only AUC</b> — it contains no XD-Violence result and no AP metric anywhere. The 84.7 UCF cell is correct; the 77.3 XD cell has no basis in the source. This is not transcription drift (like the documented 82.17→82.19 CLIP-TSA case) — it is a number a paper never reported. It is load-bearing: it appears in the camera-ready table, in <em>both</em> tables of the standalone thesis fragment, and in the §6 "on par with … Light-WVAD (77.3%)" prose. Notably, the manuscript's own <code>RE-VERIFY</code> discipline flagged six other rows but missed this one.</p>
+        <div class="evid">Primary source (arXiv 2310.05330, full text): evaluates ShanghaiTech (95.9 AUC) + UCF-Crime (84.7 AUC) only; Tables I–VI report AUC + model-size + ablations — no XD-Violence, no AP.</div>
+        <div class="fix"><b>Fix:</b> replace the XD cell with "—" (metric not reported) in main.tex:406 and the two fragment tables, and drop "and Light-WVAD (77.3%)" from the §6 on-par list. The on-par-with-RTFM/MGFN claim survives without it. While there, correct the bib <em>title</em> for the same key (it reads "A Lightweight Weakly Supervised Learning Framework…" but the real title is "A Lightweight Video Anomaly Detection Model with Weak Supervision and Adaptive Instance Selection").</div>
+        <div class="resolved-note"><b>✓ Resolved — commit f694611</b> (quick task 260622-ukd). The fabricated 77.3% XD AP was removed everywhere: <code>main.tex</code> Table 4 (XD cell → "—") and the §6 on-par prose, and both tables + both prose passages of <code>sota_comparison_full.tex</code> ("XD not evaluated"). The correct 84.7% UCF AUC is retained. The bib title (T3-4) was corrected. Verified: <code>grep "77.3"</code> → none; rendered PDF on-par prose now reads "RTFM (77.81%) and MGFN (79.19%)"; no 77.3 on the comparison pages.</div>
+      </div>
+    </div>
+
+    <div class="pcard resolved">
+      <div class="ph">
+        <h3>2. The backbone-comparison figure is built from a stale single-seed CSV, but its caption claims "three-seed means"</h3>
+        <span class="badge b-resolved">✓ RESOLVED</span><span class="badge b-high">HIGH</span><span class="badge b-confirmed">confirmed</span><span class="badge b-area">Code · Paper-figure</span>
+      </div>
+      <div class="kv">paper/figures/fig_backbone_comparison.pdf · main.tex:283 · scripts/generate_pub_figures.py:227-331 · results/phase10_charts/backbone_comparison_4way.csv</div>
+      <div class="body">
+        <p>Figure 3's PDF was generated (mtime 2026-06-09) from a single-seed, pre-λ0 CSV that predates the 3-seed table conversion (commit 33591ac, 2026-06-10). Its bars therefore disagree with the authoritative Tables 1/2 — e.g. CSV shows XD gated SO400M&nbsp;=&nbsp;79.7 vs Table 2's 78.7±0.9 (the XD headline backbone), and XD gated Giant 73.6 vs 76.8±2.8 — yet the caption asserts <b>"Visual Only and Gated Fusion bars are three-seed means."</b> The same caption also calls Late Fusion "single-seed" while Tables 1/2 now report Late Fusion <em>with</em> ±std over three seeds. So the figure shows single-seed values under a "3-seed" label.</p>
+        <div class="evid">CSV row: XD,Gated Fusion,SO400M_AP=0.797413 / Giant_AP=0.736067  vs  Table 2: SO400M 78.7±0.9, Giant 76.8±2.8.
+generate_pub_figures.py:241 "# Compute error bars … (Gated Fusion only)" — Late-Fusion bars carry no error bars.</div>
+        <div class="fix"><b>Fix:</b> regenerate the figure from the same 3-seed source feeding Tables 1/2, then update the caption (give all three variants ±std, drop "Late Fusion is single-seed"). If regeneration is deferred, at minimum change the caption so it stops claiming 3-seed provenance over single-seed bars. The headline numbers (82.5 / 78.7) are unaffected — this is a supporting figure out of sync with the now-authoritative tables.</div>
+        <div class="resolved-note"><b>✓ Resolved — commit 2e6cb6b</b> (quick task 260622-uuu). Fixed at the root cause: <code>generate_phase10_charts.py</code> read a single <code>_s42</code> run per cell, so a new <code>_seed_mean()</code> now averages each cell over seeds {42,123,2024}. Regenerated the CSV and figure (targeted single-figure regen; other figures untouched). Verified: all 24 bars equal their Table 1/2 cells to ≤0.05pp; old single-seed labels 79.7 / 73.6 / 81.7 are gone, replaced by 78.7 / 76.8 / 81.4. Caption corrected ("three fusion variants … All bars are three-seed means over seeds {42,123,2024}, matching Tables 1–2 (Gated Fusion shown with ±std)"). Clean 11-page rebuild.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DIMENSION HEALTH -->
+  <section>
+    <h2 class="sec">Dimension-by-dimension health</h2>
+    <p class="lead">Each row is one reviewer's overall read after independent re-derivation. Green "verdict" = no open issue affecting reported results.</p>
+    <table class="dim">
+      <thead><tr><th>Dimension</th><th>Verdict</th><th>What was checked &amp; found</th></tr></thead>
+      <tbody>
+        <tr><td class="d">Models &amp; MIL loss</td><td class="v">Clean</td><td class="s">All 6 equations match code (3 verified by execution). Late=½+½, gated blend+dual residual, RTFM-exact sparsity/smoothness. One latent NaN edge (bag &lt; k snippets) is unreachable in production.</td></tr>
+        <tr><td class="d">Data, eval &amp; leakage</td><td class="v">Clean</td><td class="s">Train/val/test pairwise-disjoint (overlap 0); 15.03% stratified split; alignment asserted; all paper counts reproduce (172 short UCF, n=254 test, 2 XD exclusions). One unlogged silent video-drop.</td></tr>
+        <tr><td class="d">TTA modules</td><td class="v">Clean</td><td class="s">TENT/SAR collect exactly 1,536 LN params; SAM ordering correct; <code>compute_w</code> faithful; continual protocol matches paper; all TTA numbers reproduce (+1.21, +13.2, −3.2). Naming/provenance nits only.</td></tr>
+        <tr><td class="d">Train / eval CLI</td><td class="v">Clean</td><td class="s">AdamW, warmup→cosine, batch/k/margin/λ, strict=True checkpoints, shuffled val loaders, single-class-batch skip — all match §4.2. Two cosmetic stubs.</td></tr>
+        <tr><td class="d">Reproducibility &amp; config</td><td class="v">Clean</td><td class="s">Deterministic seeding ordered correctly; all 45 configs match the paper hyperparameters exactly; UCF frame-grid manifest makes 82.5% git-reproducible. GPU determinism is best-effort (warn-only).</td></tr>
+        <tr><td class="d">Test suite</td><td class="v">Clean</td><td class="s">321 passed / 0 fail / 0 skip / 13 benign warnings in 602s. Headline-math modules all tested. Gap: no integration test pins 82.5/78.7 to a real-feature run.</td></tr>
+        <tr><td class="d">Scripts &amp; hygiene</td><td class="v">Minor</td><td class="s">Headline TTA JSONs are committed but their generators are untracked <code>_tmp_</code> scripts; <code>results/</code> is force-tracked against a wholesale ignore; the stale figure (HIGH #2) lives here.</td></tr>
+        <tr><td class="d">Claims ↔ evidence</td><td class="v">Clean</td><td class="s">Every load-bearing number re-derived from tracked data and aggregation scripts; abstract = body = tables = conclusion for the headline triple, TTA gains, 12.6-pt gap, and n=254.</td></tr>
+        <tr><td class="d">Methodology</td><td class="v">Sound</td><td class="s">Frozen dual-modal + MIL + official splits is standard and honestly scoped; two-frame-grid disclosed and cross-comparison avoided. One overstated sign-test p-value.</td></tr>
+        <tr><td class="d">SOTA fairness</td><td class="v">Mostly</td><td class="s">12/13 cells correct incl. every AP-vs-ROC-AUC trap the authors flagged; regime grouping is fair. One fabricated cell (HIGH #1) + two descriptor nits.</td></tr>
+        <tr><td class="d">TTA honesty</td><td class="v">Honest</td><td class="s">Unusually well-hedged: "near-zero by construction" on 15/20 conditions, routing-not-robustness, transductive, −3.2 seed regression all disclosed. Minor: "%" vs "points", best-case +13.2 label.</td></tr>
+        <tr><td class="d">Writing &amp; figures</td><td class="v">Healthy</td><td class="s">Compiles clean (11 pp, no undefined refs); 27 cited == 27 defined bib keys, no orphans. The stale-figure caption is the one real contradiction.</td></tr>
+        <tr><td class="d">Reproducibility honesty</td><td class="v">Sound</td><td class="s">Modest self-positioning sustained throughout; novelty claims hedged ("to our knowledge"). One gap: the §7 release promise needs a tracked TTA driver + README to fully match delivery.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- VERIFIED CLEAN -->
+  <section>
+    <h2 class="sec">Verified clean <span class="tag">positive confirmations</span></h2>
+    <p class="lead">These are the load-bearing claims the verification actively tried to break and could not. They are the reason the bottom line is confident, not merely "no news."</p>
+    <div class="flist" id="cleanlist"></div>
+  </section>
+
+  <!-- ALL FINDINGS -->
+  <section>
+    <h2 class="sec">All findings <span class="tag">52 verified · click to expand</span></h2>
+    <div class="legend">
+      <span><span class="sw" style="background:var(--high)"></span>HIGH</span>
+      <span><span class="sw" style="background:var(--low)"></span>Low</span>
+      <span><span class="sw" style="background:var(--info)"></span>Info</span>
+      <span><span class="sw" style="background:var(--clean)"></span>Clean / positive</span>
+      <span><span class="badge b-disc" style="padding:1px 7px">disclosed</span> = already noted in paper/code</span>
+    </div>
+    <div class="filterbar">
+      <span class="lbl">Severity</span>
+      <button class="fbtn on" data-f="sev" data-v="all">All</button>
+      <button class="fbtn" data-f="sev" data-v="high">HIGH</button>
+      <button class="fbtn" data-f="sev" data-v="low">Low</button>
+      <button class="fbtn" data-f="sev" data-v="info">Info</button>
+    </div>
+    <div class="filterbar">
+      <span class="lbl">Area</span>
+      <button class="fbtn on" data-f="area" data-v="all">All</button>
+      <button class="fbtn" data-f="area" data-v="Code">Code</button>
+      <button class="fbtn" data-f="area" data-v="Thesis">Thesis</button>
+    </div>
+    <div class="flist" id="alllist"></div>
+  </section>
+
+  <!-- REFUTED -->
+  <section>
+    <h2 class="sec">Removed by verification <span class="tag">11 false positives</span></h2>
+    <p class="lead">Shown for transparency — these were raised by a reviewer but the adversarial pass disproved them against the live repo. Several were positive-framed confirmations re-asked as "is there really a problem?" → no.</p>
+    <div class="refuted-grid" id="reflist"></div>
+  </section>
+
+  <!-- ACTION PLAN -->
+  <section>
+    <h2 class="sec">Suggested order of work</h2>
+    <div class="method" style="background:#fbf7f2">
+      <ul style="grid-template-columns:1fr">
+        <li style="color:var(--clean)"><b>✓ Done (2026-06-22):</b> removed the fabricated Light-WVAD XD AP + prose/bib (T3-1/T3-4, commit f694611); regenerated the backbone figure from 3-seed data + corrected caption (C7-2/T5-1, commit 2e6cb6b). Both HIGH items resolved.</li>
+        <li style="color:var(--clean)"><b>✓ Done (2026-06-22, commit bb71fb9):</b> reworded the complementarity sign-test to "6/8 strictly positive, 2 ties, p≈0.03" + correlated-configs caveat (T2-1/T2-2); "+1.2% / +13.2%" → "points" (T5-3); LAVAD "HPC cluster" → "dual RTX 3090" (T3-2); dropped the false GS-MoE verifiability rationale (T3-3); labeled the +13.2 best-case (T4-1); softened "structural vs tuning" mechanistically (T4-2); added the snippet-span/horizon caveat (T2-3). Each adversarially verified.</li>
+        <li><b>Before code release:</b> promote the four <code>_tmp_</code> TTA generators to tracked scripts (or wire <code>evaluate_tta.py --method disc_reweight</code> into a tracked sweep) and add a short README (C7-1/T6-2); add <code>!</code> un-ignore rules for the committed <code>results/</code> artifacts (C7-3).</li>
+        <li style="color:var(--clean)"><b>✓ Done (2026-06-23, commit 99078d7):</b> guarded the MIL-loss <code>N&lt;k</code> edge + regression test (C1-1/C1-2); typo'd model kwargs now fail loud (C1-3); dropped-video count logged (C2-1); eval-stub + degenerate-val-split warnings (C4-1/C4-3); renamed the mislabeled CORAL→disc-reweight script references (C3-2). Full pytest suite green (322), each adversarially verified.</li>
+      </ul>
+    </div>
+    <p class="note">None of the above changes a headline result. The science is sound; this is finishing work.</p>
+  </section>
+
+  <footer>
+    <p>Generated 2026-06-22 from a 76-agent adversarial review workflow over <code>D:\ViolenceCC</code> @ <code>main</code> (940a941). All file:line references and reproduced numbers were checked against the live repository at review time. Test run: <code>conda run -n vcc-main python -m pytest -q</code> → 321 passed, 13 warnings, 602.48s.</p>
+  </footer>
+</div>
+
+<script>
+const F = [
+  // --- CLEAN / POSITIVE (shown in cleanlist too) ---
+  {id:"C2-5",area:"Code",dim:"Data",sev:"clean",vd:"confirmed",disc:1,clean:1,t:"No leakage, correct stratification, alignment by construction, all paper counts reproduce",loc:"data/splits/*; dataset.py:192; test_loader.py:32-67",d:"UCF & XD train/val/test pairwise overlap = 0; test sets in separate dirs; an import-guard in test_loader.py blocks accidental test-set use. Val split exactly 15.03% with ratio preserved; manifest yields exactly 172 short UCF videos and n=254 test (290−36), and the XD 34-frame exclusion the paper cites.",fix:"None — healthy infrastructure."},
+  {id:"T1-2",area:"Thesis",dim:"Claims",sev:"clean",vd:"confirmed",disc:1,clean:1,t:"TTA Tables 3 & 4 and all TTA prose reproduce; TENT/SAR now genuinely 3-seed",loc:"aggregate_tta_table.py; pri5_tta_breakdown.py",d:"Re-ran the tracked aggregators: Source→Ours 63.7→64.4 / 57.0→58.5 / 58.9→61.1 / 62.8→63.3, mean 60.6→61.8 (+1.21); breakdown +4.83 Gaussian, +13.2 peak, −3.2 regression all reproduce with built-in PASS checks.",fix:"None."},
+  {id:"T1-3",area:"Thesis",dim:"Claims",sev:"clean",vd:"confirmed",disc:1,clean:1,t:"Headline triple + every ablation cell reproduce exactly from tracked data",loc:"gen_ablation_tables_3seed.py over results-index.csv",d:"All 50 ablation cells regenerate cell-for-cell; UCF Giant gated 82.54→82.5±0.4, XD SO400M gated 78.72→78.7±0.9, skeleton 68.8±2.8 / 40.8±0.6. Stored eval_metrics.json (AUC 0.8249, n_frames 1,097,050) matches.",fix:"None — keep ucf_total_frames.json as the reproducibility anchor."},
+  {id:"C3-5",area:"Code",dim:"TTA",sev:"clean",vd:"confirmed",disc:1,clean:1,t:"Entropy-too-small-to-reorder-rank mechanism is consistent with code and data",loc:"tent.py:40-78; gated_fusion.py:85-98",d:"Empirically: trainable set = exactly the 6 LN weight/bias tensors (1,536 scalars); gate/head/projections all frozen; corrupted features enter pre-fusion. Measured TENT/SAR 3-seed deltas <0.1pp (worst 0.082) — exactly what the mechanism predicts.",fix:"None — the negative-result claim is well-founded."},
+  {id:"C5-3",area:"Code",dim:"Repro",sev:"clean",vd:"confirmed",disc:1,clean:1,t:"Configs, 3 seeds, and UCF frame-grid manifest all match the paper",loc:"configs/*.yaml; data/ucf_total_frames.json",d:"All 45 configs match lr=1e-4, k=3, margin=1.0, λ_sparse=8e-3, dropout=0.3, T=32, with the only dataset-dependent value λ_smooth=8e-4 (UCF) vs 0 (XD). Manifest (1900 entries) makes the full-length UCF headline git-reproducible.",fix:"None — retain the manifest under version control."},
+  {id:"C6-1",area:"Code",dim:"Test",sev:"clean",vd:"confirmed",disc:1,clean:1,t:"Full suite passes: 321 passed, 0 fail/error/skip, 13 warnings, 602s",loc:"conda run -n vcc-main python -m pytest -q",d:"Clean green run, exit 0. test_ctrgcn_smoke.py auto-ignored (mmcv lives in the separate vcc-ctrgcn env, by design).",fix:"None; suite green."},
+  {id:"T3-5",area:"Thesis",dim:"SOTA",sev:"clean",vd:"confirmed",disc:1,clean:1,t:"All author-flagged RE-VERIFY items PASS against primary sources",loc:"main.tex Table 4 + sota_comparison_full.tex",d:"Independently re-fetched: EventVAD 82.03/64.04 (correctly uses XD AP not the 87.51 ROC-AUC), LAVAD 80.28/62.01, CLIP-TSA 82.19, MGFN 79.19 (I3D not VideoSwin), PI-VAD, DSANet, VadCLIP, UR-DMU, RTFM, Sultani, GS-MoE — 12/13 exact. AP/AUC unit discipline excellent.",fix:"Only the Light-WVAD cell (HIGH #1) and two descriptor nits remain."},
+  {id:"T6-3",area:"Thesis",dim:"Repro",sev:"clean",vd:"confirmed",disc:1,clean:1,t:"Self-positioning, caveats, and novelty claims are honest and internally consistent",loc:"abstract, §2, §6",d:"Abstract explicitly disclaims a peak-score contribution; every section sustains the modest framing. All six material caveats are disclosed; novelty is hedged ('to our knowledge', 'largely unexplored') rather than absolute.",fix:"None on honesty grounds; resolving the TTA release gap is what fully matches the §7 promise."},
+  {id:"C6-2",area:"Code",dim:"Test",sev:"clean",vd:"confirmed",disc:1,clean:1,t:"Headline-computing modules all have dedicated tests",loc:"tests/test_eval_metrics.py, test_snippet_to_frame.py, test_disc_reweight.py, test_mil_loss.py",d:"eval/metrics, snippet→frame, disc_reweight, MIL loss, and the smoothness-axis fix are all directly and substantively tested.",fix:"None; headline-math coverage good."},
+  {id:"C3-6",area:"Code",dim:"TTA",sev:"clean",vd:"partial",disc:0,clean:1,t:"Table 3 Source-Only baseline is internally consistent across both code paths",loc:"aggregate_tta_table.py",d:"Confirmed Source and Ours both come from the disc-reweight harness as a 3-seed mean — no cross-harness stitching (an earlier reviewer's '1.8pp gap' was a misread and was refuted).",fix:"None — consistency confirmed."},
+
+  // --- HIGH ---
+  {id:"T3-1",area:"Thesis",dim:"SOTA",sev:"high",vd:"confirmed",disc:0,t:"Light-WVAD XD-Violence AP (77.3) is fabricated — cited paper never evaluated XD",loc:"main.tex:406; sota_comparison_full.tex:118,197; prose main.tex:385",d:"The cited paper (Neurocomputing 2024 / arXiv 2310.05330) evaluates only UCF-Crime + ShanghaiTech, AUC only — no XD result, no AP. The 84.7 UCF cell is correct; 77.3 XD has no source. Load-bearing across Table 4, both fragment tables, and §6 prose.",fix:"Replace XD cell with '—', drop 'and Light-WVAD (77.3%)' from §6, and correct the bib title (same key).",resolved:"commit f694611 (quick task 260622-ukd)"},
+  {id:"C7-2",area:"Code",dim:"Hygiene",sev:"high",vd:"confirmed",disc:0,t:"fig_backbone_comparison.pdf built from stale single-seed CSV; caption claims 'three-seed means'",loc:"fig_backbone_comparison.pdf; main.tex:283; generate_pub_figures.py:227-331",d:"Figure predates the 3-seed table conversion; bars (e.g. XD SO400M 79.7, Giant 73.6) disagree with Tables 1/2 (78.7±0.9, 76.8±2.8) yet the caption asserts 3-seed provenance. Also calls Late Fusion single-seed while the tables now report it with ±std.",fix:"Regenerate from the 3-seed source and update the caption; or at minimum re-caption to stop claiming 3-seed over single-seed bars.",resolved:"commit 2e6cb6b (quick task 260622-uuu) — generator fixed to average over seeds, figure + CSV regenerated, caption corrected"},
+
+  // --- LOW confirmed ---
+  {id:"T2-1",area:"Thesis",dim:"Method",sev:"low",vd:"confirmed",disc:0,t:"Sign-test 'p≈0.008, 8/8 positive' overstates: 2 of 8 deltas are exactly 0.0 in the tables",loc:"main.tex:263 (+abstract:52, conclusion:438)",d:"Deltas (gated−visual): UCF [+0.2,+0.5,+0.2,+0.1], XD [+1.9,0,+2.1,0]. p≈0.0078 = 2·C(8,8)/2⁸ requires all-8 strict successes; tie-dropping (n=6) gives p=0.031. Internally inconsistent with the paper's own 'meets or exceeds' hedge.",fix:"State '6/8 strictly positive, 2 ties, p≈0.03', or footnote the unrounded deltas if the ties are truly >0.",resolved:"commit bb71fb9 (260622-vc8) — now '6/8 strictly positive, 2 ties, tie-dropped p≈0.03' in abstract/body/conclusion; adversarially verified"},
+  {id:"C2-1",area:"Code",dim:"Data",sev:"low",vd:"confirmed",disc:0,t:"MILFeatureDataset silently drops unloadable / sub-64-frame videos with no count logged",loc:"src/data/dataset.py:138,151-167",d:"_is_loadable() filters videos at construction with zero warn/log/print — violates the CLAUDE.md 'log dropped count' convention. Mitigated downstream (eval reports n_videos) but the load-time silence remains. The sibling i3d_dataset already prints 'k/n available'.",fix:"Emit a warnings.warn with the dropped count when len(video_ids) < len(all_ids).",resolved:"commit 99078d7 (260623-9tu) — warnings.warn with loadable/total + dropped count + sample ids; verified fires only on drops, filtering unchanged; adversarial check"},
+  {id:"C3-2",area:"Code",dim:"TTA",sev:"low",vd:"confirmed",disc:0,t:"pri5_tta_breakdown.py mislabels disc_reweight as 'CORAL-TTA' internally",loc:"scripts/pri5_tta_breakdown.py:2-24,191-193",d:"The breakdown generator calls the method 'CORAL-TTA' in its docstring and generated caption, but the JSONs are disc_reweight (w_vl/skelZ/skel_rel routing) — CORAL is the rejected baseline the paper reports as failing. The paper's own caption is correct; this is a script-only naming bug.",fix:"Rename 'CORAL-TTA' → 'discriminative-reliability reweighting' in the script so a future maintainer isn't misled.",resolved:"commit 99078d7 (260623-9tu) — all CORAL method-labels renamed to disc-reweight; real _coral_derisk dir path kept (var → DERISK_DIR); script reruns, reproduction checks PASS (+4.826/+13.2/-3.2); adversarial check"},
+  {id:"C4-1",area:"Code",dim:"Train",sev:"low",vd:"confirmed",disc:0,t:"--split val stub writes mil_loss=0.0 via print(), not warnings.warn() per convention",loc:"src/evaluate.py:442-445",d:"CLAUDE.md says placeholder metrics must surface via the warnings machinery; this path uses print(). Low impact — headline numbers come from --split test, which never touches the stub. The UCF-truncation path nearby correctly uses warnings.warn().",fix:"Replace the print() NOTE with warnings.warn(..., RuntimeWarning).",resolved:"commit 99078d7 (260623-9tu) — val mil_loss=0.0 stub now emits warnings.warn (RuntimeWarning); no stray print; adversarial check"},
+  {id:"C4-3",area:"Code",dim:"Train",sev:"low",vd:"confirmed",disc:0,t:"validate() returns inf if every val batch is single-class; early-stop then never improves",loc:"src/train.py:246; early_stopping.py:20-25",d:"A latent edge case: all-single-class val epochs → inf loss → 3 nan-streak → stop with no checkpoint → loud downstream FileNotFoundError. Cannot occur in practice (shuffle=True over a stratified 15% split guarantees both classes).",fix:"No change required; optionally log a WARNING the first time validate() returns inf.",resolved:"commit 99078d7 (260623-9tu) — validate() and validate_i3d() now warnings.warn before returning inf on a degenerate all-single-class val split; normal path unchanged; adversarial check"},
+  {id:"C6-4",area:"Code",dim:"Test",sev:"low",vd:"confirmed",disc:0,t:"Zero tests skipped — real-feature integration not numerically asserted",loc:"tests/conftest.py:47-53; test_train_e2e.py:20",d:"Coverage is synthetic-fixture driven; no test asserts the 82.5% / 78.7% headlines against a real cached-feature run. Bit-identical reproducibility IS tested, just not the absolute published metrics.",fix:"Add an integration test asserting reproduced UCF AUC / XD AP within tolerance when E:/features is mounted."},
+  {id:"T3-2",area:"Thesis",dim:"SOTA",sev:"low",vd:"confirmed",disc:0,t:"LAVAD hardware mislabeled 'HPC cluster' — paper times inference on 2× RTX 3090",loc:"main.tex:400,385; sota_comparison_full.tex:306",d:"LAVAD's primary paper (CVPR 2024) measures inference on two consumer RTX 3090s, not an HPC cluster / 80GB-class hardware. Numeric cells (80.28/62.01) are correct; only the descriptor overstates the compute asymmetry. (EventVAD's '80GB A800' descriptor is correct.)",fix:"Change to e.g. '13B LLM pipeline; dual 24GB GPU' — the cheaper-operating-point argument still holds.",resolved:"commit bb71fb9 (260622-vc8) — LAVAD now 'dual RTX 3090' (table+prose+fragment); 80GB-class attributed to EventVAD only; adversarially verified"},
+  {id:"T3-3",area:"Thesis",dim:"SOTA",sev:"low",vd:"confirmed",disc:0,t:"GS-MoE omission rationale ('could not be verified from PDF') is now inaccurate",loc:"main.tex:414; references.bib:252",d:"GS-MoE (91.58/82.89) is an accepted ICCV 2025 paper whose numbers verify exactly from the arXiv HTML. The architectural-budget reason for omitting it is fine; the 'unverifiable' reason is factually wrong and slightly self-serving.",fix:"Drop the 'could not be verified' clause, keep the budget rationale, optionally upgrade the bib to the ICCV venue.",resolved:"commit bb71fb9 (260622-vc8) — false-verifiability rationale dropped in main.tex + all 3 fragment spots (incl. the 'resists verification' line); architectural-budget reason kept; adversarially verified"},
+  {id:"T3-4",area:"Thesis",dim:"SOTA",sev:"low",vd:"confirmed",disc:0,t:"Light-WVAD bib title does not match the cited paper",loc:"references.bib:210-218",d:"Title field reads 'A Lightweight Weakly Supervised Learning Framework…' but the real title (same DOI) is 'A Lightweight Video Anomaly Detection Model with Weak Supervision and Adaptive Instance Selection'. Authors/DOI/venue correct.",fix:"Correct the title string (same paper as HIGH #1).",resolved:"commit f694611 (folded into the T3-1 fix)"},
+  {id:"T5-1",area:"Thesis",dim:"Writing",sev:"low",vd:"confirmed",disc:1,t:"Backbone-figure caption contradicts Tables 1/2 on Late-Fusion seed count",loc:"main.tex:283 vs 219,236,255",d:"The thesis-side view of HIGH #2: caption says 'Late Fusion is single-seed' while Tables 1/2 + main.tex:219 report all variants over three seeds. The caption is internally honest but out of sync with the now-3-seed tables.",fix:"Reconcile with HIGH #2 — regenerate the figure or fix the caption.",resolved:"commit 2e6cb6b (resolved together with HIGH #2)"},
+  {id:"T5-3",area:"Thesis",dim:"Writing",sev:"low",vd:"confirmed",disc:0,t:"TTA gains written as '%' in abstract/conclusion but 'points' in body",loc:"main.tex:52,442 vs 313,335",d:"'+1.2%, up to +13.2%' (abstract/conclusion) vs '+1.21 points' (body). A '%' on a percentage-point quantity can be misread as a relative gain.",fix:"Use 'points' (or 'pp') in the abstract and conclusion to match the body.",resolved:"commit bb71fb9 (260622-vc8) — '%'→'points' for TTA gains in abstract, conclusion, and the fragment; accuracy %s untouched; adversarially verified"},
+
+  // --- LOW partial ---
+  {id:"C1-1",area:"Code",dim:"Loss",sev:"low",vd:"partial",disc:1,t:"top-k over {finite, −inf} yields NaN loss when a bag has <k real snippets (latent)",loc:"src/losses/mil_loss.py:76-82",d:"Reproduced: a paired bag with <k=3 real snippets → NaN loss; no in-function guard. Unreachable in production — sample-with-replacement always yields all-ones T=32 masks, and the original zero-pad design that DID hit this is documented as deliberately replaced.",fix:"Add a one-line k_eff=min(k, min mask-sum) guard + a regression test, to enforce the invariant at the loss boundary.",resolved:"commit 99078d7 (260623-9tu) — fail-loud ValueError guard before top-k (raises on a bag with <k real snippets); never fires in production; green pytest (322) + adversarial check"},
+  {id:"C1-3",area:"Code",dim:"Models",sev:"low",vd:"partial",disc:1,t:"Typo'd model hyperparameters are swallowed with only a WARNING, not an error",loc:"registry.py:70-90; gated_fusion.py:52-64",d:"Constructors take **unused and only warn (D-15 decision) on undeclared keys, so a mistyped hyperparameter silently falls back to a default. Mitigated by the warning + replay allow-list — but with no logging config, those warnings reach stderr only, not the run logs backing each table.",fix:"Consider raising on unexpected kwargs for construction configs, or ensure the warnings land in the run log.",resolved:"commit 99078d7 (260623-9tu) — build_model() + GatedFusion now raise ValueError on truly-unexpected kwargs (replay allow-list honored); verified no tracked config triggers it (proj_dim/alpha are declared args); green pytest (322, incl. registry/config/ablation/e2e) + adversarial check"},
+  {id:"C7-1",area:"Code",dim:"Hygiene",sev:"low",vd:"partial",disc:0,t:"Headline TTA generators (_tmp_r1_full + deps) are untracked; only cached JSONs committed",loc:"scripts/_tmp_r1_full.py; aggregate_tta_table.py; main.tex:444",d:"The rollup JSONs feeding Table 3 are produced by untracked _tmp_ scripts; no tracked sweep regenerates them. Materially softened on verify: the tracked evaluate_tta.py --method disc_reweight DOES reproduce the routing per condition — what's missing is a tracked aggregator that emits the exact rollup schema.",fix:"Wire evaluate_tta into a tracked sweep (or promote the four _tmp_ scripts) so the table is re-derivable, not just re-readable; soften the §7 release wording until then."},
+  {id:"C7-3",area:"Code",dim:"Hygiene",sev:"low",vd:"partial",disc:0,t:"results/ git-ignored wholesale yet 28 files force-tracked — fragile provenance",loc:".gitignore; results/_coral_derisk/*, results-index.csv",d:"The 28 load-bearing artifacts survive only via a remembered force-add against a bare 'results/' ignore. Severity softened: tracked files still commit despite the ignore and 'git clean' won't delete them, so routine workflow is safe — only new siblings / rm --cached are edge cases.",fix:"Add explicit '!results/...' un-ignore rules so the committed cache is intentional and clone-stable."},
+  {id:"T2-2",area:"Thesis",dim:"Method",sev:"low",vd:"partial",disc:1,t:"Sign test over 8 non-independent paired configs is a weak statistical basis",loc:"main.tex:263",d:"The 8 configs share one frozen skeleton stream and one fusion head, so they aren't 8 independent Bernoulli trials — the p-value is anti-conservative. The paper honestly frames gains as 'within seed variance' and rests on consistency, which is the defensible read; only the p-value's prominence needs tempering.",fix:"Caveat the correlated trials; frame as consistency, not significance (pairs with T2-1).",resolved:"commit bb71fb9 (260622-vc8) — correlated-configs caveat (shared frozen skeleton stream) added at main.tex:263; adversarially verified"},
+  {id:"T2-3",area:"Thesis",dim:"Method",sev:"low",vd:"partial",disc:1,t:"7× skeleton snippet temporal-span mismatch (UCF ~20s vs XD ~2.7s) qualifies the 'aligned by construction' claim",loc:"main.tex:136",d:"A 64-frame snippet spans ~20s on UCF (3 FPS) vs ~2.7s on XD (24 FPS). 'Aligned by construction' is correct for within-dataset cross-modal alignment (disclosed). The under-stated subtlety: the ~20s UCF window GAP-pools far beyond CTR-GCN's NTU ~2-3s training horizon, a plausible driver of the weak UCF skeleton-only signal.",fix:"Add one clause reframing it as a domain/horizon caveat; the alignment claim itself is fine.",resolved:"commit bb71fb9 (260622-vc8) — domain/horizon caveat added at main.tex:136 (~20s UCF snippet ≫ CTR-GCN NTU horizon); adversarially verified"},
+  {id:"T4-1",area:"Thesis",dim:"TTA",sev:"low",vd:"partial",disc:1,t:"Abstract carries the +13.2% best-case cell without labeling it best-case in that sentence",loc:"main.tex:52",d:"+13.2 is the single most favorable of 80 backbone×condition cells (SO400M Gaussian sev-5, 3-seed mean 13.19). The clause 'on the corruption that most degrades the visual stream' qualifies it, and the body (main.tex:335) is precise, but the abstract reads optimistic at a glance.",fix:"Add 'in the best single condition' (or 'three-seed mean') to the abstract mention.",resolved:"commit bb71fb9 (260622-vc8) — abstract now '+13.2 points in the single most-degraded condition'; adversarially verified"},
+  {id:"T4-2",area:"Thesis",dim:"TTA",sev:"low",vd:"partial",disc:0,t:"'Structural not tuning' for entropy TTA is asserted mechanistically; alt-lr runs exist but go uncited",loc:"main.tex:82,329; results/_tta_rerun_continual/...",d:"The repo contains alt-lr TENT/SAR sweeps (lr=0.005, 1e-4) that ALSO change AUC <0.1pp and would strengthen the claim — but only for clip-vit-b-16, and they're never mentioned. The mechanistic argument (LN affine can't move a frozen rank detector) is correct and is the real basis.",fix:"Either cite the alt-lr runs ('also <0.1pp') or soften to 'consistent with a structural rather than a tuning cause'.",resolved:"commit bb71fb9 (260622-vc8) — main.tex:82 softened to a mechanistic claim (LayerNorm-affine-only adaptation of a frozen rank detector), not a tuning-sweep conclusion; adversarially verified"},
+  {id:"T5-2",area:"Thesis",dim:"Writing",sev:"low",vd:"partial",disc:0,t:"Abstract is one dense ~285-word paragraph that overpacks results, mechanism, and caveats",loc:"main.tex:51-53",d:"A single block nesting multiple em-dash/parenthetical clauses and inlining the full TTA mechanism — taxes a first-time reader and buries the three contributions. The one-paragraph form is a deliberate design choice (D-42 note).",fix:"Defer the inline mechanism to the body and/or trim toward ~250 words."},
+  {id:"T5-6",area:"Thesis",dim:"Writing",sev:"low",vd:"partial",disc:1,t:"SOTA-comparison bib entries carry unresolved RE-VERIFY notes and 'and others' authorship",loc:"main.tex:399-404; references.bib:220-257",d:"Table 4 source lines still hold inline RE-VERIFY comments (unrendered) and several bib entries use 'and others' / list forthcoming works as @inproceedings. Disclosed via arXiv notes, but on the camera-ready checklist.",fix:"Complete the camera-ready verification, fill author lists, and confirm venues before submission."},
+  {id:"T6-2",area:"Thesis",dim:"Repro",sev:"low",vd:"partial",disc:0,t:"No top-level README or run-all/reproduction guide for a third party",loc:"repo root",d:"Infrastructure is tracked but scattered; a newcomer has no map from env setup → extraction → training → table/figure generation, nor which results/ files are committed snapshots vs regenerable.",fix:"Add a short README mapping the command sequence per table/figure and the snapshot-vs-regenerable artifacts."},
+
+  // --- INFO ---
+  {id:"C1-2",area:"Code",dim:"Loss",sev:"info",vd:"confirmed",disc:0,t:"No test covers the N_real<k NaN edge (existing masked-topk test uses 10 real positions)",loc:"tests/test_mil_loss.py:81-113",d:"The invariant that keeps C1-1 unreachable is itself untested; a future padding change could silently reintroduce NaN loss.",fix:"Add a regression test for the N_real<k path.",resolved:"commit 99078d7 (260623-9tu) — test_mil_ranking_loss_raises_when_bag_has_fewer_than_k_real added and passing; adversarial check"},
+  {id:"C2-3",area:"Code",dim:"Data",sev:"info",vd:"confirmed",disc:1,t:"UCF frame-label indexing is 0-based half-open vs Sultani 1-based inclusive (0.002pp, disclosed)",loc:"src/eval/ucf_annotations.py:89-100",d:"An 8-line comment documents the convention difference, quantifies its 0.002pp AUC/AP impact as cosmetic, and intentionally leaves it. The XD parser uses the same convention consistently.",fix:"No change; disclosure is appropriate."},
+  {id:"C3-3",area:"Code",dim:"TTA",sev:"info",vd:"confirmed",disc:1,t:"SAR reset() does not clear SAM's own per-param e_w state (benign)",loc:"src/tta/sar.py:77-80; sam.py:47,56",d:"e_w is fully transient (written then consumed within one step) and the production SGD is momentum-free, so nothing leaks. No effect on any number.",fix:"No action; optional symmetry cleanup."},
+  {id:"C5-2",area:"Code",dim:"Repro",sev:"info",vd:"confirmed",disc:0,t:"Misnamed near-duplicate scratch config configs/_giant_smoothmeasure.yaml",loc:"configs/_giant_smoothmeasure.yaml",d:"A scratch config that could be mistaken for a paper config.",fix:"Delete/rename, or add a header comment clarifying it captures the earlier smoothness implementation."},
+  {id:"C7-5",area:"Code",dim:"Hygiene",sev:"info",vd:"confirmed",disc:0,t:"Untracked top-level clutter (pipeline-docs.html, CGW template, .playwright-cli, *.mjs, deleted .planning doc)",loc:"working tree",d:"Several untracked artifacts and one deleted planning doc leave the working tree noisy before any release tag.",fix:"Gitignore or remove the scratch artifacts; decide whether the LaTeX template should be vendored; restore or commit the deleted doc."},
+  {id:"T5-5",area:"Thesis",dim:"Writing",sev:"info",vd:"confirmed",disc:0,t:"Orphan figure asset fig_gating_distribution.pdf is never referenced",loc:"paper/figures/",d:"An unused PDF sits in the figures directory with no \\includegraphics.",fix:"Delete or note as intentional; no paper-content change."},
+  {id:"C2-2",area:"Code",dim:"Data",sev:"info",vd:"partial",disc:1,t:"XD fusion eval drops ~0.74% of frames via 64-window truncation (disclosed)",loc:"src/evaluate.py",d:"Correctly disclosed at main.tex:219; a small, documented approximation.",fix:"No action; optionally add a symmetric xd_total_frames.json manifest."},
+  {id:"C2-4",area:"Code",dim:"Data",sev:"info",vd:"partial",disc:1,t:"Split byte-reproducibility depends on unsorted iterdir() order (documented machine-specific)",loc:"scripts/create_splits.py",d:"The committed split files + --verify byte-check are the reproducibility mechanism and work; re-sorting would invalidate the published splits.",fix:"No code change."},
+  {id:"C3-1",area:"Code",dim:"TTA",sev:"info",vd:"partial",disc:1,t:"disc_reweight numbers reproducible from git via aggregation; generating scripts untracked",loc:"aggregate_tta_table.py",d:"A narrower restatement of C7-1: the JSONs + aggregators are tracked and reproduce the table, but the original generators aren't.",fix:"Commit a slim driver, or note in the aggregator that evaluate_tta.py is the canonical generator."},
+  {id:"C3-4",area:"Code",dim:"TTA",sev:"info",vd:"partial",disc:1,t:"SAR second-pass reuses first-pass reliability mask and never acts on EMA (intentional, disclosed)",loc:"src/tta/sar.py",d:"Documented design choice; immaterial to results.",fix:"None — keep the docstring caveat."},
+  {id:"C5-1",area:"Code",dim:"Repro",sev:"info",vd:"partial",disc:1,t:"Global deterministic algorithms use warn_only=True — GPU determinism is best-effort",loc:"src/utils/seed.py",d:"Bit-identical reproducibility is guaranteed on CPU (and tested), but GPU runs may fall back to nondeterministic kernels. The paper makes no determinism claim; seed-variance reporting already absorbs residual GPU nondeterminism.",fix:"No change needed; optionally note the CPU-only guarantee in the docstring."},
+  {id:"C6-3",area:"Code",dim:"Test",sev:"info",vd:"partial",disc:1,t:"Intentional single-class metric warnings emit as expected",loc:"tests/",d:"The 13 warnings are benign/intentional.",fix:"No action; optional cosmetic scheduler tidy."},
+  {id:"C7-6",area:"Code",dim:"Hygiene",sev:"info",vd:"partial",disc:0,t:"22 untracked _tmp_* exploration scripts in scripts/ — dead-by-design but unmarked",loc:"scripts/_tmp_*.py",d:"Throwaway scouts clutter the tree, but four of them are the load-bearing TTA generators (C7-1) and must NOT be blanket-ignored until promoted.",fix:"Gitignore scripts/_tmp_*.py AFTER promoting the four TTA generators to tracked names."},
+  {id:"T1-4",area:"Thesis",dim:"Claims",sev:"info",vd:"partial",disc:0,t:"'up to +13.2%' is the 3-seed mean of SO400M Gaussian sev-5, not the single-seed peak (13.92)",loc:"main.tex:52,335",d:"Internally consistent (it's the averaged value, matching how Tables 3-4 are labeled) but easy to misread as a single-seed peak.",fix:"Optionally add 'three-seed mean' to the +13.2 mention."},
+  {id:"T1-5",area:"Thesis",dim:"Claims",sev:"info",vd:"partial",disc:1,t:"External SOTA numbers carry RE-VERIFY flags — pending camera-ready check",loc:"main.tex:399-404",d:"Not traceable to this repo by nature; the AP-vs-ROC-AUC trap on EventVAD/LAVAD is the highest-risk item and is annotated inline. (Verification confirmed the current values are correct — see T3-5.)",fix:"Complete the 17-item camera-ready checklist before submission."},
+  {id:"T2-4",area:"Thesis",dim:"Method",sev:"info",vd:"partial",disc:1,t:"Validation by MIL loss only (no frame-level model selection) is sound but under-discussed",loc:"main.tex:210",d:"Val MIL loss is a surrogate that need not track frame-AUC, so reported numbers are unbiased but not checkpoint-optimal — a reasonable necessity given only video-level labels.",fix:"Optional one sentence pre-empting the 'better selection would raise the headline' question."},
+  {id:"T4-4",area:"Thesis",dim:"TTA",sev:"info",vd:"partial",disc:1,t:"'Improves on all four backbones across 20 conditions' is true but ~75% of conditions are zero by construction",loc:"main.tex:82,335",d:"The breakdown table already shows motion/JPEG/brightness = 0.00 and the prose says 'near-zero by construction', so the 5/20 structure is transparent — but the contribution sentence reads broader.",fix:"Optionally reword contribution 3 to 'gain concentrated on the visual-collapsing (Gaussian) conditions'."},
+  {id:"T4-5",area:"Thesis",dim:"TTA",sev:"info",vd:"partial",disc:0,t:"Calling disc-reweight a 'TTA' contribution when it is modality routing (no parameter updates)",loc:"main.tex:82",d:"No correctness issue — the routing nature is stated plainly and the Discussion already characterizes it as routing.",fix:"Optionally retitle to 'reliability-aware test-time modality routing'."},
+];
+
+const REFUTED = [
+  {id:"T6-1",t:"'Headline TTA numbers can't be regenerated from released code'",why:"Refuted — src/tta/evaluate_tta.py is a tracked, runnable --method disc_reweight pipeline that reproduces the routing per condition from the same feature caches the other methods use. The only real (narrow) gap is a tracked rollup aggregator → downgraded to the low C7-1."},
+  {id:"C1-4",t:"'Paper says SigLIP2 Base is 768-d but the model input is 1536-d'",why:"Refuted — 768-d is the per-frame backbone embedding; the paper explicitly documents the mean+max doubling to 2d (main.tex:149,153) and the configs set clip_dim=1536=2×768. Self-consistent, no mismatch."},
+  {id:"C4-2",t:"'Warmup uses start_factor=0.01, not literal LR=0'",why:"Refuted — the prose only claims 'linear warmup over 5 epochs' and never asserts a literal-0 start; ramping from 1% of base LR is the standard correct form. No discrepancy."},
+  {id:"C7-4",t:"'results-index.csv is single-seed, not the basis for the 3-seed tables'",why:"Refuted — all three seeds ARE present (rows ~948-1013 were appended later); recomputed skeleton 68.8±2.8 and gated 81.4±0.3 match the tables exactly, and the generator reads solely from this CSV."},
+  {id:"T1-1",t:"'Headline triple + all ablation cells reproduce' (positive)",why:"Re-asked as 'is there a problem?' → no. Both aggregators re-run clean against the tracked CSV; every cell matches the paper. Traceability intact."},
+  {id:"T2-5",t:"'Two-frame-grid disclosure is clear, cross-comparison avoided' (positive)",why:"Confirmed healthy — the truncated-grid caveat is at main.tex:302/219 and the 60.6 Table-3 value is never juxtaposed against the 82.5 full-length headline. No open defect."},
+  {id:"T2-6",t:"'Smoothness footnote (≤0.13pp) is internally consistent' (positive)",why:"Confirmed — 0.1 ≤ 0.13 ≤ 0.4 holds against the reported seed variance; the headline backbone's own std is 0.4. Honestly labeled 'reported as run'."},
+  {id:"T2-7",t:"'Entropy-TTA <0.1pp negative result is well-argued' (positive)",why:"Confirmed — the 1,536-param mechanism is substantiated in code, the gains are table-backed and bounded, and every caveat is disclosed. No overclaim."},
+  {id:"T4-3",t:"'Table 3 Source vs Ours come from two harnesses (~1.8pp gap)'",why:"Refuted — both columns come from the disc-reweight harness as a 3-seed mean; the '1.8pp gap' was a misread of the seed-42-only value against the 3-seed mean. Running the generator reproduces the table exactly."},
+  {id:"T4-6",t:"'Single-seed −3.2pp regression disclosure is adequate' (positive)",why:"Confirmed — −3.20 reproduces (seed-42 Base Gaussian sev-5); all three seeds are positive on average; the disclosure names backbone, condition, magnitude, cause, and caveat."},
+  {id:"T5-4",t:"'Temporal-scores caption hardcodes RoadAccidents while figure auto-titles'",why:"Refuted — ran the exact selection heuristic on committed data: it selects RoadAccidents127, so the rendered title matches the caption. Only cosmetic brittleness remains."},
+];
+
+// render helpers
+function sevBadge(s){return s==="high"?'<span class="badge b-high">HIGH</span>':s==="low"?'<span class="badge b-low">Low</span>':s==="clean"?'<span class="badge b-clean">Clean</span>':'<span class="badge b-info">Info</span>';}
+function vdBadge(v){return '<span class="badge b-'+v+'">'+v+'</span>';}
+function card(f){
+  const cls = f.sev==="clean"?"clean":f.sev;
+  return `<div class="f ${cls}${f.resolved?' resolved-f':''}" data-sev="${f.sev==='clean'?'info':f.sev}" data-area="${f.area}">
+    <div class="fh">
+      <span class="fid">${f.id}</span>
+      ${f.resolved?'<span class="badge b-resolved">✓ resolved</span>':''}${sevBadge(f.sev)} ${vdBadge(f.vd)}
+      <span class="badge b-area">${f.area} · ${f.dim}</span>
+      ${f.disc?'<span class="badge b-disc">disclosed</span>':''}
+      <span class="ft">${f.t}</span>
+      <span class="fexp">+</span>
+    </div>
+    <div class="fd">
+      <div class="loc">${f.loc}</div>
+      <p>${f.d}</p>
+      <div class="fix"><b>${f.fix.startsWith('None')||f.fix.startsWith('No ')?'Status:':'Fix:'}</b> ${f.fix}</div>
+      ${f.resolved?'<div class="resolved-note"><b>✓ Resolved — '+f.resolved+'</b></div>':''}
+    </div>
+  </div>`;
+}
+// clean list = positives
+document.getElementById('cleanlist').innerHTML = F.filter(f=>f.clean).map(card).join('');
+// all list = issues (non-clean) + minor positives; order by severity
+const order={high:0,low:1,info:2,clean:3};
+document.getElementById('alllist').innerHTML = F.slice().sort((a,b)=>order[a.sev]-order[b.sev]).map(card).join('');
+// refuted
+document.getElementById('reflist').innerHTML = REFUTED.map(r=>`<div class="rf"><b>${r.id}</b> — ${r.t}<br>${r.why}</div>`).join('');
+
+// expand toggles
+document.querySelectorAll('.f').forEach(el=>{
+  el.querySelector('.fexp').addEventListener('click',()=>{el.classList.toggle('open');el.querySelector('.fexp').textContent=el.classList.contains('open')?'–':'+';});
+  el.querySelector('.fh').addEventListener('click',e=>{if(e.target.classList.contains('fexp'))return;el.classList.toggle('open');el.querySelector('.fexp').textContent=el.classList.contains('open')?'–':'+';});
+});
+
+// filters
+const state={sev:"all",area:"all"};
+function applyFilters(){
+  document.querySelectorAll('#alllist .f').forEach(el=>{
+    const okS = state.sev==="all"||el.dataset.sev===state.sev;
+    const okA = state.area==="all"||el.dataset.area===state.area;
+    el.style.display=(okS&&okA)?"":"none";
+  });
+}
+document.querySelectorAll('.fbtn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    const f=b.dataset.f;
+    document.querySelectorAll(`.fbtn[data-f="${f}"]`).forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); state[f]=b.dataset.v; applyFilters();
+  });
+});
+</script>
+</body>
+</html>

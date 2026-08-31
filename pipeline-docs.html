@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ViolenceCC Pipeline Documentation</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+/* ══════════════════════════════════════════════════════════════
+   CSS Custom Properties & Theme
+   ══════════════════════════════════════════════════════════════ */
+:root {
+  --bg: #ffffff; --bg-alt: #f5f7fa; --bg-card: #ffffff;
+  --text: #1a1a2e; --text-secondary: #555; --text-dim: #888;
+  --border: #e0e0e0; --border-light: #eee;
+  --accent: #4361ee; --accent-light: #e8edff; --accent-dark: #3a56d4;
+  --success: #06d6a0; --warning: #ffd166; --danger: #ef476f;
+  --skeleton-color: #06d6a0; --clip-color: #4361ee; --fusion-color: #7209b7;
+  --siglip-color: #f77f00; --so400m-color: #d62828;
+  --nav-height: 56px;
+  --max-w: 1200px;
+  --font-sans: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  --shadow: 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-lg: 0 4px 24px rgba(0,0,0,0.12);
+  --radius: 8px;
+  --radius-sm: 4px;
+}
+[data-theme="dark"] {
+  --bg: #0f0f1a; --bg-alt: #1a1a2e; --bg-card: #1a1a2e;
+  --text: #e0e0e0; --text-secondary: #aaa; --text-dim: #666;
+  --border: #333; --border-light: #2a2a3e;
+  --accent: #6c8cff; --accent-light: #1a2040; --accent-dark: #8ba3ff;
+  --shadow: 0 2px 8px rgba(0,0,0,0.3);
+  --shadow-lg: 0 4px 24px rgba(0,0,0,0.4);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Reset & Base
+   ══════════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; scroll-padding-top: calc(var(--nav-height) + 16px); }
+body {
+  font-family: var(--font-sans); color: var(--text); background: var(--bg);
+  line-height: 1.7; font-size: 15px; transition: background 0.3s, color 0.3s;
+}
+h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0.5em; }
+h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.75em; color: var(--accent); }
+h3 { font-size: 1.15rem; font-weight: 600; margin-bottom: 0.5em; }
+p { margin-bottom: 1em; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code {
+  font-family: var(--font-mono); font-size: 0.88em;
+  background: var(--bg-alt); padding: 2px 6px; border-radius: var(--radius-sm);
+}
+pre {
+  font-family: var(--font-mono); font-size: 0.85em; background: var(--bg-alt);
+  padding: 16px; border-radius: var(--radius); overflow-x: auto;
+  border: 1px solid var(--border-light); margin-bottom: 1em; line-height: 1.5;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Navigation
+   ══════════════════════════════════════════════════════════════ */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: var(--nav-height); background: var(--bg-card);
+  border-bottom: 1px solid var(--border); backdrop-filter: blur(12px);
+  display: flex; align-items: center; padding: 0 24px;
+  box-shadow: var(--shadow);
+}
+nav .logo { font-weight: 700; font-size: 1.1rem; color: var(--accent); white-space: nowrap; }
+nav .nav-links {
+  display: flex; gap: 4px; margin-left: 32px; flex: 1;
+  overflow-x: auto; scrollbar-width: none;
+}
+nav .nav-links::-webkit-scrollbar { display: none; }
+nav .nav-links a {
+  padding: 6px 12px; border-radius: var(--radius-sm); font-size: 0.85rem;
+  white-space: nowrap; color: var(--text-secondary); font-weight: 500;
+  transition: all 0.2s;
+}
+nav .nav-links a:hover { background: var(--accent-light); color: var(--accent); text-decoration: none; }
+nav .nav-links a.active { background: var(--accent); color: #fff; }
+nav .nav-right { display: flex; gap: 8px; margin-left: auto; }
+.theme-toggle {
+  background: var(--bg-alt); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 4px 10px; cursor: pointer; font-size: 1rem; color: var(--text);
+}
+.hamburger {
+  display: none; background: none; border: none; font-size: 1.4rem;
+  cursor: pointer; color: var(--text); padding: 4px;
+}
+@media (max-width: 768px) {
+  .hamburger { display: block; }
+  nav .nav-links {
+    display: none; position: absolute; top: var(--nav-height); left: 0; right: 0;
+    flex-direction: column; background: var(--bg-card); border-bottom: 1px solid var(--border);
+    padding: 8px; box-shadow: var(--shadow-lg); margin-left: 0;
+  }
+  nav .nav-links.open { display: flex; }
+  nav .nav-links a { padding: 10px 16px; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Layout
+   ══════════════════════════════════════════════════════════════ */
+main { margin-top: var(--nav-height); }
+section {
+  max-width: var(--max-w); margin: 0 auto; padding: 48px 24px;
+  border-bottom: 1px solid var(--border-light);
+}
+section:last-child { border-bottom: none; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; }
+@media (max-width: 768px) {
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  section { padding: 32px 16px; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Cards & Components
+   ══════════════════════════════════════════════════════════════ */
+.card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 24px; box-shadow: var(--shadow);
+}
+.card h3 { margin-top: 0; }
+.callout {
+  border-left: 4px solid var(--accent); background: var(--accent-light);
+  padding: 16px 20px; border-radius: 0 var(--radius) var(--radius) 0;
+  margin-bottom: 1.5em;
+}
+.callout.success { border-left-color: var(--success); background: rgba(6,214,160,0.08); }
+.callout.warning { border-left-color: var(--warning); background: rgba(255,209,102,0.08); }
+.callout.danger { border-left-color: var(--danger); background: rgba(239,71,111,0.08); }
+.badge {
+  display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.badge-primary { background: var(--accent); color: #fff; }
+.badge-skeleton { background: var(--skeleton-color); color: #fff; }
+.badge-clip { background: var(--clip-color); color: #fff; }
+.badge-fusion { background: var(--fusion-color); color: #fff; }
+.stat-card {
+  text-align: center; padding: 20px;
+}
+.stat-card .stat-value {
+  font-size: 2rem; font-weight: 700; color: var(--accent);
+  font-family: var(--font-mono);
+}
+.stat-card .stat-label { font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px; }
+
+/* ══════════════════════════════════════════════════════════════
+   Tabs
+   ══════════════════════════════════════════════════════════════ */
+.tab-group { margin-bottom: 24px; }
+.tab-buttons {
+  display: flex; gap: 0; border-bottom: 2px solid var(--border);
+  overflow-x: auto; scrollbar-width: none;
+}
+.tab-buttons::-webkit-scrollbar { display: none; }
+.tab-btn {
+  padding: 10px 20px; border: none; background: none; cursor: pointer;
+  font-size: 0.9rem; font-weight: 500; color: var(--text-secondary);
+  border-bottom: 2px solid transparent; margin-bottom: -2px;
+  white-space: nowrap; transition: all 0.2s;
+}
+.tab-btn:hover { color: var(--accent); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+.tab-panel { display: none; padding: 20px 0; }
+.tab-panel.active { display: block; }
+
+/* ══════════════════════════════════════════════════════════════
+   Tables
+   ══════════════════════════════════════════════════════════════ */
+.table-wrap { overflow-x: auto; margin-bottom: 1.5em; }
+table {
+  width: 100%; border-collapse: collapse; font-size: 0.88rem;
+}
+th, td {
+  padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border-light);
+}
+th {
+  background: var(--bg-alt); font-weight: 600; white-space: nowrap;
+  cursor: pointer; user-select: none; position: sticky; top: 0;
+}
+th:hover { background: var(--accent-light); }
+th .sort-arrow { font-size: 0.7em; margin-left: 4px; opacity: 0.4; }
+th.sorted-asc .sort-arrow, th.sorted-desc .sort-arrow { opacity: 1; }
+tr:hover { background: var(--accent-light); }
+td.num { font-family: var(--font-mono); text-align: right; }
+.best { font-weight: 700; color: var(--success); }
+
+/* ══════════════════════════════════════════════════════════════
+   Diagrams (SVG containers)
+   ══════════════════════════════════════════════════════════════ */
+.diagram-container {
+  background: var(--bg-alt); border: 1px solid var(--border-light);
+  border-radius: var(--radius); padding: 24px; margin: 1.5em 0;
+  overflow-x: auto;
+}
+.diagram-container svg { display: block; margin: 0 auto; }
+.diagram-container svg text { font-family: var(--font-sans); }
+[data-theme="dark"] .diagram-container svg text { fill: #e0e0e0; }
+[data-theme="dark"] .diagram-container svg .box { stroke: #555; }
+[data-theme="dark"] .diagram-container svg .arrow { stroke: #888; }
+
+/* ══════════════════════════════════════════════════════════════
+   Architecture Blocks (CSS-based diagrams)
+   ══════════════════════════════════════════════════════════════ */
+.arch-flow {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  font-family: var(--font-mono); font-size: 0.82rem; margin: 1em 0;
+}
+.arch-block {
+  padding: 8px 14px; border-radius: var(--radius-sm); border: 2px solid;
+  white-space: nowrap; font-weight: 500;
+}
+.arch-block.skel { border-color: var(--skeleton-color); background: rgba(6,214,160,0.08); }
+.arch-block.clip { border-color: var(--clip-color); background: rgba(67,97,238,0.08); }
+.arch-block.fuse { border-color: var(--fusion-color); background: rgba(114,9,183,0.08); }
+.arch-block.head { border-color: var(--text-dim); background: var(--bg-alt); }
+.arch-arrow { color: var(--text-dim); font-size: 1.2em; }
+.dim-label { font-size: 0.75rem; color: var(--text-dim); }
+
+/* ══════════════════════════════════════════════════════════════
+   Chart containers
+   ══════════════════════════════════════════════════════════════ */
+.chart-container {
+  position: relative; margin: 1.5em 0; background: var(--bg-card);
+  border: 1px solid var(--border-light); border-radius: var(--radius);
+  padding: 16px;
+}
+.chart-container canvas { max-height: 400px; }
+
+/* ══════════════════════════════════════════════════════════════
+   Collapsible
+   ══════════════════════════════════════════════════════════════ */
+details {
+  border: 1px solid var(--border); border-radius: var(--radius);
+  margin-bottom: 1em; background: var(--bg-card);
+}
+details summary {
+  padding: 12px 16px; cursor: pointer; font-weight: 600; font-size: 0.95rem;
+  list-style: none; display: flex; align-items: center; gap: 8px;
+}
+details summary::before { content: '\25B6'; font-size: 0.7em; transition: transform 0.2s; }
+details[open] summary::before { transform: rotate(90deg); }
+details .detail-content { padding: 0 16px 16px; }
+
+/* ══════════════════════════════════════════════════════════════
+   Print
+   ══════════════════════════════════════════════════════════════ */
+@media print {
+  nav { display: none; }
+  main { margin-top: 0; }
+  section { page-break-inside: avoid; padding: 24px 0; }
+  .chart-container { break-inside: avoid; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Utility
+   ══════════════════════════════════════════════════════════════ */
+.mt-1 { margin-top: 8px; } .mt-2 { margin-top: 16px; } .mt-3 { margin-top: 24px; }
+.mb-2 { margin-bottom: 16px; } .mb-3 { margin-bottom: 24px; }
+.text-center { text-align: center; }
+.text-mono { font-family: var(--font-mono); }
+.text-sm { font-size: 0.85rem; }
+.text-dim { color: var(--text-secondary); }
+.flex-center { display: flex; align-items: center; justify-content: center; }
+.gap-2 { gap: 16px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     NAVIGATION
+     ═══════════════════════════════════════════════════════════ -->
+<nav>
+  <span class="logo">ViolenceCC</span>
+  <button class="hamburger" onclick="document.querySelector('.nav-links').classList.toggle('open')" aria-label="Toggle menu">&#9776;</button>
+  <div class="nav-links">
+    <a href="#overview" class="active">Overview</a>
+    <a href="#datasets">Datasets</a>
+    <a href="#features">Feature Extraction</a>
+    <a href="#pooling">Pooling</a>
+    <a href="#models">Models</a>
+    <a href="#training">Training</a>
+    <a href="#tta">TTA</a>
+    <a href="#results">Results</a>
+  </div>
+  <div class="nav-right">
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light mode">&#9681;</button>
+  </div>
+</nav>
+
+<main>
+
+<!-- ═══════════════════════════════════════════════════════════
+     1. OVERVIEW
+     ═══════════════════════════════════════════════════════════ -->
+<section id="overview">
+  <h1>ViolenceCC: Dual-Modal Fusion for Violence Detection</h1>
+  <p>A weakly supervised video anomaly detection (VAD) framework combining <strong>skeleton dynamics</strong> (CTR-GCN) with <strong>visual-language semantics</strong> (CLIP/SigLIP2) through gated fusion, trained with MIL Ranking Loss. Secondary investigation of TENT/SAR entropy-minimization test-time adaptation on LayerNorm-based fusion heads.</p>
+
+  <div class="callout">
+    <strong>Research Contributions:</strong> (1) Dual-modal skeleton+VLM fusion for violence-oriented VAD with gated attention; (2) Systematic evaluation of LN-based TTA (TENT/SAR) for cross-scene deployment robustness.
+  </div>
+
+  <!-- Pipeline Overview Diagram -->
+  <div class="diagram-container">
+    <svg viewBox="0 0 1000 320" width="100%" style="max-width:1000px;">
+      <!-- Raw Videos -->
+      <rect x="10" y="130" width="110" height="50" rx="8" fill="none" stroke="#888" stroke-width="2" class="box"/>
+      <text x="65" y="160" text-anchor="middle" font-size="13" font-weight="600">Raw Videos</text>
+
+      <!-- Arrow -->
+      <line x1="120" y1="155" x2="170" y2="155" stroke="#888" stroke-width="2" marker-end="url(#arrowhead)" class="arrow"/>
+
+      <!-- Frame Extraction -->
+      <rect x="170" y="130" width="120" height="50" rx="8" fill="none" stroke="#888" stroke-width="2" class="box"/>
+      <text x="230" y="152" text-anchor="middle" font-size="12">Frame</text>
+      <text x="230" y="168" text-anchor="middle" font-size="12">Extraction</text>
+
+      <!-- Branch arrows -->
+      <line x1="290" y1="140" x2="340" y2="70" stroke="var(--skeleton-color)" stroke-width="2" marker-end="url(#arrowG)" class="arrow"/>
+      <line x1="290" y1="170" x2="340" y2="230" stroke="var(--clip-color)" stroke-width="2" marker-end="url(#arrowB)" class="arrow"/>
+
+      <!-- Skeleton Branch -->
+      <rect x="340" y="20" width="100" height="45" rx="8" fill="rgba(6,214,160,0.12)" stroke="var(--skeleton-color)" stroke-width="2"/>
+      <text x="390" y="37" text-anchor="middle" font-size="11" font-weight="600" fill="var(--skeleton-color)">RTMPose</text>
+      <text x="390" y="52" text-anchor="middle" font-size="10" fill="var(--skeleton-color)">COCO-17</text>
+
+      <line x1="440" y1="42" x2="490" y2="42" stroke="var(--skeleton-color)" stroke-width="2" marker-end="url(#arrowG)"/>
+
+      <rect x="490" y="20" width="100" height="45" rx="8" fill="rgba(6,214,160,0.12)" stroke="var(--skeleton-color)" stroke-width="2"/>
+      <text x="540" y="37" text-anchor="middle" font-size="11" font-weight="600" fill="var(--skeleton-color)">CTR-GCN</text>
+      <text x="540" y="52" text-anchor="middle" font-size="10" fill="var(--skeleton-color)">4-stream</text>
+
+      <line x1="590" y1="42" x2="640" y2="42" stroke="var(--skeleton-color)" stroke-width="2" marker-end="url(#arrowG)"/>
+
+      <rect x="640" y="20" width="90" height="45" rx="8" fill="rgba(6,214,160,0.15)" stroke="var(--skeleton-color)" stroke-width="2"/>
+      <text x="685" y="40" text-anchor="middle" font-size="12" font-weight="700" fill="var(--skeleton-color)">256-d</text>
+      <text x="685" y="55" text-anchor="middle" font-size="9" fill="var(--skeleton-color)">per snippet</text>
+
+      <!-- CLIP Branch -->
+      <rect x="340" y="210" width="100" height="45" rx="8" fill="rgba(67,97,238,0.12)" stroke="var(--clip-color)" stroke-width="2"/>
+      <text x="390" y="227" text-anchor="middle" font-size="11" font-weight="600" fill="var(--clip-color)">CLIP</text>
+      <text x="390" y="243" text-anchor="middle" font-size="10" fill="var(--clip-color)">ViT-B/16</text>
+
+      <line x1="440" y1="232" x2="490" y2="232" stroke="var(--clip-color)" stroke-width="2" marker-end="url(#arrowB)"/>
+
+      <rect x="490" y="210" width="100" height="45" rx="8" fill="rgba(67,97,238,0.12)" stroke="var(--clip-color)" stroke-width="2"/>
+      <text x="540" y="227" text-anchor="middle" font-size="11" font-weight="600" fill="var(--clip-color)">Mean+Max</text>
+      <text x="540" y="243" text-anchor="middle" font-size="10" fill="var(--clip-color)">Pooling</text>
+
+      <line x1="590" y1="232" x2="640" y2="232" stroke="var(--clip-color)" stroke-width="2" marker-end="url(#arrowB)"/>
+
+      <rect x="640" y="210" width="90" height="45" rx="8" fill="rgba(67,97,238,0.15)" stroke="var(--clip-color)" stroke-width="2"/>
+      <text x="685" y="230" text-anchor="middle" font-size="12" font-weight="700" fill="var(--clip-color)">1024-d</text>
+      <text x="685" y="245" text-anchor="middle" font-size="9" fill="var(--clip-color)">per snippet</text>
+
+      <!-- Converge arrows to cache -->
+      <line x1="730" y1="50" x2="780" y2="120" stroke="var(--skeleton-color)" stroke-width="2" marker-end="url(#arrowG)"/>
+      <line x1="730" y1="230" x2="780" y2="155" stroke="var(--clip-color)" stroke-width="2" marker-end="url(#arrowB)"/>
+
+      <!-- Feature Cache -->
+      <rect x="770" y="115" width="90" height="50" rx="8" fill="var(--accent-light)" stroke="var(--accent)" stroke-width="2"/>
+      <text x="815" y="137" text-anchor="middle" font-size="11" font-weight="600">.npy</text>
+      <text x="815" y="153" text-anchor="middle" font-size="10">Cache</text>
+
+      <!-- Arrow to training -->
+      <line x1="860" y1="140" x2="880" y2="140" stroke="var(--fusion-color)" stroke-width="2" marker-end="url(#arrowP)"/>
+
+      <!-- MIL Training + Eval -->
+      <rect x="880" y="105" width="110" height="70" rx="8" fill="rgba(114,9,183,0.1)" stroke="var(--fusion-color)" stroke-width="2"/>
+      <text x="935" y="130" text-anchor="middle" font-size="11" font-weight="600" fill="var(--fusion-color)">MIL Training</text>
+      <text x="935" y="148" text-anchor="middle" font-size="10" fill="var(--fusion-color)">+ Evaluation</text>
+      <text x="935" y="165" text-anchor="middle" font-size="10" fill="var(--fusion-color)">AUC / AP</text>
+
+      <!-- Labels -->
+      <text x="390" y="10" text-anchor="middle" font-size="11" font-weight="600" fill="var(--skeleton-color)">Skeleton Branch</text>
+      <text x="390" y="280" text-anchor="middle" font-size="11" font-weight="600" fill="var(--clip-color)">Visual Branch</text>
+
+      <!-- Arrow markers -->
+      <defs>
+        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#888"/></marker>
+        <marker id="arrowG" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="var(--skeleton-color)"/></marker>
+        <marker id="arrowB" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="var(--clip-color)"/></marker>
+        <marker id="arrowP" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="var(--fusion-color)"/></marker>
+      </defs>
+    </svg>
+  </div>
+
+  <!-- Key Stats -->
+  <div class="grid-3 mt-3">
+    <div class="card stat-card">
+      <div class="stat-value">82.27%</div>
+      <div class="stat-label">UCF-Crime AUC (Gated Fusion)</div>
+    </div>
+    <div class="card stat-card">
+      <div class="stat-value">92.00%</div>
+      <div class="stat-label">XD-Violence AUC (Gated Fusion)</div>
+    </div>
+    <div class="card stat-card">
+      <div class="stat-value">71.92%</div>
+      <div class="stat-label">XD-Violence AP (Gated Fusion)</div>
+    </div>
+  </div>
+
+  <div class="callout warning mt-3">
+    <strong>Hardware:</strong> Single NVIDIA RTX 4090 (24 GB VRAM). All backbones frozen — no end-to-end finetuning. Three-stage extract-train-evaluate pipeline.
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     2. DATASETS
+     ═══════════════════════════════════════════════════════════ -->
+<section id="datasets">
+  <h2>Datasets</h2>
+  <div class="grid-2">
+    <div class="card">
+      <h3><span class="badge badge-primary">UCF-Crime</span></h3>
+      <p>1,900 untrimmed surveillance videos across 13 anomaly categories + Normal. Frame-level temporal annotations.</p>
+      <table>
+        <tr><td><strong>Train</strong></td><td class="num">1,368 videos</td></tr>
+        <tr><td><strong>Validation</strong></td><td class="num">242 videos</td></tr>
+        <tr><td><strong>Test</strong></td><td class="num">290 videos</td></tr>
+        <tr><td><strong>Violence Categories</strong></td><td>Fighting, Assault</td></tr>
+        <tr><td><strong>Label Parsing</strong></td><td><code>Normal_Videos*</code> prefix = 0</td></tr>
+        <tr><td><strong>Source Format</strong></td><td>PNGs (extracted frames)</td></tr>
+      </table>
+      <p class="text-sm text-dim mt-2">Categories: Abuse, Arrest, Arson, Assault, Burglary, Explosion, Fighting, RoadAccidents, Robbery, Shooting, Shoplifting, Stealing, Vandalism</p>
+    </div>
+    <div class="card">
+      <h3><span class="badge" style="background:var(--danger);color:#fff">XD-Violence</span></h3>
+      <p>4,754 multi-scene videos from movies, YouTube, news, CCTV. 6 violence-related categories with frame-level annotations.</p>
+      <table>
+        <tr><td><strong>Train</strong></td><td class="num">3,360 videos</td></tr>
+        <tr><td><strong>Validation</strong></td><td class="num">594 videos</td></tr>
+        <tr><td><strong>Test</strong></td><td class="num">800 videos</td></tr>
+        <tr><td><strong>Violence Categories</strong></td><td>All 6 are violence-related</td></tr>
+        <tr><td><strong>Label Parsing</strong></td><td><code>_label_A</code> suffix = normal</td></tr>
+        <tr><td><strong>Source Format</strong></td><td>MP4 (variable FPS, decord)</td></tr>
+      </table>
+      <p class="text-sm text-dim mt-2">Categories: B1-Fighting, B2-Shooting, B4-Riot, B5-Abuse, B6-Car Accident, G-Explosion</p>
+    </div>
+  </div>
+
+  <h3 class="mt-3">Snippet Construction</h3>
+  <div class="callout">
+    <strong>64 frames per snippet.</strong> Each video is divided into temporal snippets of 64 consecutive frames. Snippet boundaries are pre-computed and stored as JSON files. Both skeleton and CLIP features are extracted per-snippet, producing aligned <code>[N_snippets, D]</code> arrays per video.
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Property</th><th>UCF-Crime</th><th>XD-Violence</th></tr></thead>
+      <tbody>
+        <tr><td>Total Videos</td><td class="num">1,900</td><td class="num">4,754</td></tr>
+        <tr><td>Total Test Frames</td><td class="num">1,010,560</td><td class="num">2,313,024</td></tr>
+        <tr><td>Scene Type</td><td>Surveillance (fixed camera)</td><td>Multi-scene (movies, news, CCTV)</td></tr>
+        <tr><td>Annotation Level</td><td>Frame-level temporal ranges</td><td>Frame-level temporal ranges</td></tr>
+        <tr><td>Supervision</td><td colspan="2" class="text-center">Weakly supervised (video-level labels only during training)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     3. FEATURE EXTRACTION
+     ═══════════════════════════════════════════════════════════ -->
+<section id="features">
+  <h2>Feature Extraction</h2>
+  <p>All backbones are <strong>frozen</strong> (no finetuning). Features are extracted once and cached as <code>.npy</code> files for fast training iteration.</p>
+
+  <div class="tab-group">
+    <div class="tab-buttons">
+      <button class="tab-btn active" onclick="switchTab(this, 'feat')">Skeleton (CTR-GCN)</button>
+      <button class="tab-btn" onclick="switchTab(this, 'feat')">CLIP / SigLIP2</button>
+      <button class="tab-btn" onclick="switchTab(this, 'feat')">Alignment</button>
+    </div>
+
+    <!-- Skeleton Tab -->
+    <div class="tab-panel active" data-group="feat">
+      <h3>Skeleton Feature Extraction Pipeline</h3>
+      <p>Two-stage process across two separate conda environments:</p>
+
+      <div class="diagram-container">
+        <svg viewBox="0 0 900 180" width="100%" style="max-width:900px;">
+          <!-- Stage 1: RTMPose -->
+          <rect x="10" y="40" width="140" height="55" rx="8" fill="rgba(6,214,160,0.1)" stroke="var(--skeleton-color)" stroke-width="2"/>
+          <text x="80" y="62" text-anchor="middle" font-size="12" font-weight="600" fill="var(--skeleton-color)">RTMPose-m</text>
+          <text x="80" y="80" text-anchor="middle" font-size="10" fill="var(--skeleton-color)">COCO-17 keypoints</text>
+          <text x="80" y="110" text-anchor="middle" font-size="9" fill="var(--text-dim)">vcc-skeleton env</text>
+
+          <line x1="150" y1="67" x2="190" y2="67" stroke="var(--skeleton-color)" stroke-width="2" marker-end="url(#arrowG)"/>
+
+          <!-- Pickle output -->
+          <rect x="190" y="47" width="80" height="40" rx="6" fill="var(--bg-alt)" stroke="var(--border)" stroke-width="1.5"/>
+          <text x="230" y="72" text-anchor="middle" font-size="11">.pkl</text>
+
+          <line x1="270" y1="67" x2="310" y2="67" stroke="var(--skeleton-color)" stroke-width="2" marker-end="url(#arrowG)"/>
+
+          <!-- Stage 2: CTR-GCN -->
+          <rect x="310" y="20" width="250" height="100" rx="8" fill="rgba(6,214,160,0.08)" stroke="var(--skeleton-color)" stroke-width="2"/>
+          <text x="435" y="42" text-anchor="middle" font-size="12" font-weight="600" fill="var(--skeleton-color)">CTR-GCN 4-Stream Aggregation</text>
+
+          <!-- 4 streams inside -->
+          <rect x="320" y="52" width="75" height="22" rx="4" fill="rgba(6,214,160,0.2)" stroke="var(--skeleton-color)" stroke-width="1"/>
+          <text x="357" y="67" text-anchor="middle" font-size="9" fill="var(--skeleton-color)">Joint (1.0)</text>
+          <rect x="320" y="78" width="75" height="22" rx="4" fill="rgba(6,214,160,0.2)" stroke="var(--skeleton-color)" stroke-width="1"/>
+          <text x="357" y="93" text-anchor="middle" font-size="9" fill="var(--skeleton-color)">Bone (1.0)</text>
+          <rect x="405" y="52" width="75" height="22" rx="4" fill="rgba(6,214,160,0.15)" stroke="var(--skeleton-color)" stroke-width="1"/>
+          <text x="442" y="67" text-anchor="middle" font-size="9" fill="var(--skeleton-color)">JointMot (0.5)</text>
+          <rect x="405" y="78" width="75" height="22" rx="4" fill="rgba(6,214,160,0.15)" stroke="var(--skeleton-color)" stroke-width="1"/>
+          <text x="442" y="93" text-anchor="middle" font-size="9" fill="var(--skeleton-color)">BoneMot (0.5)</text>
+
+          <!-- Weighted avg label -->
+          <text x="510" y="72" font-size="10" fill="var(--text-dim)">w.avg</text>
+          <text x="510" y="86" font-size="9" fill="var(--text-dim)">/3.0</text>
+
+          <text x="435" y="135" text-anchor="middle" font-size="9" fill="var(--text-dim)">vcc-ctrgcn env (PyTorch 1.12 + mmcv 1.7)</text>
+
+          <line x1="560" y1="67" x2="610" y2="67" stroke="var(--skeleton-color)" stroke-width="2" marker-end="url(#arrowG)"/>
+
+          <!-- Output -->
+          <rect x="610" y="40" width="120" height="55" rx="8" fill="rgba(6,214,160,0.15)" stroke="var(--skeleton-color)" stroke-width="2"/>
+          <text x="670" y="62" text-anchor="middle" font-size="13" font-weight="700" fill="var(--skeleton-color)">[N, 256]</text>
+          <text x="670" y="80" text-anchor="middle" font-size="10" fill="var(--skeleton-color)">float32 .npy</text>
+
+          <!-- Pretrained label -->
+          <text x="435" y="155" text-anchor="middle" font-size="9" fill="var(--text-dim)">Pretrained: NTU120 HRNet 2D (frozen)</text>
+        </svg>
+      </div>
+
+      <div class="callout">
+        <strong>PreNormalize2D:</strong> Raw pixel coordinates are normalized to [-1, 1] using <code>img_shape</code> from the pickle metadata. A 2.0 tolerance check prevents silent failures from incorrect normalization.
+      </div>
+
+      <p><strong>2-Person Handling:</strong> RTMPose detects all persons per frame; top 2 by confidence are kept. If only 1 person is detected, the second slot is zero-filled. The 2-person features can be aggregated at extraction time (M-pool) or at training time (see <a href="#pooling">Pooling</a> section).</p>
+    </div>
+
+    <!-- CLIP/SigLIP2 Tab -->
+    <div class="tab-panel" data-group="feat">
+      <h3>Visual Feature Extraction</h3>
+      <p>Frozen vision-language model backbones extract per-frame embeddings, pooled to per-snippet features.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Backbone</th><th>Per-Frame Dim</th><th>Mean+Max Output</th><th>Mean-Only Output</th><th>Model Params</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>CLIP ViT-B/16</strong> <span class="badge badge-clip">baseline</span></td><td class="num">512</td><td class="num">1,024</td><td class="num">512</td><td class="num">86.2M</td></tr>
+            <tr><td><strong>SigLIP2 ViT-B/16-256</strong></td><td class="num">768</td><td class="num">1,536</td><td class="num">768</td><td class="num">~93M</td></tr>
+            <tr><td><strong>SigLIP2 SO400M</strong></td><td class="num">1,152</td><td class="num">2,304</td><td class="num">1,152</td><td class="num">~400M</td></tr>
+            <tr><td><strong>SigLIP2 Giant</strong></td><td class="num">1,536</td><td class="num">3,072</td><td class="num">1,536</td><td class="num">~1.1B</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p><strong>Frame Sampling:</strong> ~1 FPS within each snippet. UCF PNGs: every 3rd frame (<code>sample_every=3</code>). XD MP4s: decode actual FPS, sample every <code>round(fps/1.0)</code> frames.</p>
+      <p><strong>Environment:</strong> <code>vcc-main</code> (PyTorch 2.6.0 + open-clip-torch 3.3.0)</p>
+    </div>
+
+    <!-- Alignment Tab -->
+    <div class="tab-panel" data-group="feat">
+      <h3>Feature Alignment & Storage</h3>
+      <div class="callout success">
+        <strong>Alignment Invariant (DATA-08):</strong> <code>skel.shape[0] == clip.shape[0]</code> is asserted at dataset <code>__getitem__</code> time. Misalignment triggers an immediate <code>AssertionError</code> with the offending <code>video_id</code>.
+      </div>
+      <ul>
+        <li><strong>Storage Format:</strong> <code>float32</code> NumPy arrays, one <code>.npy</code> file per video per modality</li>
+        <li><strong>Atomic Writes:</strong> write-temp &rarr; fsync &rarr; rename pattern prevents partial/corrupt files</li>
+        <li><strong>Lazy Loading:</strong> <code>mmap_mode='r'</code> at initialization &mdash; O(1) header peek, no full copy</li>
+        <li><strong>Verification:</strong> <code>scripts/verify_alignment.py</code> checks all videos in a split for skeleton-CLIP snippet count match</li>
+      </ul>
+
+      <div class="table-wrap mt-2">
+        <table>
+          <thead><tr><th>Feature Type</th><th>Cache Path Pattern</th><th>Shape</th></tr></thead>
+          <tbody>
+            <tr><td>Skeleton (default)</td><td><code>E:/features/{dataset}/skeleton/{video_id}.npy</code></td><td>[N, 256]</td></tr>
+            <tr><td>Skeleton (2-person)</td><td><code>E:/features/{dataset}/skeleton_2p/{video_id}.npy</code></td><td>[N, 2, 256]</td></tr>
+            <tr><td>CLIP mean+max</td><td><code>E:/features/{dataset}/clip/{video_id}.npy</code></td><td>[N, 1024]</td></tr>
+            <tr><td>CLIP mean-only</td><td><code>E:/features/{dataset}/clip_mean/{video_id}.npy</code></td><td>[N, 512]</td></tr>
+            <tr><td>SigLIP2 mean+max</td><td><code>E:/features/{dataset}/siglip2/{video_id}.npy</code></td><td>[N, 1536]</td></tr>
+            <tr><td>SO400M mean+max</td><td><code>E:/features/{dataset}/so400m/{video_id}.npy</code></td><td>[N, 2304]</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     4. POOLING STRATEGIES
+     ═══════════════════════════════════════════════════════════ -->
+<section id="pooling">
+  <h2>Pooling Strategies</h2>
+  <p>Two distinct pooling stages: <strong>temporal pooling</strong> of per-frame visual embeddings within a snippet, and <strong>2-person aggregation</strong> of skeleton features when multiple persons are detected.</p>
+
+  <h3>CLIP Temporal Pooling (at extraction time)</h3>
+  <p>Per-frame embeddings from the frozen backbone are aggregated to a single vector per snippet:</p>
+
+  <div class="diagram-container">
+    <svg viewBox="0 0 800 280" width="100%" style="max-width:800px;">
+      <!-- Input frames -->
+      <text x="400" y="20" text-anchor="middle" font-size="12" font-weight="600">Snippet: n sampled frames at ~1 FPS</text>
+      <g transform="translate(130,30)">
+        <rect x="0" y="0" width="50" height="35" rx="4" fill="rgba(67,97,238,0.1)" stroke="var(--clip-color)" stroke-width="1.5"/>
+        <text x="25" y="22" text-anchor="middle" font-size="10">e&#x2081;</text>
+        <rect x="60" y="0" width="50" height="35" rx="4" fill="rgba(67,97,238,0.1)" stroke="var(--clip-color)" stroke-width="1.5"/>
+        <text x="85" y="22" text-anchor="middle" font-size="10">e&#x2082;</text>
+        <rect x="120" y="0" width="50" height="35" rx="4" fill="rgba(67,97,238,0.1)" stroke="var(--clip-color)" stroke-width="1.5"/>
+        <text x="145" y="22" text-anchor="middle" font-size="10">e&#x2083;</text>
+        <text x="200" y="22" text-anchor="middle" font-size="14" fill="var(--text-dim)">...</text>
+        <rect x="230" y="0" width="50" height="35" rx="4" fill="rgba(67,97,238,0.1)" stroke="var(--clip-color)" stroke-width="1.5"/>
+        <text x="255" y="22" text-anchor="middle" font-size="10">e&#x2099;</text>
+        <text x="310" y="22" text-anchor="start" font-size="10" fill="var(--text-dim)">each 512-d (CLIP)</text>
+      </g>
+
+      <!-- Arrows down -->
+      <line x1="200" y1="75" x2="200" y2="105" stroke="var(--clip-color)" stroke-width="2" marker-end="url(#arrowB)"/>
+      <line x1="500" y1="75" x2="500" y2="105" stroke="var(--clip-color)" stroke-width="2" marker-end="url(#arrowB)"/>
+
+      <!-- Mean+Max path -->
+      <rect x="80" y="110" width="240" height="70" rx="8" fill="rgba(67,97,238,0.06)" stroke="var(--clip-color)" stroke-width="2"/>
+      <text x="200" y="130" text-anchor="middle" font-size="12" font-weight="600" fill="var(--clip-color)">Mean+Max Pooling (default)</text>
+
+      <rect x="95" y="140" width="80" height="28" rx="4" fill="rgba(67,97,238,0.15)" stroke="var(--clip-color)" stroke-width="1"/>
+      <text x="135" y="159" text-anchor="middle" font-size="10">mean(e) 512-d</text>
+      <rect x="225" y="140" width="80" height="28" rx="4" fill="rgba(67,97,238,0.15)" stroke="var(--clip-color)" stroke-width="1"/>
+      <text x="265" y="159" text-anchor="middle" font-size="10">max(e) 512-d</text>
+
+      <text x="200" y="200" text-anchor="middle" font-size="11" fill="var(--text-dim)">concatenate &darr;</text>
+
+      <rect x="130" y="210" width="140" height="40" rx="8" fill="rgba(67,97,238,0.2)" stroke="var(--clip-color)" stroke-width="2"/>
+      <text x="200" y="235" text-anchor="middle" font-size="14" font-weight="700" fill="var(--clip-color)">1024-d</text>
+
+      <!-- Mean-only path -->
+      <rect x="420" y="110" width="180" height="70" rx="8" fill="rgba(67,97,238,0.06)" stroke="var(--clip-color)" stroke-width="2" stroke-dasharray="5,3"/>
+      <text x="510" y="130" text-anchor="middle" font-size="12" font-weight="600" fill="var(--clip-color)">Mean-Only Pooling</text>
+      <rect x="450" y="140" width="100" height="28" rx="4" fill="rgba(67,97,238,0.15)" stroke="var(--clip-color)" stroke-width="1"/>
+      <text x="500" y="159" text-anchor="middle" font-size="10">mean(e) 512-d</text>
+
+      <text x="510" y="200" text-anchor="middle" font-size="11" fill="var(--text-dim)">&darr;</text>
+
+      <rect x="440" y="210" width="140" height="40" rx="8" fill="rgba(67,97,238,0.12)" stroke="var(--clip-color)" stroke-width="2" stroke-dasharray="5,3"/>
+      <text x="510" y="235" text-anchor="middle" font-size="14" font-weight="700" fill="var(--clip-color)">512-d</text>
+    </svg>
+  </div>
+
+  <h3>2-Person Skeleton Aggregation (at training time)</h3>
+  <p>When skeleton features are extracted with 2-person tracking, the <code>[N, 2, 256]</code> tensor is aggregated via one of these strategies:</p>
+
+  <div class="diagram-container">
+    <svg viewBox="0 0 700 200" width="100%" style="max-width:700px;">
+      <!-- Input -->
+      <rect x="10" y="60" width="100" height="30" rx="4" fill="rgba(6,214,160,0.15)" stroke="var(--skeleton-color)" stroke-width="1.5"/>
+      <text x="60" y="80" text-anchor="middle" font-size="10">Person 1: 256-d</text>
+      <rect x="10" y="100" width="100" height="30" rx="4" fill="rgba(6,214,160,0.1)" stroke="var(--skeleton-color)" stroke-width="1.5"/>
+      <text x="60" y="120" text-anchor="middle" font-size="10">Person 2: 256-d</text>
+
+      <!-- Arrows -->
+      <line x1="110" y1="75" x2="170" y2="40" stroke="var(--skeleton-color)" stroke-width="1.5" marker-end="url(#arrowG)"/>
+      <line x1="110" y1="85" x2="170" y2="85" stroke="var(--skeleton-color)" stroke-width="1.5" marker-end="url(#arrowG)"/>
+      <line x1="110" y1="95" x2="170" y2="130" stroke="var(--skeleton-color)" stroke-width="1.5" marker-end="url(#arrowG)"/>
+      <line x1="110" y1="115" x2="170" y2="40" stroke="var(--skeleton-color)" stroke-width="1.5" marker-end="url(#arrowG)"/>
+      <line x1="110" y1="115" x2="170" y2="85" stroke="var(--skeleton-color)" stroke-width="1.5" marker-end="url(#arrowG)"/>
+      <line x1="110" y1="115" x2="170" y2="130" stroke="var(--skeleton-color)" stroke-width="1.5" marker-end="url(#arrowG)"/>
+
+      <!-- Concat -->
+      <rect x="170" y="22" width="140" height="36" rx="6" fill="rgba(6,214,160,0.1)" stroke="var(--skeleton-color)" stroke-width="1.5"/>
+      <text x="240" y="38" text-anchor="middle" font-size="11" font-weight="600" fill="var(--skeleton-color)">Concat</text>
+      <text x="240" y="52" text-anchor="middle" font-size="9" fill="var(--text-dim)">flatten [p1;p2]</text>
+      <line x1="310" y1="40" x2="370" y2="40" stroke="var(--skeleton-color)" stroke-width="1.5" marker-end="url(#arrowG)"/>
+      <rect x="370" y="25" width="90" height="30" rx="4" fill="rgba(6,214,160,0.2)" stroke="var(--skeleton-color)" stroke-width="2"/>
+      <text x="415" y="44" text-anchor="middle" font-size="12" font-weight="700" fill="var(--skeleton-color)">512-d</text>
+
+      <!-- Max -->
+      <rect x="170" y="68" width="140" height="36" rx="6" fill="rgba(6,214,160,0.1)" stroke="var(--skeleton-color)" stroke-width="1.5"/>
+      <text x="240" y="84" text-anchor="middle" font-size="11" font-weight="600" fill="var(--skeleton-color)">Max</text>
+      <text x="240" y="98" text-anchor="middle" font-size="9" fill="var(--text-dim)">element-wise max</text>
+      <line x1="310" y1="86" x2="370" y2="86" stroke="var(--skeleton-color)" stroke-width="1.5" marker-end="url(#arrowG)"/>
+      <rect x="370" y="71" width="90" height="30" rx="4" fill="rgba(6,214,160,0.2)" stroke="var(--skeleton-color)" stroke-width="2"/>
+      <text x="415" y="90" text-anchor="middle" font-size="12" font-weight="700" fill="var(--skeleton-color)">256-d</text>
+
+      <!-- Mean -->
+      <rect x="170" y="114" width="140" height="36" rx="6" fill="rgba(6,214,160,0.1)" stroke="var(--skeleton-color)" stroke-width="1.5"/>
+      <text x="240" y="130" text-anchor="middle" font-size="11" font-weight="600" fill="var(--skeleton-color)">Mean</text>
+      <text x="240" y="144" text-anchor="middle" font-size="9" fill="var(--text-dim)">element-wise avg</text>
+      <line x1="310" y1="132" x2="370" y2="132" stroke="var(--skeleton-color)" stroke-width="1.5" marker-end="url(#arrowG)"/>
+      <rect x="370" y="117" width="90" height="30" rx="4" fill="rgba(6,214,160,0.2)" stroke="var(--skeleton-color)" stroke-width="2"/>
+      <text x="415" y="136" text-anchor="middle" font-size="12" font-weight="700" fill="var(--skeleton-color)">256-d</text>
+
+      <!-- Labels -->
+      <text x="530" y="44" font-size="10" fill="var(--text-dim)">preserves both persons</text>
+      <text x="530" y="90" font-size="10" fill="var(--text-dim)">keeps dominant signal</text>
+      <text x="530" y="136" font-size="10" fill="var(--text-dim)">default (pre-aggregated)</text>
+    </svg>
+  </div>
+
+  <h3>Dimension Summary (Backbone &times; Pooling)</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Visual Backbone</th><th>Per-Frame</th><th>Mean+Max (default)</th><th>Mean-Only</th><th>Skeleton Dim</th><th>Shared Projection</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>CLIP ViT-B/16 <span class="badge badge-clip">baseline</span></td><td class="num">512</td><td class="num">1,024</td><td class="num">512</td><td class="num">256</td><td class="num">256</td></tr>
+        <tr><td>SigLIP2 ViT-B/16-256</td><td class="num">768</td><td class="num">1,536</td><td class="num">768</td><td class="num">256</td><td class="num">256</td></tr>
+        <tr><td>SigLIP2 SO400M</td><td class="num">1,152</td><td class="num">2,304</td><td class="num">1,152</td><td class="num">256</td><td class="num">256</td></tr>
+        <tr><td>SigLIP2 Giant</td><td class="num">1,536</td><td class="num">3,072</td><td class="num">1,536</td><td class="num">256</td><td class="num">256</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="text-sm text-dim">All visual features are projected to 256-d shared space inside the fusion model regardless of backbone dimension.</p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     5. MODEL ARCHITECTURES
+     ═══════════════════════════════════════════════════════════ -->
+<section id="models">
+  <h2>Model Architectures</h2>
+  <p>Five model variants share a common <strong>MILHead</strong> classifier. The primary thesis model is <strong>GatedFusion (MOD-06)</strong>.</p>
+
+  <div class="tab-group">
+    <div class="tab-buttons">
+      <button class="tab-btn active" onclick="switchTab(this, 'model')">GatedFusion (Primary)</button>
+      <button class="tab-btn" onclick="switchTab(this, 'model')">SkeletonOnly</button>
+      <button class="tab-btn" onclick="switchTab(this, 'model')">CLIPOnly</button>
+      <button class="tab-btn" onclick="switchTab(this, 'model')">LateFusion</button>
+    </div>
+
+    <!-- GatedFusion Tab -->
+    <div class="tab-panel active" data-group="model">
+      <h3>MOD-06: GatedFusion <span class="badge badge-fusion">Primary</span></h3>
+      <p>Learned sigmoid gating in a 256-d shared embedding space with residual gradient highway. Three named LayerNorms serve as the TTA adaptation surface.</p>
+
+      <pre>
+skel [B,T,256]  &rarr; Linear(256&rarr;256)  &rarr; <span style="color:var(--skeleton-color);font-weight:700">LN_skel</span>  &rarr; p_skel [B,T,256]
+clip [B,T,1024] &rarr; Linear(1024&rarr;256) &rarr; <span style="color:var(--clip-color);font-weight:700">LN_clip</span>  &rarr; p_clip [B,T,256]
+
+gate = &sigma;(Linear([p_skel; p_clip]))    &isin; [0,1]^256
+fused = gate &odot; p_skel + (1-gate) &odot; p_clip
+residual = fused + p_skel + p_clip          &larr; gradient highway
+
+<span style="color:var(--fusion-color);font-weight:700">LN_fused</span>(residual) &rarr; Dropout(0.3) &rarr; MILHead &rarr; scores [B,T]
+      </pre>
+
+      <div class="grid-2 mt-2">
+        <div class="callout">
+          <strong>Gate Initialization (m1 mitigation):</strong> Xavier uniform with <code>gain=0.1</code> + zero bias. Initial gate &asymp; sigmoid(0) = 0.5, preventing early saturation and gradient vanishing.
+        </div>
+        <div class="callout success">
+          <strong>3 Named LayerNorms:</strong> <code>ln_skel</code>, <code>ln_clip</code>, <code>ln_fused</code> &mdash; directly addressable for Phase 5 TTA (TENT/SAR) parameter collection without opaque traversal.
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr><td>Parameters</td><td class="num">498.1K</td></tr>
+            <tr><td>MACs</td><td class="num">15.96M</td></tr>
+            <tr><td>Inference Latency</td><td class="num">1.050 ms</td></tr>
+            <tr><td>Throughput</td><td class="num">15,237 snippets/s</td></tr>
+            <tr><td>Peak GPU Memory</td><td class="num">21.7 MB</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SkeletonOnly Tab -->
+    <div class="tab-panel" data-group="model">
+      <h3>MOD-03: SkeletonOnly</h3>
+      <p>Skeleton-only ablation baseline. Single LayerNorm on raw skeleton features.</p>
+      <pre>
+skel [B,T,256] &rarr; <span style="color:var(--skeleton-color);font-weight:700">LN_skel</span> &rarr; MILHead(256&rarr;128&rarr;32&rarr;1) &rarr; Sigmoid &rarr; scores [B,T]
+      </pre>
+      <p><strong>Parameters:</strong> 37.6K &nbsp;|&nbsp; <strong>MACs:</strong> 1.21M &nbsp;|&nbsp; <strong>Latency:</strong> 0.504 ms</p>
+    </div>
+
+    <!-- CLIPOnly Tab -->
+    <div class="tab-panel" data-group="model">
+      <h3>MOD-04: CLIPOnly</h3>
+      <p>CLIP-only ablation baseline. Learned projection from 1024-d to 512-d before the head.</p>
+      <pre>
+clip [B,T,1024] &rarr; Linear(1024&rarr;512) &rarr; <span style="color:var(--clip-color);font-weight:700">LN_clip</span> &rarr; MILHead(512&rarr;128&rarr;32&rarr;1) &rarr; Sigmoid &rarr; scores [B,T]
+      </pre>
+      <p><strong>Parameters:</strong> 595.7K &nbsp;|&nbsp; <strong>MACs:</strong> 19.07M &nbsp;|&nbsp; <strong>Latency:</strong> 0.690 ms</p>
+    </div>
+
+    <!-- LateFusion Tab -->
+    <div class="tab-panel" data-group="model">
+      <h3>MOD-05: LateFusion</h3>
+      <p>Score-level average of independent SkeletonOnly and CLIPOnly branches. &alpha; = 0.5 (equal weighting).</p>
+      <pre>
+s_skel = SkeletonOnly(skel)     &rarr; [B,T]
+s_clip = CLIPOnly(clip)         &rarr; [B,T]
+scores = 0.5 &times; s_skel + 0.5 &times; s_clip   &rarr; [B,T]
+      </pre>
+      <p><strong>Parameters:</strong> 633.2K &nbsp;|&nbsp; <strong>MACs:</strong> 20.29M &nbsp;|&nbsp; <strong>Latency:</strong> 1.153 ms</p>
+    </div>
+  </div>
+
+  <h3>Shared MILHead</h3>
+  <p>All variants use the identical 3-layer MLP classifier (isolating fusion effects in ablations):</p>
+  <div class="arch-flow">
+    <span class="arch-block head">Linear(D&rarr;128)</span>
+    <span class="arch-arrow">&rarr;</span>
+    <span class="arch-block head">ReLU</span>
+    <span class="arch-arrow">&rarr;</span>
+    <span class="arch-block head">Dropout(0.3)</span>
+    <span class="arch-arrow">&rarr;</span>
+    <span class="arch-block head">Linear(128&rarr;32)</span>
+    <span class="arch-arrow">&rarr;</span>
+    <span class="arch-block head">ReLU</span>
+    <span class="arch-arrow">&rarr;</span>
+    <span class="arch-block head">Dropout(0.3)</span>
+    <span class="arch-arrow">&rarr;</span>
+    <span class="arch-block head">Linear(32&rarr;1)</span>
+    <span class="arch-arrow">&rarr;</span>
+    <span class="arch-block head">Sigmoid</span>
+  </div>
+  <p class="text-sm text-dim">Hidden dimensions 128&rarr;32 match RTFM/MGFN conventions. Output is per-snippet anomaly probability in [0, 1].</p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     6. TRAINING
+     ═══════════════════════════════════════════════════════════ -->
+<section id="training">
+  <h2>Training Pipeline</h2>
+
+  <h3>MIL Ranking Loss</h3>
+  <p>Top-k Multiple Instance Learning ranking loss (RTFM, ICCV 2021) adapted for sigmoid-scale scores [0,1].</p>
+
+  <div class="diagram-container">
+    <svg viewBox="0 0 850 280" width="100%" style="max-width:850px;">
+      <!-- Normal bag -->
+      <rect x="10" y="20" width="300" height="50" rx="6" fill="rgba(6,214,160,0.08)" stroke="var(--skeleton-color)" stroke-width="1.5"/>
+      <text x="20" y="42" font-size="11" fill="var(--skeleton-color)" font-weight="600">Normal bag:</text>
+      <text x="130" y="42" font-size="10" fill="var(--skeleton-color)">[s&#x2081;, s&#x2082;, ... s&#x2083;&#x2082;]</text>
+      <text x="20" y="60" font-size="9" fill="var(--text-dim)">32 snippet scores in [0,1]</text>
+
+      <!-- Abnormal bag -->
+      <rect x="10" y="80" width="300" height="50" rx="6" fill="rgba(239,71,111,0.08)" stroke="var(--danger)" stroke-width="1.5"/>
+      <text x="20" y="102" font-size="11" fill="var(--danger)" font-weight="600">Abnormal bag:</text>
+      <text x="145" y="102" font-size="10" fill="var(--danger)">[s&#x2081;, s&#x2082;, ... s&#x2083;&#x2082;]</text>
+      <text x="20" y="120" font-size="9" fill="var(--text-dim)">32 snippet scores in [0,1]</text>
+
+      <!-- Top-k arrows -->
+      <line x1="310" y1="45" x2="380" y2="45" stroke="var(--skeleton-color)" stroke-width="1.5" marker-end="url(#arrowG)"/>
+      <text x="345" y="38" font-size="9" fill="var(--text-dim)">top-3</text>
+      <line x1="310" y1="105" x2="380" y2="105" stroke="var(--danger)" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+      <text x="345" y="98" font-size="9" fill="var(--text-dim)">top-3</text>
+
+      <!-- Means -->
+      <rect x="380" y="28" width="80" height="34" rx="4" fill="var(--bg-alt)" stroke="var(--border)" stroke-width="1.5"/>
+      <text x="420" y="50" text-anchor="middle" font-size="11" font-weight="600">t_nor</text>
+      <rect x="380" y="88" width="80" height="34" rx="4" fill="var(--bg-alt)" stroke="var(--border)" stroke-width="1.5"/>
+      <text x="420" y="110" text-anchor="middle" font-size="11" font-weight="600">t_abn</text>
+
+      <!-- Loss formulas -->
+      <rect x="20" y="155" width="810" height="110" rx="8" fill="var(--bg-alt)" stroke="var(--border)" stroke-width="1"/>
+      <text x="40" y="180" font-size="13" font-weight="700" fill="var(--accent)">Loss Components:</text>
+
+      <text x="40" y="205" font-size="12" font-family="var(--font-mono)">
+        <tspan fill="var(--danger)" font-weight="600">L_rank</tspan>    = mean( ReLU( margin - t_abn + t_nor ) )
+      </text>
+      <text x="580" y="205" font-size="10" fill="var(--text-dim)">margin = 1.0</text>
+
+      <text x="40" y="228" font-size="12" font-family="var(--font-mono)">
+        <tspan fill="var(--warning)" font-weight="600">L_sparse</tspan>  = &lambda;&#x2081; &middot; mean( ||scores_abn||&#x2082; )
+      </text>
+      <text x="580" y="228" font-size="10" fill="var(--text-dim)">&lambda;&#x2081; = 8e-3</text>
+
+      <text x="40" y="251" font-size="12" font-family="var(--font-mono)">
+        <tspan fill="var(--clip-color)" font-weight="600">L_smooth</tspan> = &lambda;&#x2082; &middot; &Sigma;( s[t+1] - s[t] )&sup2;
+      </text>
+      <text x="580" y="251" font-size="10" fill="var(--text-dim)">&lambda;&#x2082; = 8e-4</text>
+    </svg>
+  </div>
+
+  <h3>Bag Construction & Data Loading</h3>
+  <div class="grid-2">
+    <div class="card">
+      <h3>Train / Val Mode</h3>
+      <ul>
+        <li>Target <strong>T = 32 snippets</strong> per bag</li>
+        <li>If N &ge; 32: uniform 32-segment sub-sample (one random pick per segment)</li>
+        <li>If N &lt; 32: <strong>sample with replacement</strong> (not zero-padding, which caused NaN losses)</li>
+        <li>Paired batching: B normal + B abnormal per step</li>
+        <li>Val loader uses <code>shuffle=True</code> to prevent single-class batch bias</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Test Mode</h3>
+      <ul>
+        <li>Return <strong>all N snippets</strong> in temporal order</li>
+        <li>No sampling, no padding</li>
+        <li>Snippet-to-frame mapping via pre-computed boundaries</li>
+        <li>Frame-level AUC/AP computed against temporal ground truth</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 class="mt-3">Training Configuration</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Hyperparameter</th><th>Default</th><th>Sweep Range</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>Learning Rate</td><td class="num">1e-4</td><td class="num">6.5e-4 &ndash; 2e-3</td><td>AdamW optimizer</td></tr>
+        <tr><td>Weight Decay</td><td class="num">1e-2</td><td>&mdash;</td><td>L2 regularization</td></tr>
+        <tr><td>Epochs</td><td class="num">50</td><td>&mdash;</td><td>Max training epochs</td></tr>
+        <tr><td>Warmup Epochs</td><td class="num">5</td><td>&mdash;</td><td>Linear warmup</td></tr>
+        <tr><td>Early Stopping</td><td class="num">10</td><td>&mdash;</td><td>Patience on val loss</td></tr>
+        <tr><td>Top-k</td><td class="num">3</td><td class="num">1 &ndash; 9</td><td>MIL top-k selection</td></tr>
+        <tr><td>Hinge Margin</td><td class="num">1.0</td><td>&mdash;</td><td>On sigmoid [0,1] scale</td></tr>
+        <tr><td>Batch Size</td><td class="num">16</td><td>&mdash;</td><td>Per normal/abnormal loader</td></tr>
+        <tr><td>Dropout</td><td class="num">0.3</td><td>&mdash;</td><td>MILHead + fusion output</td></tr>
+        <tr><td>Snippets per Bag</td><td class="num">32</td><td>&mdash;</td><td>T in dataset sampling</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout mt-2">
+    <strong>Training entry:</strong> <code>python src/train.py --config configs/gated_fusion.yaml --seed 42</code><br>
+    <strong>Outputs:</strong> <code>results/{run}/best_model.pth</code>, <code>config_snapshot.json</code>, <code>train_log.csv</code>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     7. TEST-TIME ADAPTATION
+     ═══════════════════════════════════════════════════════════ -->
+<section id="tta">
+  <h2>Test-Time Adaptation (TTA)</h2>
+  <p>Entropy-minimization TTA adapted from BatchNorm-based methods (TENT, SAR) to <strong>LayerNorm affine parameters</strong> (&gamma;, &beta;) in the fusion head. Only 1,536 parameters are updated (3 LNs &times; 256-d &times; 2).</p>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>TENT <span class="text-dim text-sm">(Wang et al., ICLR 2021)</span></h3>
+      <ol>
+        <li>Set model to train mode, freeze all params except LN affine</li>
+        <li>Disable dropout explicitly (<code>model.dropout.eval()</code>)</li>
+        <li>For each test batch: forward &rarr; compute binary entropy &rarr; backward &rarr; update LN &gamma;,&beta;</li>
+        <li><strong>Per-video reset:</strong> restore LN params from source checkpoint</li>
+      </ol>
+      <pre style="font-size:0.8em">
+H(s) = -(s&middot;log(s) + (1-s)&middot;log(1-s))
+L_tent = mean(H(scores))   &larr; minimize entropy
+      </pre>
+    </div>
+    <div class="card">
+      <h3>SAR <span class="text-dim text-sm">(Niu et al., ICLR 2023 Oral)</span></h3>
+      <ol>
+        <li>Reliable entropy filtering: exclude samples with H(s) &gt; margin_e0</li>
+        <li>SAM step 1: <strong>ascend</strong> in entropy gradient direction (find sharpness)</li>
+        <li>SAM step 2: <strong>descend</strong> at perturbed point (favor flat minima)</li>
+        <li><strong>Per-video reset</strong> (same as TENT)</li>
+      </ol>
+      <pre style="font-size:0.8em">
+margin_e0 = 0.4 &times; ln(2) &asymp; 0.277
+&rho; &isin; {0.001, 0.005, 0.01, 0.05, 0.1}
+      </pre>
+    </div>
+  </div>
+
+  <h3 class="mt-3">Corruption Types (UCF-Crime-C)</h3>
+  <p>Applied to CLIP features at test time to simulate domain shift:</p>
+  <div class="grid-2">
+    <div class="card"><h3>Gaussian Noise</h3><p>Additive noise &sigma; &isin; {0.1, 0.2, 0.3, 0.4, 0.5} for 5 severity levels. Simulates sensor noise.</p></div>
+    <div class="card"><h3>JPEG Compression</h3><p>Quality Q &isin; {50, 40, 30, 20, 10}. Simulates low-bandwidth transmission artifacts.</p></div>
+    <div class="card"><h3>Brightness Shift</h3><p>Factor &isin; {0.7, 1.3, 0.5, 1.5, 2.0}. Simulates day/night lighting changes.</p></div>
+    <div class="card"><h3>Motion Blur</h3><p>Kernel size increases with severity. Simulates camera shake or fast motion.</p></div>
+  </div>
+
+  <div class="callout warning mt-3">
+    <strong>Key Finding:</strong> TTA shows marginal gains on controlled corruptions (typically &lt;2% AUC improvement). Brightness is most resilient to corruption; Gaussian noise and JPEG cause the most degradation. SAR's reliable entropy filtering provides modest improvements over basic TENT.
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     8. RESULTS
+     ═══════════════════════════════════════════════════════════ -->
+<section id="results">
+  <h2>Results</h2>
+
+  <div class="tab-group">
+    <div class="tab-buttons">
+      <button class="tab-btn active" onclick="switchTab(this, 'results')">Main Ablations</button>
+      <button class="tab-btn" onclick="switchTab(this, 'results')">Backbone Comparison</button>
+      <button class="tab-btn" onclick="switchTab(this, 'results')">Per-Category</button>
+      <button class="tab-btn" onclick="switchTab(this, 'results')">TTA Results</button>
+    </div>
+
+    <!-- Main Ablations -->
+    <div class="tab-panel active" data-group="results">
+      <h3>UCF-Crime Ablation Results</h3>
+      <div class="chart-container"><canvas id="chart-ucf-ablation"></canvas></div>
+      <div class="table-wrap">
+        <table id="table-ucf" class="sortable">
+          <thead><tr>
+            <th>Variant</th><th>Seed</th>
+            <th onclick="sortTable('table-ucf',2)">AUC % <span class="sort-arrow">&udarr;</span></th>
+            <th onclick="sortTable('table-ucf',3)">AP % <span class="sort-arrow">&udarr;</span></th>
+          </tr></thead>
+          <tbody>
+            <tr><td>Skeleton-Only</td><td class="num">42</td><td class="num">71.80</td><td class="num">15.27</td></tr>
+            <tr><td>CLIP-Only</td><td class="num">42</td><td class="num">81.69</td><td class="num">22.34</td></tr>
+            <tr><td>Late Fusion</td><td class="num">42</td><td class="num">78.71</td><td class="num">18.74</td></tr>
+            <tr><td><strong>Gated Fusion</strong></td><td class="num">42</td><td class="num best">82.27</td><td class="num">23.15</td></tr>
+            <tr><td>GF 2-Person Concat</td><td class="num">42</td><td class="num">81.65</td><td class="num">22.01</td></tr>
+            <tr><td>GF CLIP Mean-Only</td><td class="num">42</td><td class="num">81.78</td><td class="num best">23.42</td></tr>
+            <tr><td><strong>Gated Fusion</strong></td><td class="num">123</td><td class="num">81.68</td><td class="num">22.72</td></tr>
+            <tr><td><strong>Gated Fusion</strong></td><td class="num">2024</td><td class="num">82.00</td><td class="num">23.53</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="text-sm text-dim">Gated Fusion 3-seed mean: AUC 81.98% &plusmn; 0.29%, AP 23.13% &plusmn; 0.38%</p>
+
+      <h3 class="mt-3">XD-Violence Ablation Results</h3>
+      <div class="chart-container"><canvas id="chart-xd-ablation"></canvas></div>
+      <div class="table-wrap">
+        <table id="table-xd" class="sortable">
+          <thead><tr>
+            <th>Variant</th><th>Seed</th>
+            <th onclick="sortTable('table-xd',2)">AUC % <span class="sort-arrow">&udarr;</span></th>
+            <th onclick="sortTable('table-xd',3)">AP % <span class="sort-arrow">&udarr;</span></th>
+          </tr></thead>
+          <tbody>
+            <tr><td>Skeleton-Only</td><td class="num">42</td><td class="num">72.12</td><td class="num">41.32</td></tr>
+            <tr><td>CLIP-Only</td><td class="num">42</td><td class="num">91.13</td><td class="num">70.53</td></tr>
+            <tr><td>Late Fusion</td><td class="num">42</td><td class="num">90.00</td><td class="num">65.48</td></tr>
+            <tr><td><strong>Gated Fusion</strong></td><td class="num">42</td><td class="num best">92.00</td><td class="num best">71.92</td></tr>
+            <tr><td>GF 2-Person Concat</td><td class="num">42</td><td class="num">91.64</td><td class="num">71.02</td></tr>
+            <tr><td>GF CLIP Mean-Only</td><td class="num">42</td><td class="num">91.45</td><td class="num">69.60</td></tr>
+            <tr><td><strong>Gated Fusion</strong></td><td class="num">123</td><td class="num">91.73</td><td class="num">71.20</td></tr>
+            <tr><td><strong>Gated Fusion</strong></td><td class="num">2024</td><td class="num">91.42</td><td class="num">69.80</td></tr>
+            <tr><td>RTFM I3D RGB</td><td class="num">42</td><td class="num">86.75</td><td class="num">65.70</td></tr>
+            <tr><td>RTFM I3D Flow</td><td class="num">42</td><td class="num">83.41</td><td class="num">59.16</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="text-sm text-dim">Gated Fusion 3-seed mean: AUC 91.72% &plusmn; 0.29%, AP 70.97% &plusmn; 1.08%</p>
+    </div>
+
+    <!-- Backbone Comparison -->
+    <div class="tab-panel" data-group="results">
+      <h3>Three-Way Backbone Comparison: CLIP vs SigLIP2-Base vs SO400M</h3>
+      <div class="chart-container"><canvas id="chart-backbone-ucf"></canvas></div>
+      <div class="chart-container"><canvas id="chart-backbone-xd"></canvas></div>
+
+      <h3 class="mt-3">Seed Stability (3-seed, Gated Fusion)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Metric</th><th>CLIP ViT-B/16</th><th>SigLIP2-Base</th><th>SO400M</th></tr></thead>
+          <tbody>
+            <tr><td>UCF AUC</td><td class="num">81.98% &plusmn; 0.30%</td><td class="num">79.77% &plusmn; 0.22%</td><td class="num">81.90% &plusmn; 0.38%</td></tr>
+            <tr><td>XD AUC</td><td class="num">91.72% &plusmn; 0.29%</td><td class="num">92.32% &plusmn; 0.47%</td><td class="num">92.88% &plusmn; 0.49%</td></tr>
+            <tr><td>XD AP</td><td class="num">71.00% &plusmn; 1.08%</td><td class="num">74.70% &plusmn; 2.93%</td><td class="num best">73.81% &plusmn; 2.81%</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout mt-2">
+        <strong>Key Insight:</strong> SO400M recovers near-CLIP performance on UCF (82.18% vs 82.27%) while being the strongest backbone on XD-Violence. SigLIP2-Base underperforms CLIP on UCF by ~2.5pp but matches on XD.
+      </div>
+    </div>
+
+    <!-- Per-Category -->
+    <div class="tab-panel" data-group="results">
+      <h3>XD-Violence Per-Category AP (Gated Fusion, Seed 42)</h3>
+      <div class="chart-container"><canvas id="chart-per-category"></canvas></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Category</th><th>AP %</th><th>Difficulty</th></tr></thead>
+          <tbody>
+            <tr><td>B4: Riot</td><td class="num best">88.15</td><td><span class="badge" style="background:var(--success);color:#fff">Easiest</span></td></tr>
+            <tr><td>B1: Fighting</td><td class="num">77.76</td><td><span class="badge" style="background:var(--success);color:#fff">Easy</span></td></tr>
+            <tr><td>G: Explosion</td><td class="num">54.02</td><td><span class="badge" style="background:var(--warning);color:#333">Medium</span></td></tr>
+            <tr><td>B2: Shooting</td><td class="num">51.35</td><td><span class="badge" style="background:var(--warning);color:#333">Medium</span></td></tr>
+            <tr><td>B5: Abuse</td><td class="num">44.89</td><td><span class="badge" style="background:var(--danger);color:#fff">Hard</span></td></tr>
+            <tr><td>B6: Car Accident</td><td class="num">41.54</td><td><span class="badge" style="background:var(--danger);color:#fff">Hard</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="text-dim text-sm">Large-motion violence (Riot, Fighting) easiest to detect. Subtle violence (Abuse) and non-human-centric events (Car Accident) remain challenging.</p>
+    </div>
+
+    <!-- TTA Results -->
+    <div class="tab-panel" data-group="results">
+      <h3>TTA Corruption Robustness (UCF-Crime, Gated Fusion)</h3>
+      <p>AUC (%) under corruption compared to clean baseline of 82.27%:</p>
+
+      <div class="chart-container"><canvas id="chart-tta"></canvas></div>
+
+      <details>
+        <summary>Full TTA Source-Only Baseline per Corruption</summary>
+        <div class="detail-content">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Corruption</th><th>Sev 1</th><th>Sev 2</th><th>Sev 3</th><th>Sev 4</th><th>Sev 5</th></tr></thead>
+              <tbody>
+                <tr><td>Gaussian Noise</td><td class="num">63.96</td><td class="num">53.14</td><td class="num">49.94</td><td class="num">52.44</td><td class="num">49.70</td></tr>
+                <tr><td>JPEG Compression</td><td class="num">55.92</td><td class="num">45.34</td><td class="num">44.06</td><td class="num">41.03</td><td class="num">43.77</td></tr>
+                <tr><td>Brightness</td><td class="num best">78.60</td><td class="num best">77.83</td><td class="num best">78.26</td><td class="num best">78.68</td><td class="num best">77.26</td></tr>
+                <tr><td>Motion Blur</td><td class="num">72.10</td><td class="num">69.44</td><td class="num">67.64</td><td class="num">69.32</td><td class="num">60.52</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </details>
+
+      <details class="mt-1">
+        <summary>Best TTA Improvement per Corruption Type</summary>
+        <div class="detail-content">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Corruption</th><th>Source-Only (mean)</th><th>Best TTA</th><th>Method</th><th>&Delta;</th></tr></thead>
+              <tbody>
+                <tr><td>Gaussian Noise</td><td class="num">53.84</td><td class="num">56.08</td><td>SAR (&rho;=0.01)</td><td class="num">+2.24</td></tr>
+                <tr><td>JPEG Compression</td><td class="num">46.02</td><td class="num">47.48</td><td>TENT (lr=0.005)</td><td class="num">+1.46</td></tr>
+                <tr><td>Brightness</td><td class="num">78.13</td><td class="num">80.02</td><td>TENT (lr=0.005)</td><td class="num">+1.89</td></tr>
+                <tr><td>Motion Blur</td><td class="num">67.80</td><td class="num">69.68</td><td>SAR (&rho;=0.005)</td><td class="num">+1.88</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="text-sm text-dim">TTA provides modest but consistent improvements across all corruption types. SAR outperforms TENT on noise-heavy corruptions; TENT is competitive on brightness/JPEG.</p>
+        </div>
+      </details>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ═══════════════════════════════════════════════════════════
+     FOOTER
+     ═══════════════════════════════════════════════════════════ -->
+<footer style="text-align:center;padding:32px;color:var(--text-dim);font-size:0.85rem;border-top:1px solid var(--border-light);">
+  ViolenceCC &mdash; Master's Thesis Research &mdash; Last updated: <span id="last-updated"></span>
+</footer>
+
+<!-- ═══════════════════════════════════════════════════════════
+     JAVASCRIPT
+     ═══════════════════════════════════════════════════════════ -->
+<script>
+// ── Theme Toggle ──
+function toggleTheme() {
+  const html = document.documentElement;
+  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('vcc-theme', next);
+  updateChartColors();
+}
+(function() {
+  const saved = localStorage.getItem('vcc-theme');
+  if (saved) document.documentElement.setAttribute('data-theme', saved);
+})();
+
+// ── Navigation Active State ──
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.nav-links a');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      navLinks.forEach(l => l.classList.remove('active'));
+      const link = document.querySelector(`.nav-links a[href="#${entry.target.id}"]`);
+      if (link) link.classList.add('active');
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+sections.forEach(s => observer.observe(s));
+
+// Close hamburger on link click (mobile)
+navLinks.forEach(link => {
+  link.addEventListener('click', () => {
+    document.querySelector('.nav-links').classList.remove('open');
+  });
+});
+
+// ── Tab Switching ──
+function switchTab(btn, group) {
+  const parent = btn.closest('.tab-group');
+  parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const panels = parent.querySelectorAll('.tab-panel');
+  const idx = Array.from(parent.querySelectorAll('.tab-btn')).indexOf(btn);
+  panels.forEach((p, i) => p.classList.toggle('active', i === idx));
+}
+
+// ── Sortable Tables ──
+function sortTable(tableId, colIdx) {
+  const table = document.getElementById(tableId);
+  const tbody = table.querySelector('tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  const th = table.querySelectorAll('th')[colIdx];
+  const asc = !th.classList.contains('sorted-asc');
+
+  table.querySelectorAll('th').forEach(h => {
+    h.classList.remove('sorted-asc', 'sorted-desc');
+  });
+  th.classList.add(asc ? 'sorted-asc' : 'sorted-desc');
+
+  rows.sort((a, b) => {
+    const av = a.cells[colIdx].textContent.trim();
+    const bv = b.cells[colIdx].textContent.trim();
+    const an = parseFloat(av), bn = parseFloat(bv);
+    if (!isNaN(an) && !isNaN(bn)) return asc ? an - bn : bn - an;
+    return asc ? av.localeCompare(bv) : bv.localeCompare(av);
+  });
+  rows.forEach(r => tbody.appendChild(r));
+}
+
+// ── Chart Colors Helper ──
+function isDark() { return document.documentElement.getAttribute('data-theme') === 'dark'; }
+function chartTextColor() { return isDark() ? '#ccc' : '#555'; }
+function chartGridColor() { return isDark() ? '#333' : '#e5e5e5'; }
+
+const chartInstances = [];
+function updateChartColors() {
+  chartInstances.forEach(c => {
+    if (c.options.scales?.x) {
+      c.options.scales.x.ticks.color = chartTextColor();
+      c.options.scales.x.grid.color = chartGridColor();
+    }
+    if (c.options.scales?.y) {
+      c.options.scales.y.ticks.color = chartTextColor();
+      c.options.scales.y.grid.color = chartGridColor();
+    }
+    if (c.options.plugins?.legend?.labels) {
+      c.options.plugins.legend.labels.color = chartTextColor();
+    }
+    c.update();
+  });
+}
+
+// ── Chart Defaults ──
+function defaultScales(yLabel, yMin, yMax) {
+  return {
+    x: { ticks: { color: chartTextColor() }, grid: { color: chartGridColor() } },
+    y: {
+      beginAtZero: false, min: yMin, max: yMax,
+      title: { display: true, text: yLabel, color: chartTextColor() },
+      ticks: { color: chartTextColor() },
+      grid: { color: chartGridColor() }
+    }
+  };
+}
+
+// ── Initialize Charts ──
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('last-updated').textContent = new Date().toLocaleDateString();
+
+  // UCF Ablation Bar Chart
+  const ucfCtx = document.getElementById('chart-ucf-ablation').getContext('2d');
+  const ucfChart = new Chart(ucfCtx, {
+    type: 'bar',
+    data: {
+      labels: ['Skeleton-Only', 'CLIP-Only', 'Late Fusion', 'Gated Fusion', 'GF 2-Person', 'GF CLIP Mean'],
+      datasets: [{
+        label: 'AUC %',
+        data: [71.80, 81.69, 78.71, 82.27, 81.65, 81.78],
+        backgroundColor: ['rgba(6,214,160,0.6)', 'rgba(67,97,238,0.6)', 'rgba(255,209,102,0.6)', 'rgba(114,9,183,0.7)', 'rgba(114,9,183,0.4)', 'rgba(114,9,183,0.4)'],
+        borderColor: ['#06d6a0', '#4361ee', '#ffd166', '#7209b7', '#7209b7', '#7209b7'],
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        title: { display: true, text: 'UCF-Crime AUC by Variant (Seed 42)', color: chartTextColor(), font: { size: 14 } }
+      },
+      scales: defaultScales('AUC %', 65, 85)
+    }
+  });
+  chartInstances.push(ucfChart);
+
+  // XD Ablation Bar Chart
+  const xdCtx = document.getElementById('chart-xd-ablation').getContext('2d');
+  const xdChart = new Chart(xdCtx, {
+    type: 'bar',
+    data: {
+      labels: ['Skeleton-Only', 'CLIP-Only', 'Late Fusion', 'Gated Fusion', 'GF 2-Person', 'GF CLIP Mean', 'RTFM I3D RGB', 'RTFM I3D Flow'],
+      datasets: [
+        {
+          label: 'AUC %',
+          data: [72.12, 91.13, 90.00, 92.00, 91.64, 91.45, 86.75, 83.41],
+          backgroundColor: 'rgba(67,97,238,0.5)',
+          borderColor: '#4361ee',
+          borderWidth: 2
+        },
+        {
+          label: 'AP %',
+          data: [41.32, 70.53, 65.48, 71.92, 71.02, 69.60, 65.70, 59.16],
+          backgroundColor: 'rgba(114,9,183,0.5)',
+          borderColor: '#7209b7',
+          borderWidth: 2
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { labels: { color: chartTextColor() } },
+        title: { display: true, text: 'XD-Violence AUC & AP by Variant (Seed 42)', color: chartTextColor(), font: { size: 14 } }
+      },
+      scales: defaultScales('Score %', 30, 95)
+    }
+  });
+  chartInstances.push(xdChart);
+
+  // Backbone Comparison - UCF
+  const bbUcfCtx = document.getElementById('chart-backbone-ucf').getContext('2d');
+  const bbUcfChart = new Chart(bbUcfCtx, {
+    type: 'bar',
+    data: {
+      labels: ['CLIP-Only', 'Late Fusion', 'Gated Fusion', 'GF 2-Person', 'GF Mean-Only'],
+      datasets: [
+        { label: 'CLIP ViT-B/16', data: [81.69, 78.71, 82.27, 81.65, 81.78], backgroundColor: 'rgba(67,97,238,0.6)', borderColor: '#4361ee', borderWidth: 2 },
+        { label: 'SigLIP2-Base', data: [79.11, 79.93, 79.61, 79.48, 80.00], backgroundColor: 'rgba(247,127,0,0.6)', borderColor: '#f77f00', borderWidth: 2 },
+        { label: 'SO400M', data: [81.41, 80.26, 82.18, 81.97, 82.45], backgroundColor: 'rgba(214,40,40,0.6)', borderColor: '#d62828', borderWidth: 2 }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { labels: { color: chartTextColor() } },
+        title: { display: true, text: 'UCF-Crime AUC: Backbone Comparison (Seed 42)', color: chartTextColor(), font: { size: 14 } }
+      },
+      scales: defaultScales('AUC %', 75, 84)
+    }
+  });
+  chartInstances.push(bbUcfChart);
+
+  // Backbone Comparison - XD (AP)
+  const bbXdCtx = document.getElementById('chart-backbone-xd').getContext('2d');
+  const bbXdChart = new Chart(bbXdCtx, {
+    type: 'bar',
+    data: {
+      labels: ['CLIP-Only', 'Late Fusion', 'Gated Fusion', 'GF 2-Person', 'GF Mean-Only'],
+      datasets: [
+        { label: 'CLIP ViT-B/16', data: [70.53, 65.48, 71.92, 71.02, 69.60], backgroundColor: 'rgba(67,97,238,0.6)', borderColor: '#4361ee', borderWidth: 2 },
+        { label: 'SigLIP2-Base', data: [72.12, 65.56, 71.92, 73.08, 72.45], backgroundColor: 'rgba(247,127,0,0.6)', borderColor: '#f77f00', borderWidth: 2 },
+        { label: 'SO400M', data: [77.64, 66.42, 73.77, 74.81, 72.47], backgroundColor: 'rgba(214,40,40,0.6)', borderColor: '#d62828', borderWidth: 2 }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { labels: { color: chartTextColor() } },
+        title: { display: true, text: 'XD-Violence AP: Backbone Comparison (Seed 42)', color: chartTextColor(), font: { size: 14 } }
+      },
+      scales: defaultScales('AP %', 60, 80)
+    }
+  });
+  chartInstances.push(bbXdChart);
+
+  // Per-Category
+  const catCtx = document.getElementById('chart-per-category').getContext('2d');
+  const catChart = new Chart(catCtx, {
+    type: 'bar',
+    data: {
+      labels: ['B4: Riot', 'B1: Fighting', 'G: Explosion', 'B2: Shooting', 'B5: Abuse', 'B6: Car Accident'],
+      datasets: [{
+        label: 'AP %',
+        data: [88.15, 77.76, 54.02, 51.35, 44.89, 41.54],
+        backgroundColor: [
+          'rgba(6,214,160,0.7)', 'rgba(6,214,160,0.5)',
+          'rgba(255,209,102,0.7)', 'rgba(255,209,102,0.5)',
+          'rgba(239,71,111,0.7)', 'rgba(239,71,111,0.5)'
+        ],
+        borderColor: ['#06d6a0','#06d6a0','#ffd166','#ffd166','#ef476f','#ef476f'],
+        borderWidth: 2
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        title: { display: true, text: 'XD-Violence Per-Category AP (Gated Fusion, Seed 42)', color: chartTextColor(), font: { size: 14 } }
+      },
+      scales: {
+        x: { min: 0, max: 100, title: { display: true, text: 'AP %', color: chartTextColor() }, ticks: { color: chartTextColor() }, grid: { color: chartGridColor() } },
+        y: { ticks: { color: chartTextColor() }, grid: { display: false } }
+      }
+    }
+  });
+  chartInstances.push(catChart);
+
+  // TTA Line Chart
+  const ttaCtx = document.getElementById('chart-tta').getContext('2d');
+  const ttaChart = new Chart(ttaCtx, {
+    type: 'line',
+    data: {
+      labels: ['Severity 1', 'Severity 2', 'Severity 3', 'Severity 4', 'Severity 5'],
+      datasets: [
+        {
+          label: 'Brightness (Source-Only)',
+          data: [78.60, 77.83, 78.26, 78.68, 77.26],
+          borderColor: '#06d6a0', backgroundColor: 'rgba(6,214,160,0.1)',
+          tension: 0.3, fill: true
+        },
+        {
+          label: 'Motion Blur (Source-Only)',
+          data: [72.10, 69.44, 67.64, 69.32, 60.52],
+          borderColor: '#ffd166', backgroundColor: 'rgba(255,209,102,0.1)',
+          tension: 0.3, fill: true
+        },
+        {
+          label: 'Gaussian Noise (Source-Only)',
+          data: [63.96, 53.14, 49.94, 52.44, 49.70],
+          borderColor: '#ef476f', backgroundColor: 'rgba(239,71,111,0.1)',
+          tension: 0.3, fill: true
+        },
+        {
+          label: 'JPEG Compression (Source-Only)',
+          data: [55.92, 45.34, 44.06, 41.03, 43.77],
+          borderColor: '#4361ee', backgroundColor: 'rgba(67,97,238,0.1)',
+          tension: 0.3, fill: true
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { labels: { color: chartTextColor() } },
+        title: { display: true, text: 'Source-Only AUC Degradation by Corruption Severity', color: chartTextColor(), font: { size: 14 } },
+        annotation: {
+          annotations: {
+            baseline: {
+              type: 'line', yMin: 82.27, yMax: 82.27,
+              borderColor: 'rgba(114,9,183,0.5)', borderDash: [6, 3], borderWidth: 2,
+              label: { display: true, content: 'Clean: 82.27%', position: 'end' }
+            }
+          }
+        }
+      },
+      scales: defaultScales('AUC %', 35, 85)
+    }
+  });
+  chartInstances.push(ttaChart);
+});
+</script>
+</body>
+</html>
