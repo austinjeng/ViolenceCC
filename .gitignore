@@ -91,3 +91,8 @@ thesis/*.synctex.gz
 thesis/*.cut
 thesis/*.lof
 thesis/*.lot
+
+# Tool/QA temp dirs (quick 260831-pzu)
+.playwright-cli/
+.qa_tmp/
+.pytest_tmp/
