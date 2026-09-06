@@ -28,7 +28,7 @@ metrics:
 
 ## What Was Done
 
-### Task 1: CJK wrap, flushright signature, fill month (commit 50d4e40)
+### Task 1: CJK wrap, flushright signature, fill month (commit 9ae09a7)
 
 - Brought the author-filled prose (7 Traditional Chinese paragraphs, byte-identical — see Deviations) into the worktree file.
 - Inserted `\begin{CJK}{UTF8}{bkai}` after `\addcontentsline` (line 9); `\chapter*{Acknowledgments}` and `\addcontentsline` stay outside the env (pure ASCII, matching the plan; abstract_zh.tex pattern followed for the env itself).
@@ -36,7 +36,7 @@ metrics:
 - Filled the date blank: 「中華民國一一五年＿月」→「中華民國一一五年八月」 (author-confirmed August; the only permitted character-level change).
 - Closed with `\end{CJK}` as the last content line.
 
-### Task 2: Clean rebuild + render verification (commit 0f2b4db for the render fix)
+### Task 2: Clean rebuild + render verification (commit 7cbd96d for the render fix)
 
 - `build_thesis.ps1 -Clean` exit 0, "LOG SCAN: clean (no errors, no undefined refs/citations)".
 - thesis/main.pdf: **96 pages** (was 95; the filled acknowledgments adds one page, within the plan's 95-96 tolerance).
@@ -51,17 +51,17 @@ metrics:
 
 **1. [Rule 3 - Blocking] Author-filled prose existed only in the main repo working tree, not in the worktree base**
 - **Found during:** Task 1
-- **Issue:** The worktree base commit (edaa522) still had the `[Acknowledgments to be written by the author.]` placeholder; the author's filled text was an uncommitted change at `D:\ViolenceCC\thesis\frontmatter\acknowledgments.tex`.
+- **Issue:** The worktree base commit (189862b) still had the `[Acknowledgments to be written by the author.]` placeholder; the author's filled text was an uncommitted change at `D:\ViolenceCC\thesis\frontmatter\acknowledgments.tex`.
 - **Fix:** Copied the main-repo file into the worktree via `cp` and verified byte-identity with `cmp` before applying the structural edits, guaranteeing the "prose byte-identical" must-have.
 - **Files modified:** thesis/frontmatter/acknowledgments.tex
-- **Commit:** 50d4e40
+- **Commit:** 9ae09a7
 
 **2. [Rule 1 - Bug] Signature block split across the p.III/p.IV page break**
 - **Found during:** Task 2 render verification
 - **Issue:** The prose fills p.III almost completely; the plain `flushright` block broke after its first line, stranding 「鄭暐瀚　謹誌於」 at the bottom of p.III with the other two lines on p.IV.
 - **Fix:** First attempt `\samepage` inside the flushright had no effect (`\\` in flushright ends the paragraph, so `\interlinepenalty` never applies between the lines). Final fix: wrapped the three lines in an unbreakable `\begin{tabular}{@{}r@{}}` inside the flushright — the whole block now moves to the top of p.IV as a unit, still right-aligned at the text edge. Fitting all three lines on p.III was rejected: it would need ~2 extra baselines via `\enlargethispage`, which collides with the folio position.
 - **Files modified:** thesis/frontmatter/acknowledgments.tex
-- **Commit:** 0f2b4db
+- **Commit:** 7cbd96d
 
 ## Verification Results
 
@@ -87,5 +87,5 @@ The author's filled acknowledgments still sits as an **uncommitted** change in t
 - FOUND: thesis/frontmatter/acknowledgments.tex
 - FOUND: thesis/main.pdf (96pp, git-ignored, not committed)
 - FOUND: .planning/quick/260813-grn-fix-thesis-acknowledgments-latex-wrap-ch/260813-grn-SUMMARY.md
-- FOUND: commit 50d4e40 (Task 1)
-- FOUND: commit 0f2b4db (Rule 1 fix)
+- FOUND: commit 9ae09a7 (Task 1)
+- FOUND: commit 7cbd96d (Rule 1 fix)

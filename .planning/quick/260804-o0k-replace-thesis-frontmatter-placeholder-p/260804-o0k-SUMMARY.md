@@ -34,7 +34,7 @@ Signed 推薦書/審定書 scans embedded at thesis pages 3-4 via pdfpages with 
 
 ## What Was Done
 
-- **Task 1 — Copy scan + switch to pdfpages** (commit `3333028`):
+- **Task 1 — Copy scan + switch to pdfpages** (commit `fec05f5`):
   - Copied the user's upload `審定書和推薦書.pdf` (1,743,631 bytes, byte-identical) to `thesis/frontmatter/signed_forms.pdf` (ASCII path, tracked by git without `-f`).
   - `thesis/preamble.tex`: added `\usepackage{pdfpages}` directly after `graphicx`, before `hyperref`.
   - `thesis/frontmatter/recommendation.tex`: full rewrite → header comment + `\includepdf[pages=2]{frontmatter/signed_forms.pdf}` (scan p.2 = 推薦書 signed 2026-07-30).
@@ -46,7 +46,7 @@ Signed 推薦書/審定書 scans embedded at thesis pages 3-4 via pdfpages with 
 
 | Commit | Message |
 | --- | --- |
-| `3333028` | docs(quick-260804-o0k): replace 推薦書/審定書 placeholders with signed scans |
+| `fec05f5` | docs(quick-260804-o0k): replace 推薦書/審定書 placeholders with signed scans |
 
 `git show --stat HEAD` lists exactly: thesis/frontmatter/approval.tex, thesis/frontmatter/recommendation.tex, thesis/frontmatter/signed_forms.pdf (new, 1,743,631 bytes), thesis/preamble.tex. No deletions. Build artifacts (thesis/main.pdf etc.) not committed (git-ignored).
 
@@ -77,4 +77,4 @@ Pre-binding revision item #3 ("unsigned 推薦書/審定書 front matter") is CL
 - FOUND: thesis/frontmatter/recommendation.tex (includepdf pages=2)
 - FOUND: thesis/frontmatter/approval.tex (includepdf pages=1)
 - FOUND: thesis/preamble.tex (\usepackage{pdfpages})
-- FOUND: commit 3333028 on main
+- FOUND: commit fec05f5 on main

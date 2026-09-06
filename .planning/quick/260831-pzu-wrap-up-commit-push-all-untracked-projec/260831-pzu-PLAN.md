@@ -133,7 +133,7 @@ Orchestrator survey results (authoritative — do NOT re-survey sizes):
 
 | Threat ID | Category | Component | Disposition | Mitigation Plan |
 |-----------|----------|-----------|-------------|-----------------|
-| T-q260831-01 | Information Disclosure | 審定書和推薦書.pdf, thesis_requirements.pdf | accept | Repo verified PRIVATE by orchestrator; signed forms already embedded in tracked thesis/frontmatter/signed_forms.pdf since commit 3333028 |
+| T-q260831-01 | Information Disclosure | 審定書和推薦書.pdf, thesis_requirements.pdf | accept | Repo verified PRIVATE by orchestrator; signed forms already embedded in tracked thesis/frontmatter/signed_forms.pdf since commit fec05f5 |
 | T-q260831-02 | Denial of Service (repo bloat) | outputs/regrid_so400m_xd/ (303MB) | mitigate | Explicit unstage + zero-match `grep -c regrid_so400m_xd` gate before commit (Task 2) |
 | T-q260831-03 | Tampering (history loss) | git push | mitigate | Plain `git push` only; `--force` explicitly forbidden in Task 3 |
 </threat_model>

@@ -28,9 +28,9 @@ completed: 2026-08-31
 
 | Task | Name | Commit | Files |
 |------|------|--------|-------|
-| 1 | Gitignore temp dirs | `408ad1e` | `.gitignore` (+`.playwright-cli/`, `.qa_tmp/`, `.pytest_tmp/`) |
+| 1 | Gitignore temp dirs | `9b4d23d` | `.gitignore` (+`.playwright-cli/`, `.qa_tmp/`, `.pytest_tmp/`) |
 | 2 | Stage and commit artifacts | `ec55cd6` | 51 files: `.planning/config.json`, `.planning/_review_code_paper_match.mjs`, 22 `scripts/` files, 2 HTML reports, `thesis/thesis_requirements.pdf`, `審定書和推薦書.pdf`, `CGW2026_Latex_Paper_Template/` (10), `output/` (1 PDF), `presentation_codex/` (2), `outputs/` defense files (12, incl. `口試白話總複習.pdf`) |
-| 3 | Push and verify sync | (remote op) | `9e02055..ec55cd6 main -> main`; ahead count now 0 |
+| 3 | Push and verify sync | (remote op) | `99d39be..ec55cd6 main -> main`; ahead count now 0 |
 
 ## Verification Results
 
@@ -59,17 +59,17 @@ None — no code behavior was changed; this task only committed existing artifac
 
 - T-q260831-01 (info disclosure): repo confirmed private; push went to `https://github.com/austinjeng/ViolenceCC.git`
 - T-q260831-02 (repo bloat): mitigated — zero-match gate executed and passed before commit
-- T-q260831-03 (history loss): plain `git push` used; fast-forward `9e02055..ec55cd6`, no force
+- T-q260831-03 (history loss): plain `git push` used; fast-forward `99d39be..ec55cd6`, no force
 
 ## Metrics
 
 - Duration: ~4 min (started 2026-08-31T10:46:53Z)
-- Commits: 2 new (`408ad1e`, `ec55cd6`), 12 total published
+- Commits: 2 new (`9b4d23d`, `ec55cd6`), 12 total published
 - Files: 52 changed across both commits (51 + 1)
 
 ## Self-Check: PASSED
 
-- FOUND: commit 408ad1e
+- FOUND: commit 9b4d23d
 - FOUND: commit ec55cd6
 - FOUND: 260831-pzu-SUMMARY.md
 - outputs/regrid_so400m_xd/ intact on disk and untracked
