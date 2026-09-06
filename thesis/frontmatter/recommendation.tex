@@ -1,7 +1,23 @@
 %%
-%% frontmatter/recommendation.tex -- 指導教授推薦書 (unnumbered, signed).
-%% Embeds the signed advisor recommendation form (signed 2026-07-30) from
-%% page 2 of frontmatter/signed_forms.pdf (source: repo-root upload
-%% 審定書和推薦書.pdf; scan order is 審定書 first, 推薦書 second).
+%% frontmatter/recommendation.tex -- 指導教授推薦書 (unnumbered).
+%% If the signed scan frontmatter/signed_forms.pdf is present (local builds;
+%% the file is gitignored -- signed committee forms are never committed),
+%% embed page 2 of it (signed 2026-07-30; scan order is 審定書 first,
+%% 推薦書 second). Public clones lack the scan and fall back to the
+%% pre-signing placeholder page.
 %%
-\includepdf[pages=2]{frontmatter/signed_forms.pdf}
+\IfFileExists{frontmatter/signed_forms.pdf}{%
+\includepdf[pages=2]{frontmatter/signed_forms.pdf}%
+}{%
+\thispagestyle{empty}
+\begin{CJK}{UTF8}{bkai}
+\vspace*{4cm}
+\begin{center}
+  {\fontsize{20}{24}\selectfont\bfseries 指導教授推薦書\par}
+  \vspace{2.5cm}
+  {\large\color{gray}（正式簽署之指導教授推薦書僅存於裝訂版 --- the signed
+   advisor recommendation form appears only in the bound copy）\par}
+\end{center}
+\end{CJK}
+\clearpage
+}

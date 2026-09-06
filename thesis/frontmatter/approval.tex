@@ -1,8 +1,23 @@
 %%
-%% frontmatter/approval.tex -- 學位考試委員審定書 (unnumbered, signed).
-%% Embeds the signed degree-examination committee approval form (committee
-%% signatures + chair stamp) from page 1 of frontmatter/signed_forms.pdf
-%% (source: repo-root upload 審定書和推薦書.pdf; scan order is 審定書 first,
-%% 推薦書 second -- hence pages=1 here despite this file being input second).
+%% frontmatter/approval.tex -- 學位考試委員審定書 (unnumbered).
+%% If the signed scan frontmatter/signed_forms.pdf is present (local builds;
+%% the file is gitignored -- signed committee forms are never committed),
+%% embed page 1 of it (scan order is 審定書 first, 推薦書 second). Public
+%% clones lack the scan and fall back to the pre-signing placeholder page.
 %%
-\includepdf[pages=1]{frontmatter/signed_forms.pdf}
+\IfFileExists{frontmatter/signed_forms.pdf}{%
+\includepdf[pages=1]{frontmatter/signed_forms.pdf}%
+}{%
+\thispagestyle{empty}
+\begin{CJK}{UTF8}{bkai}
+\vspace*{4cm}
+\begin{center}
+  {\fontsize{20}{24}\selectfont\bfseries 學位考試委員審定書\par}
+  \vspace{2.5cm}
+  {\large\color{gray}（正式簽署之學位考試委員審定書僅存於裝訂版 --- the signed
+   degree-examination committee approval form appears only in the bound
+   copy）\par}
+\end{center}
+\end{CJK}
+\clearpage
+}

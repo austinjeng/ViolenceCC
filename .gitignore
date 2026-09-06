@@ -97,5 +97,7 @@ thesis/*.lot
 .qa_tmp/
 .pytest_tmp/
 
-# Personal documents — never commit (signed committee forms; purged from remote history 2026-08-31)
+# Personal documents — never commit (signed committee forms; root copy purged
+# from remote history 2026-08-31, thesis copy purged 2026-09-06 quick-260906-nc8)
 審定書和推薦書.pdf
+thesis/frontmatter/signed_forms.pdf
